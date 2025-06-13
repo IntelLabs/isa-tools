@@ -1,12 +1,12 @@
 ################################################################
-# ASL Makefile
+# Intel ISA tools Makefile
 #
 # Copyright Arm Limited (c) 2017-2019
 # Copyright (C) 2022-2025 Intel Corporation
 # SPDX-Licence-Identifier: BSD-3-Clause
 ################################################################
 
-.DEFAULT: all
+.DEFAULT_GOAL: all
 
 VERSION = 0.2.0
 
@@ -75,7 +75,7 @@ BACKENDS = interpreter c23 ac fallback
 test_backends: ${addprefix test_backend_, ${BACKENDS}}
 
 test_backend_%: build
-	env PATH="${CURDIR}/tests/scripts:$${PATH}" ${TEST_ENV} ASL_BACKEND=$* ${LIT} tests/backends $(LIT_VERBOSITY)
+	env PATH="${CURDIR}/tests/scripts:$${PATH}" ${TEST_ENV} ISA_BACKEND=$* ${LIT} tests/backends $(LIT_VERBOSITY)
 
 
 test_demos: ${addprefix test_demo_, $(filter-out interpreter ac sc, ${BACKENDS})}
@@ -98,6 +98,18 @@ build_systemc:
 	cmake --install runtime/external/systemc/build )
 
 test_backend_sc: build_systemc
+
+asli.opam.locked:
+	opam lock .
+
+# This target can be used to create reproducible builds
+# by installing exactly the versions of dependencies that
+# are specified in the asli.opam.locked file.
+# It is not essential to use this step but we will try to
+# keep the locked file up to date so that it is always a good
+# / reliable option.
+install_dependencies: asli.opam.locked
+	opam install . --deps-only --locked
 
 ################################################################
 # End

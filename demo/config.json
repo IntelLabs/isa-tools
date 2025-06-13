@@ -9,7 +9,7 @@
         "ASL_ReadReg64",
         "ASL_WriteReg64",
         "ASL_WriteMemory8",
-        "PrintState"
+        "Print_State"
     ],
 
     "__comment": [

@@ -1,0 +1,31 @@
+// RUN: %iii --batchmode --exec=:xform_lower --exec=:xform_constprop --exec=":show --format=raw FUT" %s | filecheck --check-prefix=XFORM %s
+
+// Copyright (C) 2025-2025 Intel Corporation
+
+function FUT?() -> Integer
+begin
+    let y := 0;
+    var z := 1;
+    try
+        z := z + y;
+    catch
+    end;
+    return y;
+end
+
+// XFORM:       function FUT.0?{}() -> Integer
+// XFORM:       begin
+// XFORM-NEXT:      let y : {0} := 0;
+// XFORM-NEXT:      var z : Integer := 1;
+// XFORM-NEXT:      try
+// XFORM-NEXT:          z := 1;
+// XFORM-NEXT:      catch
+// XFORM:           endtry;
+// XFORM-NEXT:      return 0;
+// XFORM-NEXT:  end
+
+function main() -> Integer
+begin
+    Std::Print::Integer::Dec(FUT?());
+    return 0;
+end

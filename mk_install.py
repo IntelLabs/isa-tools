@@ -1,7 +1,7 @@
 #! /usr/bin/env python3
 
 """
-Build asli and install it into directory without including
+Build iii and install it into directory without including
 a full copy of ~/.opam.
 
 Typical usage:
@@ -58,7 +58,7 @@ def main() -> int:
     print(f"Copying release to {release_dir}")
 
     shutil.copytree(f"_build/install/default", release_dir, dirs_exist_ok=True)
-    shutil.rmtree(f"{release_dir}/lib/asli/libASL") # just a copy of the source code
+    shutil.rmtree(f"{release_dir}/lib/asli/libISA") # just a copy of the source code
 
     # copy Z3 file over into release (user will need to set LD_LIBRARY_PATH to lib_dir)
     shutil.copy(f"{opam_switch}/lib/stublibs/libz3.so", lib_dir)
@@ -67,6 +67,9 @@ def main() -> int:
     shutil.copy("share/env.sh", release_dir)
     shutil.copy("share/env.csh", release_dir)
     print(f"Generated environment setting files in {release_dir}/env.{{sh,csh}}")
+
+    shutil.copytree("share/editors", f"{release_dir}/share", dirs_exist_ok=True)
+    print(f"Copied editor support to {release_dir}/share/editors/")
 
     print(f"Copied release to {release_dir}")
 

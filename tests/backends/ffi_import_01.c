@@ -19,7 +19,7 @@ void FFI_null_bits128(uint64_t x[2], uint64_t r[2]) { memcpy(r, x, 2*sizeof(uint
 
 const char* FFI_null_string(const char *x) { return x; }
 enum E FFI_null_E(enum E x) { return x; }
-bool FFI_null_boolean(bool x) { return x; }
+bool FFI_null_Boolean(bool x) { return x; }
 int FFI_null_integer(int x) { return x; }
 int FFI_null_sint17(int x) { return x; }
 

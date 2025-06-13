@@ -1,0 +1,17 @@
+// RUN: %aslrun %s | filecheck %s
+// Copyright (C) 2023-2025 Intel Corporation
+
+function FUT(x : Bits(4)) -> Bits(4)
+begin
+    assert x != 0b1111;
+    return x;
+end
+
+function main() -> Integer
+begin
+    // assertion that does not fail
+    Std::Print::Bits::Hex(FUT(0b0001)); Print("\n");
+    // CHECK: 4'x1
+
+    return 0;
+end

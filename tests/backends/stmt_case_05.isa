@@ -1,0 +1,23 @@
+// RUN: not %aslrun %s | filecheck %s
+// Copyright (C) 2023-2025 Intel Corporation
+
+// UNSUPPORTED: interpreter
+
+function Test(x : Bits(65)) -> Integer
+begin
+    case x of
+        when 65'x0 => return 1;
+        // CHECK: Unimplemented large (> 64 bit) bitvector pattern
+        otherwise => return 10;
+    end;
+    return 20; // unreachable
+end
+
+function main() -> Integer
+begin
+    Std::Print::Integer::Dec(Test(65'x1)); Print("\n");
+
+    return 0;
+end
+
+

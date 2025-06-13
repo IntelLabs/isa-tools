@@ -1,5 +1,4 @@
 (lang dune 3.13)
-(using dune_site 0.1)
 
 (name asli)
 (version 2.0.0)
@@ -12,15 +11,16 @@
 
 (package
   (name asli)
-  (synopsis "Interpreter for Architecture Specification Language (ASL)")
-  (description "\| Architecture Specification Language (ASL) is an executable language for writing
+  (synopsis "Interpreter for Intel(R) ISA Specification Language")
+  (description "\| Intel(R) ISA Specification Language is an executable language for writing
                "\| clear, precise specifications of Instruction Set Architectures (ISAs).
                "\|
-               "\| The ASL interpreter (ASLi) is an implementation of ASL that can execute ASL
-               "\| specifications either in an interpreter or by compiling via C code.
+               "\| The Intel(R) ISA interpreter (iii) is an implementation of the language
+               "\| that can execute .isa specifications either in an interpreter or by
+               "\| compiling via C code.
                "\|
                "\| Currently supports reading/typechecking the specification,
-               "\| interactive execution of ASL statements and expressions,
+               "\| interactive execution of .isa statements and expressions,
                "\| executing opcodes one at a time,
                "\| loading ELF files and executing binaries.
                "\|
@@ -28,13 +28,8 @@
                "\| that can be used to execute binaries faster and can be
                "\| linked with other C/C++ libraries.
   )
-  (sites (lib plugins)
-         (lib runtime)
-         (lib runtime_include)
-         (share stdlib))
   (depends
     ("alcotest"  :with-test)
-    "dune-site"
     "linenoise"
     ("menhir"    :build)
     ("ocaml"     (>= "4.14"))

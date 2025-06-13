@@ -1,0 +1,11 @@
+// RUN: %aslrun %s | filecheck %s
+// Copyright (C) 2023-2025 Intel Corporation
+
+function main() -> Integer
+begin
+    Std::Print::String("Hello, world!");
+    // CHECK: Hello, world!
+
+    return 0;
+end
+

@@ -1,0 +1,16 @@
+// RUN: %aslrun %s | filecheck %s
+// Copyright (C) 2025-2025 Intel Corporation
+
+function FUT(x : Bits(16)) -> Bits(64)
+begin
+    // This test used to fail in c23 backend due to the subtraction
+    // being promoted to signed.
+    return Std::Bits::Zero_Extend(Std::Bits::Subtract(x, 16'x1), 64);
+end
+
+function main() -> Integer
+begin
+    Std::Print::Bits::Hex(FUT(16'x0)); Print("\n");
+    // CHECK: 64'xf
+    return 0;
+end

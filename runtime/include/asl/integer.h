@@ -84,6 +84,23 @@ ASL_exact_div_int(ASL_int_t x, ASL_int_t y)
 }
 
 static inline ASL_int_t
+ASL_cdiv_int(ASL_int_t x, ASL_int_t y)
+{
+        assert(y != 0);
+        ASL_int_t quot = x / y;
+        ASL_int_t rem = x % y;
+        if ((rem != 0) && ((x < 0) == (y < 0))) { quot++; }
+        return quot;
+}
+
+static inline ASL_int_t
+ASL_crem_int(ASL_int_t x, ASL_int_t y)
+{
+        assert(y != 0);
+        return x - ASL_cdiv_int(x, y) * y;
+}
+
+static inline ASL_int_t
 ASL_fdiv_int(ASL_int_t x, ASL_int_t y)
 {
         assert(y != 0);

@@ -50,7 +50,7 @@ jobs:
         run: |
           opam init --no-setup --disable-sandboxing --compiler=4.14.2
           opam env
-          opam install . --deps-only --with-test --with-doc --yes
+          opam install . --deps-only --with-test --with-doc --locked --yes
 
       - name: Build
         run: |

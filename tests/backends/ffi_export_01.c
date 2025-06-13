@@ -3,7 +3,7 @@
 // Exports a function FFI_test_exports that, for many
 // different ASL types "T":
 //
-// - calls an ASL function "FFI_{T}(x : {T}) => {T}"
+// - calls an ASL function "FFI_{T}(x : {T}) -> {T}"
 // - and prints the result
 //
 // Copyright (C) 2025-2025 Intel Corporation
@@ -46,10 +46,10 @@ void FFI_test_exports() {
         printf("%s\n", FFI_string("abcd"));
 
         enum E eret = FFI_E(C);
-        printf("%s\n", (eret == C) ? "TRUE" : "FALSE");
+        printf("%s\n", (eret == C) ? "True" : "False");
 
-        bool bret = FFI_boolean(true);
-        printf("%s\n", bret ? "TRUE" : "FALSE");
+        bool bret = FFI_Boolean(true);
+        printf("%s\n", bret ? "True" : "False");
 
         printf("%d\n", FFI_integer(42));
         printf("i17'd%d\n", FFI_sint17(42));
@@ -57,8 +57,8 @@ void FFI_test_exports() {
         int intret2;
         bool boolret2;
         FFI_int_bool(1, &intret2, &boolret2);
-        printf("(%d, %s)\n", intret2, boolret2 ? "TRUE" : "FALSE");
+        printf("(%d, %s)\n", intret2, boolret2 ? "True" : "False");
         FFI_int_bool(4, &intret2, &boolret2);
-        printf("(%d, %s)\n", intret2, boolret2 ? "TRUE" : "FALSE");
+        printf("(%d, %s)\n", intret2, boolret2 ? "True" : "False");
 
 }

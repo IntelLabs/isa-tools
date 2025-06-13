@@ -1,0 +1,14 @@
+// RUN: %aslrun %s | filecheck %s
+// Copyright (C) 2023-2025 Intel Corporation
+
+function Test(x : Bits(8)) -> Bits(8)
+begin
+    return (not x);
+end
+
+function main() -> Integer
+begin
+    Std::Print::Bits::Hex(Test(0b1011_0011)); Print("\n");
+    // CHECK: 8'x4c
+    return 0;
+end

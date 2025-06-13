@@ -90,13 +90,13 @@ uint64_t load_elf64(const char* filename) {
 }
 
 /****************************************************************
- * ASL error handling
+ * ISA error handling
  ****************************************************************/
 
 void
 ASL_error(const char* loc, const char* msg)
 {
-        fprintf(ASL_error_file, "%s: ASL error %s\n\n", loc, msg);
+        fprintf(ASL_error_file, "%s: ISA error %s\n\n", loc, msg);
         fprintf(ASL_error_file, "This error indicates an error in the specification and should\n");
         fprintf(ASL_error_file, "be reported as a bug.\n");
 
@@ -107,7 +107,7 @@ void
 ASL_assert(const char* loc, const char* expr, bool c)
 {
         if (!c) {
-                fprintf(ASL_error_file, "%s: ASL assertion failure %s\n\n", loc, expr);
+                fprintf(ASL_error_file, "%s: ISA assertion failure %s\n\n", loc, expr);
                 fprintf(ASL_error_file, "This error indicates an error in the specification and should\n");
                 fprintf(ASL_error_file, "be reported as a bug.\n");
 
@@ -249,10 +249,10 @@ int main(int argc, const char* argv[])
                 }
         }
 
-        PrintState();
+        Print_State();
         for(int i = 0; i < steps && !ASL_IsHalted(); ++i) {
                 ASL_Step();
-                PrintState();
+                Print_State();
         }
 
         exit(0);
