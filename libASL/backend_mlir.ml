@@ -7,6 +7,7 @@
 
 (* Turn off warnings about unused (debug) functions. *)
 [@@@warning "-32"]
+[@@@warning "-37-39-69"] (* temporary - until new IR is in place *)
 
 (** ASL to MLIR backend *)
 
@@ -14,9 +15,15 @@ module AST = Asl_ast
 module FMT = Asl_fmt
 module PP = Format
 module V = Value
+module Builtins = Builtin_idents
+module HLIR = Hlir
 open Asl_utils
 open Format_utils
 open Utils
+
+(****************************************************************
+ * Pretty printing helpers
+ ****************************************************************)
 
 let commasep (pp : PP.formatter -> 'a -> unit) (fmt : PP.formatter) (xs : 'a list) : unit =
   PP.pp_print_list
@@ -50,6 +57,107 @@ let varident (fmt : PP.formatter) (x : Ident.t) : unit =
     PP.fprintf fmt "%s" (Ident.name x)
   else
     PP.fprintf fmt "%%%s" (Ident.name x)
+
+(****************************************************************
+ * Primop support
+ ****************************************************************)
+
+let instantiate_funtype (ps : AST.expr list) (fty : AST.function_type) : AST.function_type =
+  let env = Identset.mk_bindings (List.map2 (fun (p, _) ty -> (p, ty)) fty.parameters ps) in
+  Asl_utils.subst_funtype env fty
+
+(* mapping from HLIR builtins to MLIR builtins (when mapping is 1:1) *)
+let mlir_function_mapping = Identset.mk_bindings [
+  (* bigint *)
+  ( Builtin_idents.eq_int,           "asl.eq_int");
+  ( Builtin_idents.ne_int,           "asl.ne_int");
+  ( Builtin_idents.le_int,           "asl.le_int");
+  ( Builtin_idents.lt_int,           "asl.lt_int");
+  ( Builtin_idents.ge_int,           "asl.ge_int");
+  ( Builtin_idents.gt_int,           "asl.gt_int");
+  ( Builtin_idents.add_int,          "asl.add_int");
+  ( Builtin_idents.sub_int,          "asl.sub_int");
+  ( Builtin_idents.mul_int,          "asl.mul_int");
+  ( Builtin_idents.neg_int,          "asl.neg_int");
+  ( Builtin_idents.exact_div_int,    "asl.exact_div_int");
+  ( Builtin_idents.fdiv_int,         "asl.fdiv_int");
+  ( Builtin_idents.frem_int,         "asl.frem_int");
+  ( Builtin_idents.zdiv_int,         "asl.zdiv_int");
+  ( Builtin_idents.zrem_int,         "asl.zrem_int");
+  ( Builtin_idents.align_int,        "asl.align_int");
+  ( Builtin_idents.is_pow2_int,      "asl.is_pow2_int");
+  ( Builtin_idents.mod_pow2_int,     "asl.mod_pow2_int");
+  ( Builtin_idents.pow2_int,         "asl.pow2_int");
+  ( Builtin_idents.pow_int_int,      "asl.pow_int_int");
+  ( Builtin_idents.shl_int,          "asl.shl_int");
+  ( Builtin_idents.shr_int,          "asl.shr_int");
+
+  (* bool: mapped to i1 *)
+  ( Builtin_idents.eq_bool,          "arith.cmpi eq,");
+  ( Builtin_idents.ne_bool,          "arith.cmpi ne,");
+  ( Builtin_idents.strict_and_bool,  "arith.andi");
+  ( Builtin_idents.strict_or_bool,   "arith.ori");
+
+  (* bitvectors: mapped to i{n} *)
+  ( Builtin_idents.eq_bits,          "asl.eq_bits");
+  ( Builtin_idents.ne_bits,          "asl.ne_bits");
+  ( Builtin_idents.add_bits,         "asl.add_bits");
+  ( Builtin_idents.sub_bits,         "asl.sub_bits");
+  ( Builtin_idents.mul_bits,         "asl.mul_bits");
+  ( Builtin_idents.and_bits,         "asl.and_bits");
+  ( Builtin_idents.or_bits,          "asl.or_bits");
+  ( Builtin_idents.xor_bits,         "asl.xor_bits");
+  ( Builtin_idents.not_bits,         "asl.not_bits");
+  ( Builtin_idents.lsl_bits,         "asl.lsl_bits");
+  ( Builtin_idents.lsr_bits,         "asl.lsr_bits");
+  ( Builtin_idents.asr_bits,         "asl.asr_bits");
+  ( Builtin_idents.append_bits,      "asl.append_bits");
+  ( Builtin_idents.replicate_bits,   "asl.replicate_bits");
+  ( Builtin_idents.cvt_bits_sint,    "asl.cvt_bits_sint");
+  ( Builtin_idents.cvt_bits_uint,    "asl.cvt_bits_uint");
+  ( Builtin_idents.zero_extend_bits, "asl.zero_extend_bits");
+  ( Builtin_idents.sign_extend_bits, "asl.sign_extend_bits");
+  ( Builtin_idents.asl_extract_bits, "asl.get_slice");
+  ( Builtin_idents.asl_insert_bits,  "asl.set_slice");
+
+  (* sized, signed integers: mapped to i{n} *)
+  ( Builtin_idents.eq_sintN,         "arith.cmpi eq,");
+  ( Builtin_idents.ne_sintN,         "arith.cmpi ne,");
+  ( Builtin_idents.gt_sintN,         "arith.cmpi sgt,");
+  ( Builtin_idents.ge_sintN,         "arith.cmpi sge,");
+  ( Builtin_idents.le_sintN,         "arith.cmpi sle,");
+  ( Builtin_idents.lt_sintN,         "arith.cmpi slt,");
+  ( Builtin_idents.add_sintN,        "arith.addi");
+  ( Builtin_idents.sub_sintN,        "arith.subi");
+  ( Builtin_idents.shl_sintN,        "arith.shli");
+  ( Builtin_idents.shr_sintN,        "arith.shrsi");
+  ( Builtin_idents.mul_sintN,        "arith.muli");
+  ( Builtin_idents.exact_div_sintN,  "arith.divsi");
+  ( Builtin_idents.zdiv_sintN,       "arith.divsi");
+  ( Builtin_idents.zrem_sintN,       "arith.remsi");
+  ( Builtin_idents.fdiv_sintN,       "arith.floordivsi");
+
+  ( Builtin_idents.print_bits_hex,   "asl.print_bits_hex");
+  ( Builtin_idents.print_int_hex,    "asl.print_int_hex");
+  ( Builtin_idents.print_int_dec,    "asl.print_int_dec");
+  ( Builtin_idents.print_sintN_hex,  "asl.print_sintN_hex");
+  ( Builtin_idents.print_sintN_dec,  "asl.print_sintN_dec");
+
+  (* todo
+  ( Builtin_idents.neg_sintN,        "");
+  ( Builtin_idents.frem_sintN,       "");
+  ( Builtin_idents.is_pow2_sintN,    "");
+  ( Builtin_idents.pow2_sintN,       "");
+  ( Builtin_idents.align_sintN,      "");
+  ( Builtin_idents.mod_pow2_sintN,   "");
+  ( Builtin_idents.cvt_sintN_bits,   "");
+  ( Builtin_idents.cvt_bits_ssintN,  "");
+  ( Builtin_idents.cvt_bits_usintN,  "");
+  ( Builtin_idents.cvt_sintN_int,    "");
+  ( Builtin_idents.cvt_int_sintN,    "");
+  ( Builtin_idents.resize_sintN,     "");
+  *)
+]
 
 (* set of all primitive operation names - these will be preceded by asl. *)
 let primitive_operations = Identset.IdentSet.of_list [
@@ -143,65 +251,950 @@ let primitive_operations = Identset.IdentSet.of_list [
   Builtin_idents.print_sintN_hex;
   Builtin_idents.print_sintN_dec
 ]
- 
+
+(****************************************************************
+ * 
+ ****************************************************************)
+
+let enum_size = 8 (* assume this is big enough for all enumerated types *)
+let enums : int Identset.Bindings.t ref = ref Identset.Bindings.empty
+let type_of_enum : AST.ty Identset.Bindings.t ref = ref Identset.Bindings.empty
+let enum_types : Identset.IdentSet.t ref = ref Identset.IdentSet.empty
+
+let vartypes : AST.ty Identset.Bindings.t ref = ref Identset.Bindings.empty
+let funtypes : AST.function_type Identset.Bindings.t ref = ref Identset.Bindings.empty
+
+(****************************************************************
+ * HLIR context
+ *
+ * The key operations supported by the context are:
+ * - Tracking information about the current region
+ *   - Operations added to the current region
+ *   - Source level variables assigned to in tthe current region
+ * - Environment support
+ *   - reading and writing the bindings of source language variables
+ *     to HLIR variables
+ *   - listing the variables assigned to in the current region
+ * - Cloning the context (with an empty set of mutable variables and
+ *   a nested scope for immutable variables).
+ * - Providing access to the name supply for this function
+ *   Note that the same name supply is used for the entire function.
+ *
+ * To make it easy to find the modified variables, we maintain two
+ * mappings:
+ * - the initial binding of a source language variable to a value
+ *   (most variables are immutable - so they will be in this mapping)
+ * - the changes to the bindings in the current region
+ ****************************************************************)
+
+(* IR code generators incrementally write code to a codegen context
+ * containing all mutable state.
+ *)
+type context = {
+  var_idents : Asl_utils.nameSupply;
+  operations : HLIR.operation list ref; (* in reverse order *)
+  (* note that both initial_bindings and local_rebindings are internally mutable *)
+  initial_bindings : HLIR.ident ScopeStack.t; (* local variables *)
+  local_rebindings : HLIR.ident Scope.t; (* local modifications *)
+  mutable_vars : Identset.IdentSet.t ref; (* mutable variables - used when converting loops *)
+}
+
+let ppContext (fmt : PP.formatter) (ctx : context) : unit =
+    (*
+  let pp_entry (fmt : PP.formatter) (x : hlir_env_entry) : unit =
+      let (v, mut) = x in
+      HLIR.ppIdent fmt v;
+      if mut then PP.fprintf fmt " mutable"
+  in
+  PP.fprintf fmt "{ %a }" (ScopeStack.pp pp_entry) env
+  *)
+    ()
+
+let fresh_context (_ : unit) : context =
+  { var_idents = new nameSupply "%";
+    operations = ref [];
+    initial_bindings = ScopeStack.empty ();
+    local_rebindings = Scope.empty ();
+    mutable_vars = ref Identset.IdentSet.empty;
+  }
+
+let clone_context (ctx : context) : context =
+  { var_idents = ctx.var_idents;
+    operations = ref [];
+    initial_bindings = ScopeStack.add_local_scope ctx.initial_bindings;
+    local_rebindings = Scope.empty ();
+    mutable_vars = ref !(ctx.mutable_vars);
+  }
+
+let mk_fresh (ctx : context) (t : HLIR.ty) : HLIR.ident =
+  let v = ctx.var_idents#fresh in
+  HLIR.Ident (v, t)
+
+let get_region (ctx : context) (outputs : HLIR.ident list) (inputs : HLIR.ident list) : HLIR.region =
+  let ops = List.rev (!(ctx.operations)) in
+  ctx.operations := [];
+  { inputs; operations = ops; outputs }
+
+let emit_op (ctx : context) (x : HLIR.operation) : unit =
+  ctx.operations := x :: !(ctx.operations)
+
+let get_binding (ctx : context) (v : Ident.t) : HLIR.ident option =
+  ( match Scope.get ctx.local_rebindings v with
+  | Some v' -> Some v'
+  | None -> ScopeStack.get ctx.initial_bindings v
+  )
+
+let add_initial_binding (ctx : context) (is_constant : bool) (v : Ident.t) (v' : HLIR.ident) : unit =
+  ScopeStack.add ctx.initial_bindings v v';
+  if not is_constant then begin
+    ctx.mutable_vars := Identset.IdentSet.add v !(ctx.mutable_vars)
+  end
+
+let all_mutable_vars (ctx : context) : Ident.t list =
+  Identset.IdentSet.elements !(ctx.mutable_vars)
+
+let rebind (ctx : context) (v : Ident.t) (v' : HLIR.ident) : unit =
+  Scope.set ctx.local_rebindings v v'
+
+let get_rebound_variables (old_ctx : context) (ctx : context) : HLIR.ident Scope.t =
+  Scope.filter
+    (fun v v' -> get_binding old_ctx v <> Some v')
+    ctx.local_rebindings
+
+(****************************************************************
+ * HLIR utilities
+ ****************************************************************)
+
+let add_noresult_op (loc : Loc.t) (ctx : context) (op : HLIR.op) (operands : HLIR.ident list) : unit =
+  emit_op ctx { results=[]; op; operands; regions=[]; loc }
+
+let add_simple_op (loc : Loc.t) (ctx : context) (rty : HLIR.ty) (op : HLIR.op) (operands : HLIR.ident list) : HLIR.ident =
+  let r = mk_fresh ctx rty in
+  emit_op ctx { results=[r]; op; operands; regions=[]; loc };
+  r
+
+(****************************************************************
+ * HLIR generation
+ ****************************************************************)
+
+let valueLit (loc : Loc.t) (ctx : context) (x : Value.value) : HLIR.ident =
+  let ty = HLIR.mkType (type_of_value loc x) in
+  add_simple_op loc ctx ty (Constant x) []
+
+let rec expr_to_ir (loc : Loc.t) (ctx : context) (x : AST.expr) : HLIR.ident =
+  ( match x with
+  | Expr_Lit v -> valueLit loc ctx v
+  | Expr_Slices (Type_Integer _, Expr_Lit v, [Slice_LoWd (Expr_Lit lo, Expr_Lit wd)]) ->
+      let v' = Value.extract_bits'' loc v lo wd in
+      valueLit loc ctx v'
+  | Expr_Var v when Ident.equal v Builtin_idents.false_ident -> valueLit loc ctx (VBool false)
+  | Expr_Var v when Ident.equal v Builtin_idents.true_ident -> valueLit loc ctx (VBool true)
+
+  | Expr_Var v when Identset.Bindings.mem v !type_of_enum ->
+      let ty = Identset.Bindings.find v !type_of_enum in
+      add_simple_op loc ctx (Type ty) (Symbol v) []
+
+  | Expr_Var v ->
+      ( match get_binding ctx v with
+      | None -> (* global variable *)
+          assert (Identset.Bindings.mem v !vartypes);
+          let ty = Identset.Bindings.find v !vartypes in
+          let ref = add_simple_op loc ctx (Ref ty) (MkRef v) [] in
+          add_simple_op loc ctx (Type ty) Load [ref]
+      | Some v' -> v' (* local variable *)
+      )
+
+  | Expr_Array (e, ix) ->
+      let e'  = expr_to_ir loc ctx e in
+      let ix' = expr_to_ir loc ctx ix in
+      let ref_ty = HLIR.typeof e' in
+      let elt_ty = ( match ref_ty with
+                   | Ref (Type_Array(_, elt_ty)) -> elt_ty
+                   | _ -> raise (InternalError (loc, "expr", (fun fmt -> HLIR.ppType fmt ref_ty), __LOC__))
+                   )
+      in
+      let eref = add_simple_op loc ctx (Ref elt_ty) AddIndex [e'; ix'] in
+      add_simple_op loc ctx (Type elt_ty) Load [eref]
+
+  | Expr_In (e, Pat_Lit (VMask mask)) ->
+      let e' = expr_to_ir loc ctx e in
+      let ty = HLIR.typeof e' in
+      let (v, m) = Primops.prim_mask_to_bits mask in
+      let value  = add_simple_op loc ctx ty (Constant (VBits v)) [] in
+      let mask   = add_simple_op loc ctx ty (Constant (VBits m)) [] in
+      let masked = add_simple_op loc ctx ty (Builtin Builtins.and_bits) [e'; mask] in
+      add_simple_op loc ctx ty (Builtin Builtins.eq_bits) [masked; value]
+
+  | Expr_If (els, e) ->
+      let rec ir_ites els ctx : HLIR.ident =
+        ( match els with
+        | [] -> expr_to_ir loc ctx e
+        | (c,t)::els' ->
+           let c' = expr_to_ir loc ctx c in
+           let t' = expr_to_region loc ctx t in
+           let e' = expr_to_region loc ctx (AST.Expr_If (els', e)) in
+           ir_ite loc ctx c' t' e'
+        )
+      in ir_ites els ctx
+  | Expr_TApply (f, [], [x; y], NoThrow) when Ident.equal f Builtin_idents.lazy_and_bool ->
+      let x' = expr_to_ir loc ctx x in
+      let y' = expr_to_region loc ctx y in
+      let ff = value_to_region loc ctx (Value.VBool false) in
+      ir_ite loc ctx x' y' ff
+  | Expr_TApply (f, [], [x; y], NoThrow) when Ident.equal f Builtin_idents.lazy_or_bool ->
+      let x' = expr_to_ir loc ctx x in
+      let tt = value_to_region loc ctx (Value.VBool true) in
+      let y' = expr_to_region loc ctx y in
+      ir_ite loc ctx x' tt y'
+  | Expr_TApply (f, [], [x; y], NoThrow) when Ident.equal f Builtin_idents.implies_bool ->
+      let x' = expr_to_ir loc ctx x in
+      let y' = expr_to_region loc ctx y in
+      let tt = value_to_region loc ctx (VBool true) in
+      ir_ite loc ctx x' y' tt
+  | Expr_TApply (f, [], [x], NoThrow) when Ident.equal f Builtin_idents.not_bool ->
+      let x' = expr_to_ir loc ctx x in
+      let y' = valueLit loc ctx (VBool false) in
+      add_simple_op loc ctx (Type type_bool) (Builtin Builtin_idents.eq_bool) [x'; y']
+  | Expr_TApply (f, _, [Expr_Lit (VInt n)], NoThrow) when Ident.equal f Builtin_idents.zeros_bits ->
+      valueLit loc ctx (VBits (Primops.prim_zeros_bits n))
+  | Expr_TApply (f, _, [Expr_Lit (VInt n)], NoThrow) when Ident.equal f Builtin_idents.ones_bits ->
+      valueLit loc ctx (VBits (Primops.prim_ones_bits n))
+  | Expr_TApply (f, ps, [x; Expr_Lit (VInt n)], NoThrow) when Ident.equal f Builtin_idents.mk_mask ->
+      let fty = Identset.Bindings.find f !funtypes in
+      let fty' = instantiate_funtype ps fty in
+      let ones = valueLit loc ctx (VBits (Primops.prim_ones_bits n)) in
+      let x' = expr_to_ir loc ctx x in
+      let n' = valueLit loc ctx (VInt n) in
+      let d = add_simple_op loc ctx (Type type_integer) (Builtin Builtin_idents.sub_int) [n'; x'] in
+      add_simple_op loc ctx (Type fty'.rty) (Builtin Builtin_idents.lsr_bits) [ones; d]
+  | Expr_TApply (f, ps, args, throws) ->
+      let fty = Identset.Bindings.find f !funtypes in
+      let fty' = instantiate_funtype ps fty in
+      let args' = List.map (expr_to_ir loc ctx) args in
+      if Identset.Bindings.mem f mlir_function_mapping then (
+        (* todo: in the backend, we expect primops to be called with fixed bitwidths *)
+        add_simple_op loc ctx (Type fty'.rty) (Builtin f) args'
+      ) else if Ident.matches f ~name:"asl_eq_enum" then (
+        add_simple_op loc ctx (Type fty'.rty) (Builtin Builtin_idents.eq_bool) args'
+      ) else if Ident.matches f ~name:"asl_ne_enum" then (
+        add_simple_op loc ctx (Type fty'.rty) (Builtin Builtin_idents.ne_bool) args'
+      ) else (
+        let ps' = List.map (expr_to_ir loc ctx) ps in
+        add_simple_op loc ctx (Type fty'.rty) (Call f) (ps' @ args')
+      )
+  | Expr_Slices (Type_Bits (Expr_Lit (VInt m), _), x, [Slice_LoWd (lo, Expr_Lit wd)]) ->
+      let x' = expr_to_ir loc ctx x in
+      let lo' = expr_to_ir loc ctx lo in
+      let wd' = valueLit loc ctx wd in
+      add_simple_op loc ctx (Type (type_bits (Expr_Lit wd))) (Builtin Builtin_idents.asl_extract_bits) [x'; lo'; wd']
+  | Expr_Assert (e1, e2, loc) ->
+      let e1' = expr_to_ir loc ctx e1 in
+      let msg = String.escaped (Utils.to_string2 (Fun.flip FMT.expr e1)) in
+      add_noresult_op loc ctx (Assert msg) [e1'];
+      expr_to_ir loc ctx e2
+  | Expr_Let (v, t, e, b) ->
+      let e' = expr_to_ir loc ctx e in
+      add_initial_binding ctx true v e';
+      expr_to_ir loc ctx b
+  | _ ->
+      let pp fmt = FMT.expr fmt x in
+      raise (Error.Unimplemented (loc, "expression", pp))
+  )
+
+and value_to_region (loc : Loc.t) (ctx : context) (v : Value.value) : (HLIR.region * HLIR.ty) =
+  let ctx' = clone_context ctx in
+  let v' = add_simple_op loc ctx' (HLIR.mkType (Asl_utils.type_of_value loc v)) (Constant v) [] in
+  (get_region ctx' [v'] [], HLIR.typeof v')
+
+and expr_to_region (loc : Loc.t) (ctx : context) (e : AST.expr) : (HLIR.region * HLIR.ty) =
+  let ctx' = clone_context ctx in
+  let e' = expr_to_ir loc ctx' e in
+  (get_region ctx' [e'] [], HLIR.typeof e')
+
+and ir_ite (loc : Loc.t) (ctx : context) (c : HLIR.ident) (t : (HLIR.region * HLIR.ty)) (e : (HLIR.region * HLIR.ty)) : HLIR.ident =
+  let (t', tty) = t in
+  let (e', ety) = e in
+  (* tty and ety should be equivalent *)
+  let r = mk_fresh ctx tty in
+  emit_op ctx { results=[r]; op=If; operands=[c]; regions=[t'; e']; loc };
+  r
+
+let rec stmt_to_ir (ctx : context) (x : AST.stmt) : unit =
+  ( match x with
+  | Stmt_VarDeclsNoInit _ ->
+      ()
+  | Stmt_VarDecl (is_constant, DeclItem_Var (v, _), i, loc) ->
+      let i' = expr_to_ir loc ctx i in
+      add_initial_binding ctx is_constant v i'
+  | Stmt_VarDecl (is_constant, DeclItem_Wildcard _, i, loc) ->
+      ignore (expr_to_ir loc ctx i)
+  | Stmt_Assign (LExpr_Var v, rhs, loc) ->
+      let rhs' = expr_to_ir loc ctx rhs in
+      if Identset.Bindings.mem v !vartypes then begin (* global *)
+        let ty = Identset.Bindings.find v !vartypes in
+        let ref = add_simple_op loc ctx (Ref ty) (MkRef v) [] in
+        add_noresult_op loc ctx Store [ref; rhs']
+      end else begin
+        rebind ctx v rhs'
+      end
+  | Stmt_Assign (LExpr_Slices (Type_Bits _, LExpr_Var v, [Slice_LoWd (lo, Expr_Lit wd)]), rhs, loc) ->
+      let rhs' = expr_to_ir loc ctx rhs in
+      let lo' = expr_to_ir loc ctx lo in
+      let wd' = valueLit loc ctx wd in
+      ( match get_binding ctx v with
+      | None -> (* global *)
+        let ty = Identset.Bindings.find v !vartypes in
+        let ref = add_simple_op loc ctx (Ref ty) (MkRef v) [] in
+        let lhs = add_simple_op loc ctx (Type ty) Load [ref] in
+        let lhs' = add_simple_op loc ctx (HLIR.typeof lhs) (Builtin Builtin_idents.asl_insert_bits) [lhs; lo'; wd'; rhs'] in
+        add_noresult_op loc ctx Store [ref; lhs']
+      | Some lhs ->
+        let lhs' = add_simple_op loc ctx (HLIR.typeof lhs) (Builtin Builtin_idents.asl_insert_bits) [lhs; lo'; wd'; rhs'] in
+        rebind ctx v lhs'
+      )
+      (*
+  | Stmt_Assign (LExpr_Array (LExpr_Var v, ix), rhs, loc) ->
+      let ty = Identset.Bindings.find v !vartypes in
+      let aref = locals#fresh in
+      PP.fprintf fmt "%a = asl.address_of(@@%a) : !asl.ref<%a>@,"
+        varident aref
+        ident v
+        (pp_type loc) ty;
+      let (ix', _) = expr loc env fmt ix in
+      let eref = locals#fresh in
+      PP.fprintf fmt "%a = asl.array_ref(%a, %a) : !asl.ref<%a>@,"
+        varident eref
+        varident aref
+        varident ix'
+        (pp_type loc) ty;
+      let (rhs', ty) = expr loc env fmt rhs in
+      PP.fprintf fmt "asl.store(%a) = %a : %a@,"
+        varident eref
+        varident rhs'
+        (pp_type loc) ty
+        *)
+  | Stmt_Assign (LExpr_Wildcard, rhs, loc) ->
+      ignore (expr_to_ir loc ctx rhs)
+  | Stmt_Block (ss, loc) ->
+      let ctx' = clone_context ctx in
+      List.iter (stmt_to_ir ctx') ss;
+      let changes = get_rebound_variables ctx ctx' in
+      List.iter (emit_op ctx) ((get_region ctx' [] []).operations);
+      Scope.iter (rebind ctx) changes
+  | Stmt_Return (e, loc) ->
+      ( match e with
+      | Expr_Tuple [] -> ()
+      | _ ->
+        let e' = expr_to_ir loc ctx e in
+        add_noresult_op loc ctx Return [e']
+      )
+  | Stmt_Assert (e, loc) ->
+      let e' = expr_to_ir loc ctx e in
+      let msg = String.escaped (Utils.to_string2 (Fun.flip FMT.expr e)) in
+      add_noresult_op loc ctx (Assert msg) [e']
+  | Stmt_TCall (f, ps, args, throws, loc) ->
+      let args' = List.map (expr_to_ir loc ctx) args in
+      if Identset.IdentSet.mem f primitive_operations then (
+        (* todo: in the backend, we expect primops to be called with fixed bitwidths *)
+        add_noresult_op loc ctx (Builtin f) args'
+      ) else (
+        let ps' = List.map (expr_to_ir loc ctx) ps in
+        add_noresult_op loc ctx (Call f) (ps' @ args')
+      )
+  | Stmt_If ([], (e, _), _) ->
+      List.iter (stmt_to_ir ctx) e
+  | Stmt_If ((c, t, loc)::cs, e, l) ->
+      let c' = expr_to_ir loc ctx c in
+
+      let t_ctx = clone_context ctx in
+      List.iter (stmt_to_ir t_ctx) t;
+      let t_changes = Scope.get_bindings (get_rebound_variables ctx t_ctx) in
+
+      let e_ctx = clone_context ctx in
+      stmt_to_ir e_ctx (Stmt_If (cs, e, l));
+      let e_changes = Scope.get_bindings (get_rebound_variables ctx e_ctx) in
+
+      let changes = Identset.Bindings.merge
+        (fun v ovt ove ->
+            (* I believe that at least one of ovt or ove is not None and they have the same type *)
+            let ty = Utils.from_option ovt (fun _ -> Option.get ove) |> HLIR.typeof in
+            let vm = mk_fresh ctx ty in
+            let vt' = from_option ovt (fun _ -> get_binding ctx v |> Option.get) in
+            let ve' = from_option ove (fun _ -> get_binding ctx v |> Option.get) in
+            Some (vm, vt', ve')
+        )
+        t_changes
+        e_changes
+      in
+
+      let t_results = List.map (fun (v, (vm,vt,ve)) -> vt) (Identset.Bindings.bindings changes) in
+      let e_results = List.map (fun (v, (vm,vt,ve)) -> ve) (Identset.Bindings.bindings changes) in
+
+      let t_region = get_region t_ctx t_results [] in
+      let e_region = get_region e_ctx e_results [] in
+
+      let results = List.map (fun (v, (vm,vt,ve)) -> rebind ctx v vm; vm) (Identset.Bindings.bindings changes) in
+      emit_op ctx { results; op=If; operands=[c']; regions=[t_region; e_region]; loc }
+
+  | Stmt_For (i, ty, f, dir, t, b, loc) ->
+      let f' = expr_to_ir loc ctx f in
+      let t' = expr_to_ir loc ctx t in
+
+      let b_ctx = clone_context ctx in
+
+      (* We don't know which variables the loop body is going to modify.
+       * So we conservatively assume that all mutable variables are modified.
+       *)
+      let inputs = List.map (fun v ->
+          let current = get_binding b_ctx v |> Option.get in
+          let v' = mk_fresh b_ctx (HLIR.typeof current) in
+          rebind b_ctx v v';
+          (v, v')
+        )
+        (all_mutable_vars ctx)
+      in
+
+      (* add binding for loop counter *)
+      let i' = mk_fresh b_ctx (HLIR.typeof f') in
+      add_initial_binding b_ctx true i i';
+
+      List.iter (stmt_to_ir b_ctx) b;
+      let b_changes = List.map
+        (fun (v, v_in) -> (* v_in is the value at the start of the loop body *)
+            let v_out = get_binding b_ctx v |> Option.get in
+            let v_init = get_binding ctx v |> Option.get in
+            let v_final = mk_fresh ctx (HLIR.typeof v_out) in (* output from for loop *)
+            (v, v_init, v_in, v_out, v_final)
+        )
+        inputs
+      in
+      let b_in = List.map (fun (v, v_init, v_in, v_out, v_final) -> v_in) b_changes in
+      let b_out = List.map (fun (v, v_init, v_in, v_out, v_final) -> v_out) b_changes in
+      let b_region = get_region b_ctx b_out (i' :: b_in) in
+
+      let inputs = List.map (fun (v, v_init, v_in, v_out, v_final) -> v_init) b_changes in
+      let results = List.map (fun (v, v_init, v_in, v_out, v_final) -> rebind ctx v v_final; v_final) b_changes in
+      emit_op ctx { results; op=For(dir==Direction_Up); operands=[f'; t'] @ inputs; regions=[b_region]; loc }
+
+  | Stmt_While (cond, body, loc) ->
+      let c_ctx = clone_context ctx in
+
+      (* We don't know which variables the loop body is going to modify.
+       * So we conservatively assume that all mutable variables are modified.
+       *)
+      let inputs = List.map (fun v ->
+          let current = get_binding ctx v |> Option.get in
+          let v' = mk_fresh c_ctx (HLIR.typeof current) in
+          rebind c_ctx v v';
+          (v, v')
+        )
+        (all_mutable_vars ctx)
+      in
+      let cond' = expr_to_ir loc c_ctx cond in
+      let c_region = get_region c_ctx [cond'] [] in
+
+      let b_ctx = clone_context ctx in
+      List.iter (stmt_to_ir b_ctx) body;
+      let b_changes = List.map
+        (fun (v, v_in) -> (* v_in is the value at the start of the loop body *)
+            let v_out = get_binding b_ctx v |> Option.get in
+            let v_init = get_binding ctx v |> Option.get in
+            let v_final = mk_fresh ctx (HLIR.typeof v_out) in (* output from loop *)
+            (v, v_init, v_in, v_out, v_final)
+        )
+        inputs
+      in
+
+      let b_in = List.map (fun (v, v_init, v_in, v_out, v_final) -> v_in) b_changes in
+      let b_out = List.map (fun (v, v_init, v_in, v_out, v_final) -> v_out) b_changes in
+      let b_region = get_region b_ctx b_out b_in in
+
+      let inputs = List.map (fun (v, v_init, v_in, v_out, v_final) -> v_init) b_changes in
+      let results = List.map (fun (v, v_init, v_in, v_out, v_final) -> rebind ctx v v_final; v_final) b_changes in
+      emit_op ctx { results; op=While; operands=inputs; regions=[c_region; b_region]; loc }
+
+  | _ ->
+      let pp fmt = FMT.stmt fmt x in
+      raise (Error.Unimplemented (Loc.Unknown, "statement", pp))
+  )
+
+let declaration_to_ir (x : AST.declaration) : HLIR.global option =
+  ( match x with
+  | Decl_BuiltinType _
+  | Decl_BuiltinFunction _
+  | Decl_Forward _
+  | Decl_Operator1 _
+  | Decl_Operator2 _
+  | Decl_FunType _
+    -> None
+  | Decl_Var (v, ty, loc) ->
+      let ty' = HLIR.mkType ty in
+      Some (HLIR.Variable(v, ty', loc))
+  | Decl_FunDefn (f, fty, body, loc) ->
+      let ctx = fresh_context () in
+      let ps' = List.map (fun (v, ot) ->
+          let t' = HLIR.mkType (Option.get ot) in
+          let v' = mk_fresh ctx t' in
+          add_initial_binding ctx true v v';
+          v'
+        )
+        fty.parameters
+      in
+      let args' = List.map (fun (v, t, _) ->
+          let t' = HLIR.mkType t in
+          let v' = mk_fresh ctx t' in
+          add_initial_binding ctx true v v';
+          v'
+        )
+        fty.args
+      in
+      List.iter (stmt_to_ir ctx) body;
+      let inputs = ps' @ args' in
+      let outputs = List.mapi (fun i ty ->
+          let nm = "%output" ^ Int.to_string i in
+          HLIR.Ident (Ident.mk_ident nm, HLIR.Type ty)
+        )
+        (tupleTypes fty.rty)
+      in
+      let r = get_region ctx outputs inputs in
+      Some (HLIR.Function(f, r, loc))
+  | _ ->
+      None
+  )
+
+(****************************************************************
+ * Primop support
+ ****************************************************************)
+
 let standard_functions = Identset.IdentSet.of_list [
+    (*
   Builtin_idents.asl_file_open;
   Builtin_idents.asl_file_write;
   Builtin_idents.asl_file_getc;
   Builtin_idents.asl_fuzz;
+  *)
   Builtin_idents.print_int_hex;
   Builtin_idents.print_int_dec;
+  (*
+  Builtin_idents.print_sintN_dec;
+  Builtin_idents.print_sintN_hex;
+  *)
   Builtin_idents.print_char;
   Builtin_idents.print_str;
   Builtin_idents.print_bits
 ]
 
-let arith_functions = Identset.mk_bindings [
-  ( Builtin_idents.eq_sintN,         "arith.cmpi eq,");
-  ( Builtin_idents.ne_sintN,         "arith.cmpi ne,");
-  ( Builtin_idents.gt_sintN,         "arith.cmpi sgt,");
-  ( Builtin_idents.ge_sintN,         "arith.cmpi sge,");
-  ( Builtin_idents.le_sintN,         "arith.cmpi sle,");
-  ( Builtin_idents.lt_sintN,         "arith.cmpi slt,");
-  ( Builtin_idents.add_sintN,        "arith.addi");
-  ( Builtin_idents.sub_sintN,        "arith.subi");
-  ( Builtin_idents.shl_sintN,        "arith.shli");
-  ( Builtin_idents.shr_sintN,        "arith.shrsi");
-  ( Builtin_idents.mul_sintN,        "arith.muli");
-  ( Builtin_idents.exact_div_sintN,  "arith.divsi");
-  ( Builtin_idents.zdiv_sintN,       "arith.divsi");
-  ( Builtin_idents.zrem_sintN,       "arith.remsi");
-  ( Builtin_idents.fdiv_sintN,       "arith.floordivsi")
-  (*
-  ( Builtin_idents.neg_sintN,        "");
-  ( Builtin_idents.frem_sintN,       "");
-  ( Builtin_idents.is_pow2_sintN,    "");
-  ( Builtin_idents.pow2_sintN,       "");
-  ( Builtin_idents.align_sintN,      "");
-  ( Builtin_idents.mod_pow2_sintN,   "");
-  ( Builtin_idents.cvt_sintN_bits,   "");
-  ( Builtin_idents.cvt_bits_ssintN,  "");
-  ( Builtin_idents.cvt_bits_usintN,  "");
-  ( Builtin_idents.cvt_sintN_int,    "");
-  ( Builtin_idents.cvt_int_sintN,    "");
-  ( Builtin_idents.resize_sintN,     "");
-  *)
-]
+(****************************************************************
+ * Generating MLIR types
+ ****************************************************************)
 
-let prim_name (fmt : PP.formatter) (x : Ident.t) : unit =
-  let nm = Ident.name x in 
-  if String.starts_with ~prefix:"asl_" nm then begin
-    PP.fprintf fmt "asl.%s" (Utils.string_drop 4 nm)
-  end else begin
-    PP.fprintf fmt "asl.%s" nm
+(****************************************************************
+ * Converting HLIR control flow operations to cf-like basic blocks
+ ****************************************************************)
+
+type cf_label = Ident.t
+type cf_target = (cf_label * HLIR.ident list)
+type cf_terminator = (string * HLIR.ident list * cf_target list)
+type cf_block = (cf_target * HLIR.operation list * cf_terminator)
+
+type cf_context = {
+  label_idents : Asl_utils.nameSupply;
+  local_idents : Asl_utils.nameSupply;
+  return_bb : cf_label;
+  start : cf_target ref;
+  operations : HLIR.operation list ref; (* in reverse order *)
+  terminator : cf_terminator option ref;
+  blocks : cf_block list ref;
+}
+
+let fresh_cf_context (_ : unit) : cf_context =
+  let dummy_target = (Builtins.wildcard_ident, []) in
+  { label_idents = new nameSupply "^bb";
+    local_idents = new nameSupply "%cf";
+    return_bb = Ident.mk_ident "^ret";
+    start = ref dummy_target;
+    operations = ref [];
+    terminator = ref None;
+    blocks = ref [];
+  }
+
+let clone_cf_context (ctx : cf_context) (start : cf_target) : cf_context =
+  { label_idents = ctx.label_idents;
+    local_idents = ctx.local_idents;
+    return_bb = ctx.return_bb;
+    start = ref start;
+    operations = ref [];
+    terminator = ref None;
+    blocks = ctx.blocks;
+  }
+
+let start_new_bb (ctx : cf_context) (target : cf_target) : unit =
+  (* check that there is no pending bb *)
+  assert (Utils.is_empty !(ctx.operations));
+  assert (Option.is_none !(ctx.terminator));
+  ctx.start := target;
+  ctx.operations := [];
+  ctx.terminator := None
+
+let mk_label (ctx : cf_context) : cf_label =
+  ctx.label_idents#fresh
+
+let end_bb (ctx : cf_context) (terminator : cf_terminator) : unit =
+  let terminator = Option.value ~default:terminator (!(ctx.terminator)) in
+  let block = (!(ctx.start), List.rev !(ctx.operations), terminator) in
+  ctx.blocks := block :: !(ctx.blocks);
+  ctx.operations := [];
+  ctx.terminator := None
+
+let emit_cf_op (ctx : cf_context) (x : HLIR.operation) : unit =
+  ctx.operations := x :: !(ctx.operations)
+
+let emit_simple_cf_op (loc : Loc.t) (ctx : cf_context) (rty : HLIR.ty) (op : HLIR.op) (operands : HLIR.ident list) : HLIR.ident =
+  let v = ctx.local_idents#fresh in
+  let r = HLIR.Ident (v, rty) in
+  emit_cf_op ctx { results=[r]; op; operands; regions=[]; loc };
+  r
+
+let terminate_block (ctx : cf_context) (op : string) (args : HLIR.ident list) (targets : cf_target list) : unit =
+  if Option.is_none !(ctx.terminator) then begin
+    ctx.terminator := Some (op, args, targets)
   end
 
-let enum_size = 8 (* assume this is big enough for all enumerated types *)
-let enums : int Identset.Bindings.t ref = ref Identset.Bindings.empty
-let enum_types : Identset.IdentSet.t ref = ref Identset.IdentSet.empty
+let rec operation_to_cf (ctx : cf_context) (x : HLIR.operation) : unit =
+  let bad_op _ = raise (InternalError (x.loc, "operation_to_cf", (fun fmt -> HLIR.ppOperation fmt x), __LOC__))
+  in
+  ( match x.op with
+  | For(up) ->
+      ( match (x.operands, x.regions) with
+      | ((f :: t :: inputs), [body]) ->
+          let l_loophead = mk_label ctx in
+          let l_loopbody = mk_label ctx in
+          let l_endloop = mk_label ctx in
+          let terminator = ("cf.br", [], [(l_loophead, f :: inputs)]) in
+          end_bb ctx terminator;
 
-let vartypes : AST.ty Identset.Bindings.t ref = ref Identset.Bindings.empty
-let funtypes : AST.function_type Identset.Bindings.t ref = ref Identset.Bindings.empty
+          let v = List.hd body.inputs in
+
+          (* loop termination test at top of loop *)
+          let loophead_ctx = clone_cf_context ctx (l_loophead, body.inputs) in
+          let cond = emit_simple_cf_op x.loc loophead_ctx (HLIR.mkType type_bool)
+                       (Builtin (if up then Builtin_idents.le_int else Builtin_idents.ge_int))
+                       [v; t]
+          in
+          end_bb loophead_ctx ("cf.cond_br", [cond], [(l_loopbody, []); (l_endloop, List.tl body.inputs)]);
+
+          (* loop body *)
+          let loopbody_ctx = clone_cf_context ctx (l_loopbody, []) in
+          List.iter (operation_to_cf loopbody_ctx) body.operations;
+          let one = emit_simple_cf_op x.loc loopbody_ctx (HLIR.typeof v) (Constant Value.int_one) [] in
+          let v' = emit_simple_cf_op x.loc loopbody_ctx (HLIR.typeof v)
+                   (Builtin (if up then Builtin_idents.add_int else Builtin_idents.sub_int))
+                   [v; one]
+          in
+          end_bb loopbody_ctx ("cf.br", [], [(l_loophead, v' :: body.outputs)]);
+
+          start_new_bb ctx (l_endloop, x.results)
+
+      | _ -> bad_op ()
+      )
+  | While -> ()
+  | Repeat -> ()
+  | If ->
+      ( match (x.operands, x.regions) with
+      | ([c], [t; e]) ->
+          let t_then = (mk_label ctx, t.inputs) in
+          let t_else = (mk_label ctx, e.inputs) in
+          let next = mk_label ctx in
+          let terminator = ("cf.cond_br", [c], [t_then; t_else]) in
+          end_bb ctx terminator;
+          region_to_cf ctx t t_then next;
+          region_to_cf ctx e t_else next;
+          start_new_bb ctx (next, x.results)
+      | _ -> bad_op ()
+      )
+  | Case -> ()
+  | Fail -> ()
+  | Return ->
+      ( match (x.operands, x.regions) with
+      | (rs, []) -> terminate_block ctx "cf.br" [] [(ctx.return_bb, rs)]
+      | _ -> bad_op ()
+      )
+
+  | Builtin _
+  | Call _
+  | Constant _
+  | Symbol _
+  | MkRef _
+  | AddIndex
+  | Load
+  | Store
+  | Assert _
+  ->
+     emit_cf_op ctx x
+  )
+
+and region_to_cf (parent_ctx : cf_context) (x : HLIR.region) (target : cf_target) (next : cf_label) : unit =
+  let ctx = clone_cf_context parent_ctx target in
+  List.iter (operation_to_cf ctx) x.operations;
+  let terminator = Utils.from_option !(ctx.terminator) (fun _ ->  ("cf.br", [], [(next, x.outputs)])) in
+  end_bb ctx terminator
+
+let hlir_to_cf (x : HLIR.region) : (cf_target * cf_block list) =
+  let ctx = fresh_cf_context () in
+  let entry = (mk_label ctx, x.inputs) in
+  region_to_cf ctx x entry ctx.return_bb;
+  let return_target = (ctx.return_bb, x.outputs) in
+  (return_target, List.rev !(ctx.blocks))
+
+(****************************************************************
+ * HLIR to MLIR conversion
+ ****************************************************************)
+
+let cg_HLIR_Value (loc : Loc.t) (fmt : PP.formatter) (x : Value.value) : unit =
+  ( match x with
+  | VInt v -> PP.fprintf fmt "%s" (Z.to_string v);
+  | VIntN v -> PP.fprintf fmt "%s" (Z.to_string v.v);
+  | VBits v -> PP.fprintf fmt "%s" (Z.to_string v.v);
+  | VString v -> PP.fprintf fmt "\"%s\"" (String.escaped v);
+  | _ -> raise (InternalError (loc, "cg_HLIR_Value", (fun fmt -> Value.pp_value fmt x), __LOC__))
+  )
+
+let cg_HLIR_ConstExpr (loc : Loc.t) (fmt : PP.formatter) (x : AST.expr) : unit =
+  (* The call to simplify is to cope with append and replicate when using -O0 *)
+  ( match Xform_simplify_expr.simplify x with
+  | Expr_Lit v -> cg_HLIR_Value loc fmt v
+  | _ ->
+      let pp fmt = FMT.expr fmt x in
+      raise (Error.Unimplemented (loc, "cg_HLIR_ConstExpr", pp))
+  )
+
+let cg_HLIR_ConstExprs (loc : Loc.t) (fmt : PP.formatter) (xs : AST.expr list) : unit =
+  commasep (cg_HLIR_ConstExpr loc) fmt xs
+
+let rec cg_HLIR_Type' (loc : Loc.t) (fmt : PP.formatter) (x : AST.ty) : unit =
+  ( match x with
+  (* | Type_Bits (e, _) -> PP.fprintf fmt "i%a" (cg_HLIR_ConstExpr loc) e *)
+  | Type_Bits (e, _) -> PP.fprintf fmt "!asl.bits<%a>" (cg_HLIR_ConstExpr loc) e
+  | Type_Constructor (tc, []) when tc = Builtin_idents.boolean_ident -> PP.fprintf fmt "i1"
+  | Type_Constructor (tc, []) when tc = Builtin_idents.string_ident -> PP.fprintf fmt "!asl.string"
+  | Type_Constructor (tc, []) when tc = Builtin_idents.ram -> PP.fprintf fmt "!asl.ram"
+  | Type_Constructor (tc, []) when Identset.IdentSet.mem tc !enum_types -> PP.fprintf fmt "i%d" enum_size
+  | Type_Constructor (i, [n]) when Ident.equal i Builtin_idents.sintN -> PP.fprintf fmt "i%a" (cg_HLIR_ConstExpr loc) n
+  | Type_Constructor (tc, []) -> PP.fprintf fmt "%a" ident tc
+  | Type_Constructor (tc, ps) -> PP.fprintf fmt "%a<%a>" ident tc (cg_HLIR_ConstExprs loc) ps
+  | Type_Integer _ -> PP.fprintf fmt "!asl.int"
+  | Type_Array (Index_Int ixty, elty) -> PP.fprintf fmt "!asl.array<%a x %a>" (cg_HLIR_ConstExpr loc) ixty (cg_HLIR_Type' loc) elty
+  | Type_Tuple tys -> PP.fprintf fmt "(%a)" (commasep (cg_HLIR_Type' loc)) tys
+  | _ ->
+      let pp fmt = FMT.ty fmt x in
+      raise (Error.Unimplemented (loc, "cg_HLIR_Type", pp))
+  )
+
+let cg_HLIR_Type (loc : Loc.t) (fmt : PP.formatter) (x : HLIR.ty) : unit =
+  ( match x with
+  | Type t -> cg_HLIR_Type' loc fmt t
+  | Ref t -> Format.fprintf fmt "!asl.ref<%a>" (cg_HLIR_Type' loc) t
+  )
+
+let cg_HLIR_Ident (loc : Loc.t) (fmt : PP.formatter) (x : HLIR.ident) : unit =
+  let Ident(v, t) = x in
+  Format.fprintf fmt "%a : %a"
+    Ident.pp v
+    (cg_HLIR_Type loc) t
+
+let cg_HLIR_IdentName (loc : Loc.t) (fmt : PP.formatter) (x : HLIR.ident) : unit =
+  let Ident(v, t) = x in
+  Format.fprintf fmt "%a"
+    Ident.pp v
+
+let cg_HLIR_IdentType (loc : Loc.t) (fmt : PP.formatter) (x : HLIR.ident) : unit =
+  let Ident(v, t) = x in
+  Format.fprintf fmt "%a"
+    (cg_HLIR_Type loc) t
+
+let rec cg_HLIR_Operation (fmt : PP.formatter) (x : HLIR.operation) : unit =
+  if Utils.is_empty x.regions then begin
+    ( match x.results with
+    | [] -> ()
+    | [r] -> Format.fprintf fmt "%a = " HLIR.ppIdentName r
+    | rs -> Format.fprintf fmt "(%a) = " (commasep HLIR.ppIdentName) rs
+    );
+    let cg_operands fmt operands = commasep (cg_HLIR_IdentName x.loc) fmt operands in
+    ( match x.op with
+    | Builtin f ->
+        let cg_types fmt vars =
+            ( match vars with
+            | [] -> Format.fprintf fmt "()"
+            | [op] -> cg_HLIR_IdentType x.loc fmt op
+            | ops -> Format.fprintf fmt "(%a)" (commasep (cg_HLIR_IdentType x.loc)) ops
+            )
+        in
+        let cg_funtype fmt _ =
+          if Ident.in_list f [
+              (* operations that generate arith.cmpi *)
+              Builtin_idents.eq_bool;
+              Builtin_idents.ne_bool;
+              Builtin_idents.eq_sintN;
+              Builtin_idents.ne_sintN;
+              Builtin_idents.gt_sintN;
+              Builtin_idents.ge_sintN;
+              Builtin_idents.le_sintN;
+              Builtin_idents.lt_sintN;
+
+              (* operations that generate arith.*i *)
+              Builtin_idents.add_sintN;
+              Builtin_idents.sub_sintN;
+              Builtin_idents.shl_sintN;
+              Builtin_idents.shr_sintN;
+              Builtin_idents.mul_sintN;
+              Builtin_idents.exact_div_sintN;
+              Builtin_idents.zdiv_sintN;
+              Builtin_idents.zrem_sintN;
+              Builtin_idents.fdiv_sintN;
+
+              ] then (
+            (* MLIR syntax turns out to have a lot of irregularities *)
+            cg_HLIR_IdentType x.loc fmt (List.hd x.operands)
+          ) else (
+            Format.fprintf fmt "%a -> %a"
+              cg_types x.operands
+              cg_types x.results
+          )
+        in
+        ( match Identset.Bindings.find_opt f mlir_function_mapping with
+        | Some f' ->
+          Format.fprintf fmt "%s %a : %a"
+            f'
+            cg_operands x.operands
+            cg_funtype ()
+        | _ when Ident.equal f Builtin_idents.asl_assert ->
+          let msg = String.escaped (Loc.to_string x.loc) in
+          Format.fprintf fmt "cf.assert %a, \"%s\"" cg_operands x.operands msg
+        | _ -> raise (InternalError (x.loc, "HLIR.Builtin", (fun fmt -> HLIR.ppOperation fmt x), __LOC__))
+        )
+    | Call f ->
+        Format.fprintf fmt "func.call @%a(%a) : (%a) -> (%a)"
+          Ident.pp f
+          (commasep (cg_HLIR_IdentName x.loc)) x.operands
+          (commasep (cg_HLIR_IdentType x.loc)) x.operands
+          (commasep (cg_HLIR_IdentType x.loc)) x.results
+    | Constant c ->
+        ( match c with
+        | VInt v -> PP.fprintf fmt "asl.constant_int %s" (Z.to_string v)
+        | VIntN v -> PP.fprintf fmt "arith.constant %s : i%d" (Z.to_string v.v) v.n
+        | VBits v -> PP.fprintf fmt "asl.constant_bits %s : !asl.bits<%d>" (Z.to_string v.v) v.n
+        | VString v -> PP.fprintf fmt "asl.constant_string \"%s\"" (String.escaped v)
+        | VBool true -> PP.fprintf fmt "arith.constant 1 : i1"
+        | VBool false -> PP.fprintf fmt "arith.constant 0 : i1"
+        | _ -> raise (InternalError (x.loc, "HLIR.Constant", (fun fmt -> HLIR.ppOperation fmt x), __LOC__))
+        )
+    | Symbol v ->
+        let value = Identset.Bindings.find v !enums in
+        PP.fprintf fmt "arith.constant %d : i %d@"
+          value
+          enum_size
+    | MkRef v -> Format.fprintf fmt "asl.address_of @%a" Ident.pp v
+    | AddIndex -> Format.fprintf fmt "asl.add_index"
+    | Load -> Format.fprintf fmt "asl.load"
+    | Store -> Format.fprintf fmt "asl.store"
+    | Assert msg -> Format.fprintf fmt "cf.assert %a, \"%s\"" cg_operands x.operands msg
+    | _ -> raise (InternalError (x.loc, "HLIR unexpected control flow", (fun fmt -> HLIR.ppOperation fmt x), __LOC__))
+    )
+  end else begin
+    raise (InternalError (x.loc, "cg_HLIR_Operation: unexpected control flow", (fun fmt -> HLIR.ppOperation fmt x), __LOC__))
+  end
+
+let cg_HLIR_Global (fmt : PP.formatter) (x : HLIR.global) : unit =
+  ( match x with
+  | Variable (v, ty, loc) ->
+      Format.fprintf fmt "asl.global \"%a\" : %a"
+        Ident.pp v
+        (cg_HLIR_Type loc) ty;
+      Format.fprintf fmt " // %a" Loc.pp loc;
+      Format.fprintf fmt "@.@."
+  | Function (f, r, loc) ->
+      let cg_args_call fmt args =
+        if not (Utils.is_empty args) then
+          (* Note that branches use this syntax "(%x, %y : !Tx, !Ty)" *)
+          Format.fprintf fmt "(%a : %a)"
+            (commasep (cg_HLIR_IdentName loc)) args
+            (commasep (cg_HLIR_IdentType loc)) args
+      in
+      let cg_target_call fmt (label, args) = Format.fprintf fmt "%a%a" Ident.pp label cg_args_call args in
+
+      let cg_args_decl fmt args =
+        if not (Utils.is_empty args) then
+          (* Note that basic blocks use this syntax "(%x : !Tx, %y : !Ty)" *)
+          Format.fprintf fmt "(%a)" (commasep (cg_HLIR_Ident loc)) args
+      in
+      let cg_target_decl fmt (label, args) =
+        Format.fprintf fmt "@,%a%a:@," Ident.pp label cg_args_decl args in
+
+      let cg_terminator fmt (t_op, t_operands, t_targets) =
+        Format.fprintf fmt "@,%s " t_op;
+        if not (Utils.is_empty t_operands) then begin
+          Format.fprintf fmt "%a"
+            (commasep HLIR.ppIdentName) t_operands
+        end;
+        if not (Utils.is_empty t_targets) then begin
+          if not (Utils.is_empty t_operands) then Format.fprintf fmt ", ";
+          Format.fprintf fmt "%a" (commasep cg_target_call) t_targets
+        end;
+        Format.fprintf fmt "@."
+      in
+
+      (* todo: return type seems to be broken *)
+      Format.fprintf fmt "func.func @%a (%a) -> (%a)@."
+        Ident.pp f
+        (commasep (cg_HLIR_Ident loc)) r.inputs
+        (commasep (cg_HLIR_IdentType loc)) r.outputs;
+      Format.fprintf fmt "{@.";
+
+      let (return_target, cf_blocks) = hlir_to_cf r in
+      let is_first = ref true in (* The first block doesn't get a label *)
+      List.iter (fun (target, operations, terminator) ->
+        if not !is_first then cg_target_decl fmt target;
+        is_first := false;
+        indented fmt (fun _ ->
+          cutsep cg_HLIR_Operation fmt operations;
+          cg_terminator fmt terminator
+        )
+      ) cf_blocks;
+      cg_target_decl fmt return_target;
+      indented fmt (fun _ ->
+        ( match return_target with
+        | (_, []) -> Format.fprintf fmt "func.return@."
+        | (_, rs) -> Format.fprintf fmt "func.return %a : %a@."
+                       (commasep (cg_HLIR_IdentName loc)) rs
+                       (commasep (cg_HLIR_IdentType loc)) rs
+        )
+      );
+
+      Format.fprintf fmt "}@."
+  )
+
+(****************************************************************
+ * 
+ ****************************************************************)
+
+(* the environment tracks the following about local variables
+ * - for mutable variables, what SSA variable holds its current value
+ * - is it a mutable variable (needed for uninitialized variables)
+ * - their type
+ *)
+
+type env_entry = (Ident.t option * bool * AST.ty)
+type environment = env_entry ScopeStack.t
+
+let ppEnv (fmt : PP.formatter) (env : environment) : unit =
+  let pp_entry (fmt : PP.formatter) (x : env_entry) : unit =
+      let (v, mut, ty) = x in
+      PP.fprintf fmt "%a :: %a "
+        (Format.pp_print_option varident) v
+        FMT.ty ty;
+      if mut then PP.fprintf fmt " mutable"
+  in
+  PP.fprintf fmt "{ %a }" (ScopeStack.pp pp_entry) env
 
 let locals = new Asl_utils.nameSupply "%"
 
@@ -221,12 +1214,6 @@ let valueLit (loc : Loc.t) (fmt : PP.formatter) (x : Value.value) : AST.ty =
       Asl_utils.type_string
   | _ -> raise (InternalError (loc, "valueLit", (fun fmt -> Value.pp_value fmt x), __LOC__))
   )
-
-let mk_bool_const (fmt : PP.formatter) (x : bool) : (Ident.t * AST.ty) =
-  let t = locals#fresh in
-  let x' = if x then 1 else 0 in
-  PP.fprintf fmt "%a = arith.constant %d : i1@," varident t x';
-  (t, Asl_utils.type_bool)
 
 (* Todo: the following is a hack that can only cope with a few simple kinds of expression
  * that appear in types but this is definitely not sufficient to express all ASL types.
@@ -266,10 +1253,6 @@ let parameters (loc : Loc.t) (fmt : PP.formatter) (ps : AST.expr list) : unit =
     PP.fprintf fmt "<%a>"
       (simple_exprs loc) ps
   end
-
-let instantiate_funtype (ps : AST.expr list) (fty : AST.function_type) : AST.function_type =
-  let env = Identset.mk_bindings (List.map2 (fun (p, _) ty -> (p, ty)) fty.parameters ps) in
-  Asl_utils.subst_funtype env fty
 
 let constraints (loc : Loc.t) (fmt : PP.formatter) (x : AST.constraint_range list) : unit =
   ()
@@ -311,6 +1294,12 @@ let rec pp_type (loc : Loc.t) (fmt : PP.formatter) (x : AST.ty) : unit =
       let pp fmt = FMT.ty fmt x in
       raise (Error.Unimplemented (loc, "type", pp))
   )
+
+let mk_bool_const (fmt : PP.formatter) (x : bool) : (Ident.t * AST.ty) =
+  let t = locals#fresh in
+  let x' = if x then 1 else 0 in
+  PP.fprintf fmt "%a = arith.constant %d : i1@," varident t x';
+  (t, Asl_utils.type_bool)
 
 let formal_param (loc : Loc.t) (fmt : PP.formatter) (x : (Ident.t * AST.ty option)) : unit =
   let (v, ot) = x in
@@ -357,24 +1346,13 @@ let funtype (loc : Loc.t) (fmt : PP.formatter) (x : AST.function_type) : unit =
     (commasep (pp_arg_type loc)) x.args
     (pp_return_type loc) x.rty
 
-(* the environment tracks the following about local variables
- * - for mutable variables, what SSA variable holds its current value
- * - is it a mutable variable (needed for uninitialized variables)
- * - their type
- *)
-
-type env_entry = (Ident.t option * bool * AST.ty)
-type environment = env_entry ScopeStack.t
-
-let ppEnv (fmt : PP.formatter) (env : environment) : unit =
-  let pp_entry (fmt : PP.formatter) (x : env_entry) : unit =
-      let (v, mut, ty) = x in
-      PP.fprintf fmt "%a :: %a "
-        (Format.pp_print_option varident) v
-        FMT.ty ty;
-      if mut then PP.fprintf fmt " mutable"
-  in
-  PP.fprintf fmt "{ %a }" (ScopeStack.pp pp_entry) env
+let prim_name (fmt : PP.formatter) (x : Ident.t) : unit =
+  let nm = Ident.name x in 
+  if String.starts_with ~prefix:"asl_" nm then begin
+    PP.fprintf fmt "asl.%s" (Utils.string_drop 4 nm)
+  end else begin
+    PP.fprintf fmt "asl.%s" nm
+  end
 
 let rec prim_apply (loc : Loc.t) (env : environment) (fmt : PP.formatter) (f : Ident.t) (ps : AST.expr list) (args : AST.expr list) : (Ident.t * AST.ty) =
   let avs = List.map (fun arg -> fst (expr loc env fmt arg)) args in
@@ -556,8 +1534,8 @@ and expr (loc : Loc.t) (env : environment) (fmt : PP.formatter) (x : AST.expr) :
         varident masked
         varident v;
       (t, type_bool)
-  | Expr_TApply (f, ps, args, NoThrow) when Identset.Bindings.mem f arith_functions ->
-      let f' = Identset.Bindings.find f arith_functions in
+  | Expr_TApply (f, ps, args, NoThrow) when Identset.Bindings.mem f mlir_function_mapping ->
+      let f' = Identset.Bindings.find f mlir_function_mapping in
       let avs = List.map (fun arg -> fst (expr loc env fmt arg)) args in
       let fty = Identset.Bindings.find f !funtypes in
       let fty' = instantiate_funtype ps fty in
@@ -989,7 +1967,7 @@ let declaration (fmt : PP.formatter) ?(is_extern : bool option) (x : AST.declara
           let env : environment = ScopeStack.empty () in
           List.iter (fun (v, oty) -> ScopeStack.add env v (None, false, Option.get oty)) fty.parameters;
           List.iter (fun (v, ty, _) -> ScopeStack.add env v (None, false, ty)) fty.args;
-          PP.fprintf fmt "asl.func @%a%a(%a) -> %a {"
+          PP.fprintf fmt "func.func @%a%a(%a) -> %a {"
             ident f
             (formal_params loc) fty.parameters
             (commasep (formal_arg loc)) fty.args
@@ -1054,7 +2032,7 @@ let _ =
         | None -> ()
         | Some fty ->
             let loc = Loc.Unknown in
-            PP.fprintf fmt "asl.func @%a%a(%a) -> %a@,"
+            PP.fprintf fmt "func.func @%a%a(%a) -> %a@,"
               ident f
               (formal_params loc) fty.parameters
               (commasep (formal_arg loc)) fty.args
@@ -1062,8 +2040,14 @@ let _ =
         )
       ) standard_functions;
 
-      PP.fprintf fmt "@,";
-      declarations fmt (List.rev decls)
+      List.iter (fun d ->
+          let ir = declaration_to_ir d in
+          Option.iter (HLIR.ppGlobal Format.std_formatter) ir;
+          PP.fprintf fmt "@,";
+          Option.iter (cg_HLIR_Global fmt) ir
+        )
+        decls
+      (* declarations fmt (List.rev decls) *)
     );
     true
   in
