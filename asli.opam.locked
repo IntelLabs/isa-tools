@@ -1,0 +1,92 @@
+opam-version: "2.0"
+name: "asli"
+version: "2.0.0"
+synopsis: "Interpreter for Architecture Specification Language (ASL)"
+description: """\
+Architecture Specification Language (ASL) is an executable language for writing
+clear, precise specifications of Instruction Set Architectures (ISAs).
+
+The ASL interpreter (ASLi) is an implementation of ASL that can execute ASL
+specifications either in an interpreter or by compiling via C code.
+
+Currently supports reading/typechecking the specification,
+interactive execution of ASL statements and expressions,
+executing opcodes one at a time,
+loading ELF files and executing binaries.
+
+Experimentally includes support for generating C code
+that can be used to execute binaries faster and can be
+linked with other C/C++ libraries."""
+maintainer: "Alastair Reid <alastair.reid@intel.com>"
+authors: "Alastair Reid"
+license: "BSD-3-Clause"
+homepage: "https://github.com/IntelLabs/asl-interpreter"
+bug-reports: "https://github.com/IntelLabs/asl-interpreter/issues"
+depends: [
+  "alcotest" {= "1.9.0" & with-test}
+  "astring" {= "0.8.5"}
+  "base-bigarray" {= "base"}
+  "base-threads" {= "base"}
+  "base-unix" {= "base"}
+  "camlp-streams" {= "5.0.1"}
+  "cmdliner" {= "1.3.0"}
+  "conf-c++" {= "1.0"}
+  "conf-gmp" {= "5"}
+  "conf-pkg-config" {= "4"}
+  "conf-python-3" {= "9.0.0"}
+  "cppo" {= "1.8.0"}
+  "crunch" {= "4.0.0"}
+  "csexp" {= "1.5.2"}
+  "dune" {= "3.19.1"}
+  "dune-private-libs" {= "3.19.1"}
+  "dune-site" {= "3.19.1"}
+  "dyn" {= "3.19.1"}
+  "fmt" {= "0.10.0"}
+  "fpath" {= "0.7.3"}
+  "linenoise" {= "1.5.1"}
+  "menhir" {= "20240715"}
+  "menhirCST" {= "20240715"}
+  "menhirLib" {= "20240715"}
+  "menhirSdk" {= "20240715"}
+  "ocaml" {= "4.14.2"}
+  "ocaml-base-compiler" {= "4.14.2"}
+  "ocaml-config" {= "2"}
+  "ocaml-options-vanilla" {= "1"}
+  "ocaml-syntax-shims" {= "1.0.0" & with-test}
+  "ocamlbuild" {= "0.16.1"}
+  "ocamlfind" {= "1.9.8"}
+  "ocolor" {= "1.3.1"}
+  "odoc" {= "3.0.0"}
+  "odoc-parser" {= "3.0.0"}
+  "ordering" {= "3.19.1"}
+  "pp" {= "2.0.0"}
+  "ptime" {= "1.2.0"}
+  "re" {= "1.13.2"}
+  "result" {= "1.5"}
+  "seq" {= "base"}
+  "stdlib-shims" {= "0.3.0" & with-test}
+  "stdune" {= "3.19.1"}
+  "topkg" {= "1.0.8"}
+  "tyxml" {= "4.6.0"}
+  "uutf" {= "1.0.4"}
+  "yojson" {= "3.0.0"}
+  "z3" {= "4.15.2"}
+  "zarith" {= "1.14"}
+]
+build: [
+  ["dune" "subst"] {dev}
+  [
+    "dune"
+    "build"
+    "-p"
+    name
+    "-j"
+    jobs
+    "--promote-install-files=false"
+    "@install"
+    "@runtest" {with-test}
+    "@doc" {with-doc}
+  ]
+  ["dune" "install" "-p" name "--create-install-files" name]
+]
+dev-repo: "git+https://github.com/IntelLabs/asl-interpreter.git"
