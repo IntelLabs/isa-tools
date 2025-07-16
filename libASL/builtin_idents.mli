@@ -115,6 +115,8 @@ val asl_set_pc : Ident.t
 val asl_elf_write_memory8 : Ident.t
 val asl_fake_return_value : Ident.t
 val asl_error_unmatched_case : Ident.t
+val asl_assert : Ident.t
+val asl_insert_bits : Ident.t
 val asl_extract_bits : Ident.t
 val asl_extract_int : Ident.t
 val asl_end_execution : Ident.t
