@@ -26,14 +26,29 @@ end)
 module Env = struct
   type t = {
     globalConsts : Eval.GlobalEnv.t;
-    locals : Values.t ScopeStack.t;
+    locals : (bool * Values.t) ScopeStack.t;
   }
+
+  type local = bool * Values.t
+
+  let glb_local (x : local) (y : local) : local =
+    assert (fst x == fst y);
+    (fst x, Values.glb (snd x) (snd y))
+
+  let equal_local (x : local) (y : local) : bool =
+    assert (fst x == fst y);
+    Values.equal (snd x) (snd y)
+
+  let pp_local (fmt : Format.formatter) (x : local) : unit =
+    let (is_immutable, v) = x in
+    if is_immutable then Format.fprintf fmt "const ";
+    Values.pp_abstract fmt v
 
   let pp (fmt : Format.formatter) (env : t) : unit =
     Format.fprintf fmt "globals\n";
     Eval.GlobalEnv.pp fmt env.globalConsts;
     Format.fprintf fmt "locals\n";
-    ScopeStack.pp Values.pp_abstract fmt env.locals
+    ScopeStack.pp pp_local fmt env.locals
 
   let globals (env : t) : Eval.GlobalEnv.t = env.globalConsts
 
@@ -52,38 +67,37 @@ module Env = struct
     let env' = {env with locals = ScopeStack.clone env.locals} in
     let a = f env in
     let b = g env' in
-    ScopeStack.merge_inplace Values.glb env.locals env'.locals;
+    ScopeStack.merge_inplace glb_local env.locals env'.locals;
     (a, b)
 
   let rec fixpoint (env : t) (f : t -> 'a) : 'a =
     let env' = {env with locals = ScopeStack.clone env.locals} in
     let orig = {env with locals = ScopeStack.clone env.locals} in
     let a = f env' in
-    ScopeStack.merge_inplace Values.glb env.locals env'.locals;
-    if ScopeStack.equal Values.equal env.locals orig.locals then
+    ScopeStack.merge_inplace glb_local env.locals env'.locals;
+    if ScopeStack.equal equal_local env.locals orig.locals then
       a
     else
       fixpoint env f
 
   let to_concrete (env : t) : Eval.Env.t =
-    let locals = ScopeStack.filter_map Values.to_concrete env.locals in
+    let locals = ScopeStack.filter_map (fun (_, v) -> Values.to_concrete v) env.locals in
     Eval.Env.mkEnv env.globalConsts locals
 
   let fun_return (env : t) (r : Values.t) : unit =
-    ScopeStack.map_inplace (Fun.const Values.top) env.locals
+    ScopeStack.map_inplace (fun (c, v) -> (c, if c then v else Values.top)) env.locals
 
   let throw (env : t) : unit =
-    ScopeStack.map_inplace (Fun.const Values.top) env.locals
+    ScopeStack.map_inplace (fun (c, v) -> (c, if c then v else Values.top)) env.locals
 
   let addLocalVar (env : t) (x : Ident.t) (v : Values.t) : unit =
-    ScopeStack.add env.locals x v
+    ScopeStack.add env.locals x (false, v)
 
   let addLocalConst (env : t) (x : Ident.t) (v : Values.t) : unit =
-    (* todo: should constants be held separately from local vars? *)
-    ScopeStack.add env.locals x v
+    ScopeStack.add env.locals x (true, v)
 
   let getVar (env : t) (x : Ident.t) : Values.t =
-    from_option (ScopeStack.get env.locals x) (fun _ ->
+    from_option (ScopeStack.get env.locals x |> Option.map snd) (fun _ ->
         from_option
           (Option.map Values.singleton
              (Eval.GlobalEnv.get_global_constant env.globalConsts x))
@@ -91,10 +105,10 @@ module Env = struct
             raise (Value.EvalError (Unknown, "getVar: " ^ Ident.to_string x))))
 
   let setVar (env : t) (x : Ident.t) (v : Values.t) : unit =
-    ignore (ScopeStack.set env.locals x v)
+    ignore (ScopeStack.set env.locals x (false, v))
 
-  let mapLocals (env : t) (f : Values.t -> Values.t) : unit =
-    ScopeStack.map_inplace f env.locals
+  let zapMutables (env : t) : unit =
+    ScopeStack.map_inplace (fun (c,v) -> (c, if c then v else Values.bottom)) env.locals
 end
 
 let mkEnv (genv : Eval.GlobalEnv.t) (values: (Ident.t * Value.value) list) : Env.t =
@@ -400,7 +414,7 @@ and xform_patterns (env : Env.t) (ps : AST.pattern list) : AST.pattern list =
 
 and xform_pattern_with_expr (env : Env.t) (p : AST.pattern) (e : AST.expr) : AST.pattern =
   let add_id (id : Ident.t) (v : Value.value) =
-    Env.addLocalVar env id (Values.singleton v)
+    Env.addLocalConst env id (Values.singleton v)
   in
   match (e, p) with
   | (Expr_Tuple rs, Pat_Tuple ps) ->
@@ -585,7 +599,7 @@ and xform_stmt (env : Env.t) (x : AST.stmt) : AST.stmt list =
           in
           eval x
       | _ ->
-          let b' = Env.fixpoint env  (fun env' ->
+          let b' = Env.fixpoint env (fun env' ->
               Env.addLocalVar env' v Values.bottom;
               xform_stmts env' b)
           in
@@ -608,11 +622,12 @@ and xform_stmt (env : Env.t) (x : AST.stmt) : AST.stmt list =
           let tb' = Env.nest env (fun env' -> xform_stmts env' tb) in
 
           (* If an exception was thrown, we don't know what variables have
-           * been assigned to before the exception. So we forget everything. *)
-          Env.mapLocals env (fun _ -> Values.bottom);
+           * been assigned to before the exception. So we forget all mutable
+           * variables. *)
+          Env.zapMutables env;
           let catchers' = List.map (function Catcher_Guarded (v, tc, b, loc) ->
               Env.nest env (fun env' ->
-                Env.addLocalVar env' v Values.bottom;
+                Env.addLocalConst env' v Values.bottom;
                 let b' = xform_stmts env' b in
                 Catcher_Guarded (v, tc, b', loc)
                 )
@@ -628,8 +643,8 @@ and xform_stmt (env : Env.t) (x : AST.stmt) : AST.stmt list =
             odefault
           in
           (* We don't know whether an exception was thrown or which
-           * catcher executed so we discard all variable values. *)
-          Env.mapLocals env (fun _ -> Values.bottom);
+           * catcher executed so we discard all mutable variable values. *)
+          Env.zapMutables env;
           [ Stmt_Try(tb', pos, catchers', odefault', loc) ]
     | Stmt_UCall _
       ->
