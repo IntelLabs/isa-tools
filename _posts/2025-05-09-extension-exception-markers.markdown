@@ -6,7 +6,7 @@ tags: extension
 
 It can be hard to think about code that contains exceptions
 because exceptions introduce invisible control flow.
-Consider this function (from [this article]({% post_url 2025-05-08-extension-named-parameters %})).
+Consider this function (from [this article]({{site.baseurl}}/{% post_url 2025-05-08-extension-named-parameters %})).
 
 ```asl
 func PushStack(value : bits(N), decrement_by : integer = N DIV 8)
