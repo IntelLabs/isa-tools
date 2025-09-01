@@ -8,6 +8,9 @@
 
 module AST = Isa_ast
 
+(* show/suppress ISA stack dump if an exception occurs *)
+val trace_exceptions : bool ref
+
 (* global symbol table *)
 module GlobalEnv : sig
   type t

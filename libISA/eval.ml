@@ -27,6 +27,13 @@ open Value
  *)
 let override_conflicts = true
 
+(** In interactive mode, if an exception occurs in some ASL code,
+ *  we want a stack dump to help debug it.
+ *  But, if an exception occurs while optimizing some ASL code, we
+ *  want to suppress that output.
+ *)
+let trace_exceptions = ref true
+
 (****************************************************************)
 (** {2 Mutable bindings}                                        *)
 (****************************************************************)
@@ -712,7 +719,9 @@ and eval_funcall (loc : Loc.t) (env : Env.t) (f : Ident.t) (tvs : value list)
   | Throw (l, exc) -> raise (Throw (l, exc))
   | EndExecution _ as e -> raise e
   | ex ->
-    Printf.printf "  %s: runtime exception thrown in %s\n%!" (Loc.to_string loc) (Ident.to_string f);
+    if !trace_exceptions then begin
+      Printf.printf "  %s: runtime exception thrown in %s\n%!" (Loc.to_string loc) (Ident.to_string f)
+    end;
     raise ex
 
 (** Evaluate call to procedure *)

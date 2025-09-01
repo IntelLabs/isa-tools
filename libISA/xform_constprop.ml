@@ -130,7 +130,9 @@ let value_of_constant (env : Env.t) (x : expr) : Value.value option =
 let expr_value (env : Env.t) (x : AST.expr) : Values.t =
   if isConstant env x then
     let env0 = Eval.Env.newEnv (Env.globals env) in
-    Values.singleton (Eval.eval_expr Unknown env0 x)
+    ( try Values.singleton (Eval.eval_expr Unknown env0 x) with
+    | Value.EvalError _ -> Values.bottom
+    )
   else Values.bottom
 
 let rec value_to_expr (x : Value.value) : expr option =
@@ -295,9 +297,9 @@ class constEvalClass (env : Env.t) =
               then
                 let env0 = Env.to_concrete env in
                 let x' =
-                    Option.value
-                    (value_to_expr (Eval.eval_expr Unknown env0 x))
-                    ~default:x
+                    ( try Option.value (value_to_expr (Eval.eval_expr Unknown env0 x)) ~default:x with
+                    | Value.EvalError _ -> x
+                    )
                 in
                 (*
                         let fmt = Format.std_formatter in
@@ -721,6 +723,7 @@ let xform_decl (genv : Eval.GlobalEnv.t) (d : AST.declaration) : AST.declaration
 
 let xform_decls (genv : Eval.GlobalEnv.t) (ds : AST.declaration list) :
     AST.declaration list =
+  Eval.trace_exceptions := false;
   let isConstant (v : Ident.t) : bool =
     Option.is_some (Eval.GlobalEnv.get_global_constant genv v)
   in
@@ -728,7 +731,9 @@ let xform_decls (genv : Eval.GlobalEnv.t) (ds : AST.declaration list) :
     List.exists (fun name -> Ident.matches v ~name) Value.impure_prims
   in
   impure_funs := identify_impure_funs isConstant isImpurePrim ds;
-  List.map (xform_decl genv) ds
+  let ds' = List.map (xform_decl genv) ds in
+  Eval.trace_exceptions := true;
+  ds'
 
 (****************************************************************
  * Command: :xform_constprop
