@@ -20,7 +20,7 @@
 #define UNUSED __attribute__ ((unused))
 
 // File that error messages are sent to
-FILE* ASL_error_file = NULL;
+FILE* error_file = NULL;
 
 /****************************************************************
  * ELF loader
@@ -53,7 +53,7 @@ uint64_t load_elf64(const char* filename) {
         FILE *f = fopen(filename, "rb");
         if (!f) {
                 perror("Error while reading ELF file: ");
-                fprintf(ASL_error_file, "%s\n", filename);
+                fprintf(error_file, "%s\n", filename);
                 exit(1);
         }
         fseek(f, 0L, SEEK_END);
@@ -75,7 +75,7 @@ uint64_t load_elf64(const char* filename) {
            || hdr->e_ident[EI_CLASS] != ELFCLASS64
            || hdr->e_ident[EI_DATA]  != ELFDATA2LSB
            ) {
-                fprintf(ASL_error_file, "File %s is not an ELF64 lsb file\n", filename);
+                fprintf(error_file, "File %s is not an ELF64 lsb file\n", filename);
                 exit(1);
         }
 
@@ -96,9 +96,9 @@ uint64_t load_elf64(const char* filename) {
 void
 ASL_error(const char* loc, const char* msg)
 {
-        fprintf(ASL_error_file, "%s: ISA error %s\n\n", loc, msg);
-        fprintf(ASL_error_file, "This error indicates an error in the specification and should\n");
-        fprintf(ASL_error_file, "be reported as a bug.\n");
+        fprintf(error_file, "%s: ISA error %s\n\n", loc, msg);
+        fprintf(error_file, "This error indicates an error in the specification and should\n");
+        fprintf(error_file, "be reported as a bug.\n");
 
         exit(1);
 }
@@ -107,9 +107,9 @@ void
 ASL_assert(const char* loc, const char* expr, bool c)
 {
         if (!c) {
-                fprintf(ASL_error_file, "%s: ISA assertion failure %s\n\n", loc, expr);
-                fprintf(ASL_error_file, "This error indicates an error in the specification and should\n");
-                fprintf(ASL_error_file, "be reported as a bug.\n");
+                fprintf(error_file, "%s: ISA assertion failure %s\n\n", loc, expr);
+                fprintf(error_file, "This error indicates an error in the specification and should\n");
+                fprintf(error_file, "be reported as a bug.\n");
 
                 exit(1);
         }
@@ -118,9 +118,9 @@ ASL_assert(const char* loc, const char* expr, bool c)
 void
 ASL_runtime_error(const char *msg)
 {
-        fprintf(ASL_error_file, "Runtime error: %s\n", msg);
-        fprintf(ASL_error_file, "This error indicates an error in the specification and should\n");
-        fprintf(ASL_error_file, "be reported as a bug.\n");
+        fprintf(error_file, "Runtime error: %s\n", msg);
+        fprintf(error_file, "This error indicates an error in the specification and should\n");
+        fprintf(error_file, "be reported as a bug.\n");
 
         exit(1);
 }
@@ -144,15 +144,15 @@ ASL_runtime_error(const char *msg)
  * to provide access to registers by their name.
  ****************************************************************/
 
-typedef int ASL_regid; // number must match the number in demo.md
+typedef int regid_t; // number must match the number in demo.md
 
 typedef struct {
         const char* name;
-        ASL_regid asl_id;
+        regid_t     id;
 } reg_entry;
 
-#define REG_ENTRY(id, nm) { .asl_id=id, .name=#nm }
-#define LAST_REG_ENTRY    { .asl_id=-1, .name=NULL }
+#define REG_ENTRY(idnum, nm) { .id=idnum, .name=#nm }
+#define LAST_REG_ENTRY       { .id=-1, .name=NULL }
 
 // This table maps register names (strings) to unique register
 // identifiers (ints).
@@ -174,9 +174,9 @@ static reg_entry reg_table[] = {
 
 static int lookup_regname(const char* name)
 {
-        for(int i = 0; reg_table[i].asl_id >= 0; ++i) {
+        for(int i = 0; reg_table[i].id >= 0; ++i) {
                 if (strcasecmp(reg_table[i].name, name) == 0) {
-                        return reg_table[i].asl_id;
+                        return reg_table[i].id;
                 }
         }
         return -1;
@@ -217,9 +217,9 @@ struct global_state Global;
 
 int main(int argc, const char* argv[])
 {
-        ASL_error_file = stderr;
+        error_file = stderr;
         if (argc < 2) {
-                fprintf(ASL_error_file, "Usage: simulator --steps=<n> <.elf files>\n");
+                fprintf(error_file, "Usage: simulator --steps=<n> <.elf files>\n");
                 exit(1);
         }
 
