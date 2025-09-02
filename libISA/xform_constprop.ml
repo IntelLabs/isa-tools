@@ -131,7 +131,7 @@ let expr_value (env : Env.t) (x : AST.expr) : Values.t =
   if isConstant env x then
     let env0 = Eval.Env.newEnv (Env.globals env) in
     ( try Values.singleton (Eval.eval_expr Unknown env0 x) with
-    | Value.EvalError _ -> Values.bottom
+    | _ -> Values.bottom
     )
   else Values.bottom
 
@@ -298,7 +298,7 @@ class constEvalClass (env : Env.t) =
                 let env0 = Env.to_concrete env in
                 let x' =
                     ( try Option.value (value_to_expr (Eval.eval_expr Unknown env0 x)) ~default:x with
-                    | Value.EvalError _ -> x
+                    | _ -> x
                     )
                 in
                 (*
