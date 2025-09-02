@@ -70,10 +70,13 @@ module Instance = struct
   let mk_monomorphic_name (loc : Loc.t) (i : t) : Ident.t =
     let (f, sizes) = i in
     assert (List.length sizes > 0);
-    List.iter (fun (nm, sz) -> assert (Z.geq (Value.to_integer loc sz) Z.zero)) sizes; (* sanity check! *)
+    (* Escape characters of printed values that are not legal in identifiers *)
+    let escape_minus s = Str.global_replace (Str.regexp "-") "minus" s in
+    let escape_tick s = Str.global_replace (Str.regexp "'") "_" s in
+    let escape s = s |> escape_minus |> escape_tick in
     let suffices =
       List.map
-        (fun (nm, sz) -> Ident.to_string nm ^ "_" ^ Value.string_of_value sz)
+        (fun (nm, sz) -> Ident.to_string nm ^ "_" ^ escape (Value.string_of_value sz))
         sizes
     in
     Ident.add_suffix f ~suffix:(String.concat "_" suffices)
@@ -479,6 +482,7 @@ let mk_explicit_request (decl_lookup_table : AST.declaration IdentTable.t) (d : 
   )
 
 let monomorphize (ds : AST.declaration list) : AST.declaration list =
+  Eval.trace_exceptions := false;
   let genv = Eval.build_constant_environment ds in
   let global_type_info = build_global_type_info ds in
   let decl_lookup_table =
@@ -494,6 +498,7 @@ let monomorphize (ds : AST.declaration list) : AST.declaration list =
   let ds' = List.map (visit_decl (mono :> isaVisitor)) ds in
   let instances = mono#getInstances in
   let protos = List.filter_map generate_prototype instances in
+  Eval.trace_exceptions := true;
   ds' @ protos @ instances
 
 (****************************************************************
