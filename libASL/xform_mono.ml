@@ -140,10 +140,11 @@ class monoClass
                )
         )
       in
-      List.iter (fun sz -> assert (Z.geq sz Z.zero)) szs; (* sanity check! *)
+      (* Escape characters of printed values that are not legal in identifiers *)
+      let escape_minus s = Str.global_replace (Str.regexp "-") "minus" s in
       let suffices =
         List.map2
-          (fun p sz -> Ident.to_string p ^ "_" ^ Z.to_string sz)
+          (fun p sz -> Ident.to_string p ^ "_" ^ escape_minus (Z.to_string sz))
           ps szs
       in
       let tc' = Ident.add_suffix tc ~suffix:(String.concat "_" suffices) in
@@ -179,10 +180,11 @@ class monoClass
         | Some (tvs, arg_names, _, _) -> (tvs, arg_names)
         | _ -> failwith (Printf.sprintf "monomorphize_fun: %s" (Ident.name_with_tag f))
       in
-      List.iter (fun sz -> assert (Z.geq sz Z.zero)) szs; (* sanity check! *)
+      (* Escape characters of printed values that are not legal in identifiers *)
+      let escape_minus s = Str.global_replace (Str.regexp "-") "minus" s in
       let suffices =
         List.map2
-          (fun nm sz -> Ident.to_string nm ^ "_" ^ Z.to_string sz)
+          (fun nm sz -> Ident.to_string nm ^ "_" ^ escape_minus (Z.to_string sz))
           tvs szs
       in
       let f' = Ident.add_suffix f ~suffix:(String.concat "_" suffices) in
@@ -391,12 +393,14 @@ let generate_prototype (x : AST.declaration) : AST.declaration option =
   )
 
 let monomorphize (ds : AST.declaration list) : AST.declaration list =
+  Eval.trace_exceptions := false;
   let genv = Eval.build_constant_environment ds in
   let global_type_info = build_global_type_info ds in
   let mono = new monoClass genv global_type_info ds in
   let ds' = List.map (visit_decl (mono :> aslVisitor)) ds in
   let instances = mono#getInstances in
   let protos = List.filter_map generate_prototype instances in
+  Eval.trace_exceptions := true;
   ds' @ protos @ instances
 
 (****************************************************************
