@@ -190,7 +190,7 @@ declaration =
  | Decl_Const of Ident.t * ty option * expr * Loc.t
  | Decl_FunType of Ident.t * function_type * Loc.t
  | Decl_FunDefn of Ident.t * function_type * stmt list * Loc.t
- | Decl_FunInstance of Ident.t * (Ident.t * Z.t option) list * Loc.t
+ | Decl_FunInstance of Ident.t * (Ident.t * Value.value option) list * Loc.t
  | Decl_Operator1 of unop * Ident.t list * Loc.t
  | Decl_Operator2 of binop * Ident.t list * Loc.t
  | Decl_Config of Ident.t * ty * expr * Loc.t

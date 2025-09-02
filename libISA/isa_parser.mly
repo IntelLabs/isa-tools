@@ -233,7 +233,7 @@ let primary :=
 let selectable_primary ==
     | p = path; { Expr_Var(p) }
     | p = path; mark = function_exception_mark ; "("; ps = parameter_associations ; ")"; { Expr_UApply(Expr_Var(p), false, ps, mark) }
-    | literal_expression
+    | l = literal_expression ; { Expr_Lit l }
     | "(" ; e = expr ; ")" ; { e }
 
 let selectors :=
@@ -259,12 +259,12 @@ let parameter_association :=
 let literal_expression :=
     | i = INTLIT ; {
         ( match Value.from_intLit i with
-        | Some v -> Expr_Lit v
+        | Some v -> v
         | None -> raise (Parse_error_locn (Range($symbolstartpos, $endpos), "integer is too big for bounds"))
         )
       }
-    | b = BITSLIT   ; { Expr_Lit(Value.VBits b) }
-    | s = STRINGLIT ; { Expr_Lit(Value.from_stringLit s) }
+    | b = BITSLIT   ; { Value.VBits b }
+    | s = STRINGLIT ; { Value.from_stringLit s }
 
 let aggregate :=
     (* Note that record aggregates are parsed as function calls *)
@@ -606,8 +606,8 @@ let function_instantiation :=
         { Decl_FunInstance(f, ps, Range($symbolstartpos, $endpos)) }
 
 let parameter_value :=
-    | p = ident ; "=>" ; i = INTLIT ; { (p, Some(snd i)) }
-    | p = ident ; "=>" ; "_"        ; { (p, None) }
+    | p = ident ; "=>" ; v = literal_expression ; { (p, Some v) }
+    | p = ident ; "=>" ; "_"                    ; { (p, None) }
 
 (****************************************************************
  * Variable declarations

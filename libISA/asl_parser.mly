@@ -252,9 +252,19 @@ function_instantiation:
 | "optimize" "function" f = path "with" "{" ps = separated_nonempty_list(",", parameter_value) "}" ";"
     { Decl_FunInstance(f, ps, Range($symbolstartpos, $endpos)) }
 
-parameter_value:
-| p = ident "=>" i = INTLIT { (p, Some(snd i)) }
-| p = ident "=>" "_"        { (p, None) }
+let parameter_value :=
+    | p = ident ; "=>" ; v = literal_expression2 ; { (p, Some v) }
+    | p = ident ; "=>" ; "_"                     ; { (p, None) }
+
+let literal_expression2 :=
+    | i = INTLIT ; {
+        ( match Value.from_intLit i with
+        | Some v -> v
+        | None -> raise (Parse_error_locn (Range($symbolstartpos, $endpos), "integer is too big for bounds"))
+        )
+      }
+    | b = BITSLIT   ; { Value.VBits b }
+    | s = STRINGLIT ; { Value.from_stringLit s }
 
 %inline builtin:
     | "__builtin" { true }

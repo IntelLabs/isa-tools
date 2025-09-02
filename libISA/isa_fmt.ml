@@ -859,7 +859,7 @@ let declaration ?(short=false) (fmt : PP.formatter) (x : AST.declaration) : unit
             (fun fmt -> commasep fmt (fun (p, sz) ->
               ( match sz with
               | None -> Format.fprintf fmt "%a => _" varname p
-              | Some n -> Format.fprintf fmt "%a => %s" varname p (Z.to_string n)
+              | Some v -> Format.fprintf fmt "%a => %a" varname p Value.pp_value v
               ))) ps
       | Decl_Operator1 (op, fs, loc) ->
           kw_underscore_operator1 fmt;

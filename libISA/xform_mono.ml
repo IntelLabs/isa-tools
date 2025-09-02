@@ -26,12 +26,22 @@ let const_expr (x : AST.expr) : Value.value option =
   | _ -> None
   )
 
-type param_request = (Ident.t * bool) list
-type arg_request = (Ident.t * bool) list
+type param_request = (Ident.t * bool * Value.value option) list
+type arg_request = (Ident.t * bool * Value.value option) list
 type request = (param_request * arg_request)
 
-let ppRequest1 (fmt : Format.formatter) (rs : (Ident.t * bool) list) : unit =
-  let pp' (r : (Ident.t * bool)) : unit = if snd r then Ident.pp fmt (fst r) else Format.fprintf fmt "_" in
+let ppRequest1 (fmt : Format.formatter) (rs : (Ident.t * bool * Value.value option) list) : unit =
+  let pp' ((var, required, ov) : (Ident.t * bool * Value.value option)) : unit =
+    if required then begin
+      Ident.pp fmt var;
+      ( match ov with
+      | None -> ()
+      | Some v -> Format.fprintf fmt "=>%a" Value.pp_value v
+      )
+    end else begin
+      Format.fprintf fmt "_"
+    end
+  in
   Format_utils.commasep fmt pp' rs
 
 let ppRequest (fmt : Format.formatter) (r : request) =
@@ -289,11 +299,12 @@ class monoClass
       assert (List.length args == List.length a_request');
       assert (List.length ps == List.length p_request);
       let matches = ref [] in (* accumulate matching args *)
-      let is_match = List.for_all2 (fun (nm, required) arg ->
+      let is_match = List.for_all2 (fun (var, required, ov) arg ->
           if required then
-              ( match const_expr arg with
-              | Some v -> matches := (nm, v) :: !matches; true
-              | None -> false
+              ( match (ov, const_expr arg) with
+              | (Some expected_v, Some v) when Value.eq_value expected_v v -> matches := (var, v) :: !matches; true
+              | (None, Some v) -> matches := (var, v) :: !matches; true
+              | (_, _) -> false
               )
           else
               true
@@ -452,8 +463,8 @@ let mk_implicit_request (d : AST.declaration) : (Ident.t * request) option =
     when not fty.is_builtin && not (Utils.is_empty fty.parameters)
     ->
       let required = List.map fst fty.parameters in
-      let ps = List.map (fun (x, _) -> (x, Ident.in_list x required)) fty.parameters in
-      let formals = List.map (fun (x, _, _) -> (x, false)) fty.args in
+      let ps = List.map (fun (x, _) -> (x, Ident.in_list x required, None)) fty.parameters in
+      let formals = List.map (fun (x, _, _) -> (x, false, None)) fty.args in
       Some (f, (ps, formals))
   | _ ->
       None
@@ -470,9 +481,18 @@ let mk_explicit_request (decl_lookup_table : AST.declaration IdentTable.t) (d : 
       | Decl_FunType (f, fty, _)
       | Decl_FunDefn (f, fty, _, _)
         ->
-          let required = List.map fst args in
-          let ps       = List.map (fun (x, _) -> (x, Ident.in_list x required)) fty.parameters in
-          let formals  = List.map (fun (x, _, _) -> (x, Ident.in_list x required && not (List.mem_assoc x ps))) fty.args in
+          let mk_arg_request ignore arg : (Ident.t * bool * Value.value option) =
+              if List.mem arg ignore then
+                (arg, false, None)
+              else
+                ( match List.assoc_opt arg args with
+                | None -> (arg, false, None)
+                | Some ov -> (arg, true, ov)
+                )
+          in
+          let p_names = List.map fst fty.parameters in
+          let ps = List.map (mk_arg_request []) p_names in
+          let formals = List.map (fun (x, _, _) -> mk_arg_request p_names x) fty.args in
           Some (f, (ps, formals))
       | _ ->
           None
