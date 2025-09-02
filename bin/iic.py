@@ -256,7 +256,7 @@ def get_c_flags(iii, backend):
         # and the include path that we need is ../_build/install/default/runtime/include
         bindir = os.path.dirname(iii)
         rootdir = os.path.dirname(bindir)
-        path = os.path.join(rootdir, "lib/iii/runtime_include")
+        path = os.path.join(rootdir, "lib/asli/runtime_include")
         c_flags = [f"-I{path}"]
     c_flags.extend(backend_c_flags[backend])
     return c_flags
@@ -279,7 +279,7 @@ def get_ld_flags(iii, backend):
         # and the include path that we need is ../_build/install/default/runtime
         bindir = os.path.dirname(iii)
         rootdir = os.path.dirname(bindir)
-        path = os.path.join(rootdir, "lib/iii/runtime/libASL.a")
+        path = os.path.join(rootdir, "lib/asli/runtime/libASL.a")
         ld_flags = [path]
     if backend == "sc":
         sc_types_dir = os.environ.get('SC_TYPES_DIR')
