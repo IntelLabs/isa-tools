@@ -461,7 +461,7 @@ let main () =
     |> String.split_on_char ':' in
   if !opt_print_version then Printf.printf "%s\n" version
   else if !opt_print_cflags then Printf.printf "-I%s\n" runtime_include_dir
-  else if !opt_print_ldflags then Printf.printf "-L%s -LASL\n" runtime_dir
+  else if !opt_print_ldflags then Printf.printf "-L%s -lASL\n" runtime_dir
   else if !opt_print_includedir then print_endline runtime_include_dir
   else if !opt_print_runtimedir then print_endline runtime_dir
   else if !opt_print_stdlibdir then print_endline stdlib_dir
