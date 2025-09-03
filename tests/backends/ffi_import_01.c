@@ -4,7 +4,7 @@
 //
 // Copyright (C) 2025-2025 Intel Corporation
 
-#include "asl_ffi.h"
+#include "isa_ffi.h"
 #include <string.h>
 
 uint8_t FFI_null_bits8(uint8_t x) { return x; }

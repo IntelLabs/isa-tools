@@ -3,7 +3,7 @@
 // Copyright (C) 2025-2025 Intel Corporation
 
 #include <stdio.h>
-#include "asl_ffi.h"
+#include "isa_ffi.h"
 
 // The following function will be executed *before* main
 void __attribute__((constructor)) FFI_Init_Configs()

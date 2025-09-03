@@ -2,7 +2,7 @@
 // Copyright (C) 2025-2025 Intel Corporation
 
 #include <stdint.h>
-#include "asl_ffi.h"
+#include "isa_ffi.h"
 
 uint32_t FFI_Call128(uint64_t x[2])
 {
