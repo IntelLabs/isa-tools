@@ -466,6 +466,9 @@ let decl_loc (x : AST.declaration) : Loc.t =
   | Decl_FunType (f, fty, loc) -> loc
   | Decl_FunDefn (f, fty, b, loc) -> loc
   | Decl_FunInstance (f, _, loc) -> loc
+  | Decl_FunFFI (nm, is_export, f, _, loc) -> loc
+  | Decl_VarFFI (nm, is_export, v, loc) -> loc
+  | Decl_TypeFFI (nm, is_export, t, loc) -> loc
   | Decl_Operator1 (op, vs, loc) -> loc
   | Decl_Operator2 (op, vs, loc) -> loc
   | Decl_Config (v, ty, e, loc) -> loc
@@ -508,6 +511,9 @@ let decl_name (x : declaration) : Ident.t option =
   | Decl_FunType (f, fty, loc) -> Some f
   | Decl_FunDefn (f, fty, b, loc) -> Some f
   | Decl_FunInstance (f, _, loc) -> Some f
+  | Decl_FunFFI (nm, is_export, f, _, loc) -> Some f
+  | Decl_VarFFI (nm, is_export, v, loc) -> Some v
+  | Decl_TypeFFI (nm, is_export, t, loc) -> None
   | Decl_Operator1 (op, vs, loc) -> None
   | Decl_Operator2 (op, vs, loc) -> None
   | Decl_Config (v, ty, e, loc) -> Some v

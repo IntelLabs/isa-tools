@@ -1264,6 +1264,9 @@ let type_decls (xs : AST.declaration list) : AST.declaration list =
     | Decl_FunDefn _
     | Decl_FunType _
     | Decl_FunInstance _
+    | Decl_FunFFI _
+    | Decl_VarFFI _
+    | Decl_TypeFFI _
     | Decl_Const _
     | Decl_Exception _
     | Decl_Var _
@@ -1292,6 +1295,9 @@ let fun_decls (xs : AST.declaration list) : AST.declaration list =
     | Decl_Typedef _
     | Decl_FunType _
     | Decl_FunInstance _
+    | Decl_FunFFI _
+    | Decl_VarFFI _
+    | Decl_TypeFFI _
     | Decl_BuiltinType _
     | Decl_Forward _
     | Decl_Operator1 _

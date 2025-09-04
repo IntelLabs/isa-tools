@@ -796,6 +796,9 @@ let build_constant_environment (ds : AST.declaration list) : GlobalEnv.t =
       | Decl_Forward (_, _)
       | Decl_FunType (_, _, _)
       | Decl_FunInstance (_, _, _)
+      | Decl_FunFFI (_, _, _, _, _)
+      | Decl_VarFFI (_, _, _, _)
+      | Decl_TypeFFI (_, _, _, _)
       | Decl_Operator1 (_, _, _)
       | Decl_Operator2 (_, _, _)
       | Decl_Use _

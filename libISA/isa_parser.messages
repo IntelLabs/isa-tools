@@ -48,31 +48,6 @@ The syntax of variable declarations is
     let <identifier> := <expr> ;
     let <identifier> : <type> := <expr> ;
 
-declarations_file: BITFIELD ID WHILE
-##
-## Ends in an error in state: 2.
-##
-## separated_nonempty_list(COLON_COLON,ID) -> ID . [ XOR WITH VAR USE UNDERSCORE_UNDERSCORE_OPERATOR_TWO UNDERSCORE_UNDERSCORE_OPERATOR_ONE UNDERSCORE_UNDERSCORE_IN UNDERSCORE_UNDERSCORE_BUILTIN TYPE TO THEN STAR_STAR STAR_COLON STAR SLASH SEMICOLON RPAREN RECORD RBRACK RBRACE QUERY PURE PLUS_PLUS PLUS_COLON PLUS PERCENT OR OPTIMIZE OF NOT MODULE MINUS_GT MINUS_COLON MINUS LT_LT LT_EQ LT LPAREN LET LBRACK LBRACE INTERFACE IN IMPURE IMPORT IF GT_GT GT_EQ GT FUNCTION FOREIGN FILE EXPORT EXCEPTION EQ_GT EQ_EQ EQ EOF ENUMERATION ENDMODULE END ELSIF ELSE DOWNTO DOT_DOT DOT DO COMMA COLON_EQ COLON BITFIELD BEGIN BANG_EQ BANG AS AND ]
-## separated_nonempty_list(COLON_COLON,ID) -> ID . COLON_COLON separated_nonempty_list(COLON_COLON,ID) [ XOR WITH VAR USE UNDERSCORE_UNDERSCORE_OPERATOR_TWO UNDERSCORE_UNDERSCORE_OPERATOR_ONE UNDERSCORE_UNDERSCORE_IN UNDERSCORE_UNDERSCORE_BUILTIN TYPE TO THEN STAR_STAR STAR_COLON STAR SLASH SEMICOLON RPAREN RECORD RBRACK RBRACE QUERY PURE PLUS_PLUS PLUS_COLON PLUS PERCENT OR OPTIMIZE OF NOT MODULE MINUS_GT MINUS_COLON MINUS LT_LT LT_EQ LT LPAREN LET LBRACK LBRACE INTERFACE IN IMPURE IMPORT IF GT_GT GT_EQ GT FUNCTION FOREIGN FILE EXPORT EXCEPTION EQ_GT EQ_EQ EQ EOF ENUMERATION ENDMODULE END ELSIF ELSE DOWNTO DOT_DOT DOT DO COMMA COLON_EQ COLON BITFIELD BEGIN BANG_EQ BANG AS AND ]
-##
-## The known suffix of the stack is as follows:
-## ID
-##
-
-Bitfield declaration expected.
-|
-The syntax of bitfield declarations is
-|
-    bitfield <identifier path> = {
-        <register field> ,
-        ...
-        <register field>
-    } : Bits(<expr>) ;
-|
-The syntax of register fields is
-|
-    <identifier> => [ <slice> , ... <slice> ]
-
 declarations_file: BITFIELD ID COLON_COLON XOR
 ##
 ## Ends in an error in state: 3.
@@ -9733,18 +9708,6 @@ The syntax of bitfields is
     <identifier> => [ <slice> , ... <slice> ]
 
 
-declarations_file: IMPURE XOR
-##
-## Ends in an error in state: 488.
-##
-## ffi_definition -> option(one_of(PURE,IMPURE)) . FOREIGN one_of(IMPORT,EXPORT) path [ VAR USE UNDERSCORE_UNDERSCORE_OPERATOR_TWO UNDERSCORE_UNDERSCORE_OPERATOR_ONE UNDERSCORE_UNDERSCORE_BUILTIN TYPE RECORD PURE OPTIMIZE MODULE LET INTERFACE IMPURE FUNCTION FOREIGN EXCEPTION EOF ENUMERATION BITFIELD ]
-##
-## The known suffix of the stack is as follows:
-## option(one_of(PURE,IMPURE))
-##
-
-Syntax error.
-
 declarations_file: FOREIGN XOR
 ##
 ## Ends in an error in state: 489.
@@ -15092,26 +15055,4 @@ The syntax of arguments is
 |
     <identifier> => <expression>
     <expression>
-
-
-declarations_file: FOREIGN EXPORT ID XOR
-##
-## Ends in an error in state: 689.
-##
-## list(declaration) -> declaration . list(declaration) [ EOF ]
-##
-## The known suffix of the stack is as follows:
-## declaration
-##
-## WARNING: This example involves spurious reductions.
-## This implies that, although the LR(1) items shown above provide an
-## accurate view of the past (what has been recognized so far), they
-## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 2, spurious reduction of production separated_nonempty_list(COLON_COLON,ID) -> ID
-## In state 5, spurious reduction of production path -> separated_nonempty_list(COLON_COLON,ID)
-## In state 493, spurious reduction of production ffi_definition -> option(one_of(PURE,IMPURE)) FOREIGN one_of(IMPORT,EXPORT) path
-## In state 687, spurious reduction of production declaration -> ffi_definition
-##
-
-Syntax error.
 

@@ -661,12 +661,20 @@ let binop :=
  ****************************************************************)
 
 let ffi_definition :=
-    (* dummy grammar rule - does not generate correct AST *)
-    | one_of("pure", "impure")? ;
-      "foreign" ;
-      one_of("import", "export") ;
-      p = path ;
-      { Decl_BuiltinType(p, Range($symbolstartpos, $endpos)) }
+    | "foreign"; is_export=ffi_direction;
+      "function"; nm = STRINGLIT; "="; f=path;
+      "with"; "{"; ps = separated_nonempty_list(",", parameter_value);"}"; ";";
+      { Decl_FunFFI(nm, is_export, f, ps, Range($symbolstartpos, $endpos)) }
+    | "foreign"; is_export=ffi_direction;
+      "var"; nm=STRINGLIT; "="; v=path; ";";
+      { Decl_VarFFI(nm, is_export, v, Range($symbolstartpos, $endpos)) }
+    | "foreign"; is_export=ffi_direction;
+      "type"; nm=STRINGLIT; "="; t=ty; ";";
+      { Decl_TypeFFI(nm, is_export, t, Range($symbolstartpos, $endpos)) }
+
+let ffi_direction :=
+    | "import" ; { false }
+    | "export" ; { true }
 
 (****************************************************************
  * Module declarations

@@ -738,6 +738,9 @@ let function_type (fmt : PP.formatter) (fty : AST.function_type) : unit =
     fmt fty.setter_arg;
   Format.fprintf fmt " -> %a" ty fty.rty
 
+let ffi_direction (fmt : PP.formatter) (is_export : bool): unit =
+  Format.fprintf fmt "%s" (if is_export then "export" else "import")
+
 let declaration ?(short=false) (fmt : PP.formatter) (x : AST.declaration) : unit =
   vbox fmt (fun _ ->
       ( match x with
@@ -861,6 +864,26 @@ let declaration ?(short=false) (fmt : PP.formatter) (x : AST.declaration) : unit
               | None -> Format.fprintf fmt "%a => _" varname p
               | Some v -> Format.fprintf fmt "%a => %a" varname p Value.pp_value v
               ))) ps
+      | Decl_FunFFI (nm, is_export, f, ps, loc) ->
+          Format.fprintf fmt "foreign %a function %s = %a with {%a};"
+            ffi_direction is_export
+            nm
+            funname f
+            (fun fmt -> commasep fmt (fun (p, sz) ->
+              ( match sz with
+              | None -> Format.fprintf fmt "%a => _" varname p
+              | Some v -> Format.fprintf fmt "%a => %a" varname p Value.pp_value v
+              ))) ps
+      | Decl_VarFFI (nm, is_export, v, loc) ->
+          Format.fprintf fmt "foreign %a var %s = %a;"
+            ffi_direction is_export
+            nm
+            varname v
+      | Decl_TypeFFI (nm, is_export, t, loc) ->
+          Format.fprintf fmt "foreign %a type %s = %a;"
+            ffi_direction is_export
+            nm
+            ty t
       | Decl_Operator1 (op, fs, loc) ->
           kw_underscore_operator1 fmt;
           nbsp fmt;

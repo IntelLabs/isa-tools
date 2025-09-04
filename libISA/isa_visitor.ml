@@ -649,6 +649,15 @@ let visit_decl (vis : isaVisitor) (x : declaration) : declaration =
     | Decl_FunInstance (f, ps, loc) ->
         let f' = visit_var vis Definition f in
         if f == f' then x else Decl_FunInstance (f', ps, loc)
+    | Decl_FunFFI (nm, is_export, f, ps, loc) ->
+        let f' = visit_var vis Definition f in
+        if f == f' then x else Decl_FunFFI (nm, is_export, f', ps, loc)
+    | Decl_VarFFI (nm, is_export, v, loc) ->
+        let v' = visit_var vis Definition v in
+        if v == v' then x else Decl_VarFFI (nm, is_export, v', loc)
+    | Decl_TypeFFI (nm, is_export, t, loc) ->
+        let t' = visit_type vis t in
+        if t == t' then x else Decl_TypeFFI (nm, is_export, t', loc)
     | Decl_Operator1 (op, vs, loc) ->
         let vs' = mapNoCopy (visit_var vis Definition) vs in
         if vs == vs' then x else Decl_Operator1 (op, vs', loc)

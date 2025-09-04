@@ -3199,6 +3199,27 @@ let tc_declaration (env : GlobalEnv.t) (d : AST.declaration) :
       | [] -> raise (UnknownObject (loc, "function", Ident.to_string qid))
       | fs -> raise (Ambiguous (loc, "function", Ident.to_string qid))
       )
+  | Decl_FunFFI (nm, is_export, qid, ps, loc) ->
+      (* todo: assignment functions need their name mangled *)
+      ( match GlobalEnv.getFuns env qid with
+      | [f] ->
+          List.iter (fun (p, _) ->
+            if not (List.exists (fun (p', _) -> Ident.equal p p') ps) then
+              let msg = Format.asprintf "missing instance request for implicit parameter %a" Ident.pp p in
+              raise (TypeError (loc, msg))
+            )
+            f.params;
+          (* todo: typecheck the instance values against the arguments *)
+          [ Decl_FunFFI (nm, is_export, f.funname, ps, loc) ]
+      | [] -> raise (UnknownObject (loc, "function", Ident.to_string qid))
+      | fs -> raise (Ambiguous (loc, "function", Ident.to_string qid))
+      )
+  | Decl_VarFFI (nm, is_export, v, loc) ->
+      let v' = get_var (Env.mkEnv env) loc v in
+      [ Decl_VarFFI (nm, is_export, v'.name, loc) ]
+  | Decl_TypeFFI (nm, is_export, t, loc) ->
+      let t' = tc_type (Env.mkEnv env) loc t in
+      [ Decl_TypeFFI (nm, is_export, t', loc) ]
   | Decl_Operator1 (op, funs, loc) ->
       let funs' =
         List.concat
