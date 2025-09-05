@@ -391,7 +391,10 @@ let options =
                                                                    "       Load JSON configuration file");
       ("--exec",              Arg.String add_exec,                 "       Execute command");
       ("--project",           Arg.String add_project,              "       Execute project file");
-      ("--format",            Arg.Symbol (formats, set_format),    "       Control print format");
+      ("--format",            Arg.Symbol (formats, set_format),    "       Control print format: \
+                                                                           'simple' - close to normal syntax; \
+                                                                           'typed' - with type parameters; \
+                                                                           'raw' - with type parameters on function calls and desugared operators");
       ("--max-errors",        Arg.Set_int Tcheck.max_errors,       "       Maximum number of typechecker errors");
       ("--check-exception-markers",    Arg.Set   Global_checks.check_defn_markers, "       Check that function definitions have correct exceptions markers");
       ("--no-check-exception-markers", Arg.Clear Global_checks.check_defn_markers, "       Do not check that function definitions have correct exceptions markers");
