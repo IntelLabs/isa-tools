@@ -29,7 +29,16 @@ class desugar (ds : AST.declaration list option) =
       | Expr_TApply (i, [n], [x; y], _) when Ident.equal i mul_bits_int ->
         Visitor.ChangeTo (Isa_utils.mk_mul_bits n x (Isa_utils.mk_cvt_int_bits n y))
       | Expr_TApply (i, szs, args, _) when Ident.equal i append_bits ->
-        Visitor.ChangeTo (Isa_utils.mk_concat szs args)
+        let f (acc1, acc2) sz arg =
+          let e1 = Isa_visitor.visit_expr (self :> Isa_visitor.isaVisitor) sz in
+          let e2 = Isa_visitor.visit_expr (self :> Isa_visitor.isaVisitor) arg in
+          match e2 with
+          | Expr_Concat (ws, es) -> (List.rev_append ws acc1, List.rev_append es acc2)
+          | _ -> (e1 :: acc1, e2 :: acc2)
+        in
+        let es1, es2 = List.fold_left2 f ([], []) szs args in
+        let szs', args' = (List.rev es1, List.rev es2) in
+        Visitor.ChangeTo (Isa_utils.mk_concat szs' args')
       | _ -> DoChildren
       )
   end
