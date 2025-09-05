@@ -3,7 +3,7 @@
  *
  * Copyright Arm Limited (c) 2017-2019
  * Copyright (C) 2022-2025 Intel Corporation
- * SPDX-Licence-Identifier: BSD-3-Clause
+ * SPDX-License-Identifier: BSD-3-Clause
  *
  * This code follows the pattern used in the cilVisitor class in
  * George Necula's excellent CIL (https://people.eecs.berkeley.edu/~necula/cil/)

@@ -327,6 +327,7 @@ def mk_script(args, output_directory):
         if args.Obounded: script.append(":xform_bounded")
         if args.show_final_isa:
             script.append(f":show --format=raw")
+            script.append(f":show --format={args.format}")
         else:
             script.append(f":{backend_generator[args.backend]} --output-dir={output_directory} --basename={args.basename} --num-c-files=1")
         return "\n".join(script)
@@ -367,7 +368,7 @@ def mk_script(args, output_directory):
         for l in lines_in:
             if l.startswith(":"):
                 command = l.split()[0][1:]
-                lines_out.append(f":show --format=raw --output {args.intermediates}.{i:02}.{command}.isa")
+                lines_out.append(f":show --format={args.format} --output {args.intermediates}.{i:02}.{command}.isa")
                 i = i + 1
             lines_out.append(l)
 
@@ -523,6 +524,7 @@ def main() -> int:
     parser.add_argument("--verbose", "-v", help="verbose", action='store_true')
     parser.add_argument("--working-dir", help="working directory, by default temporarily created", metavar="working_dir", default="")
     parser.add_argument("--save-temps", help="save intermediate compilation results", action='store_true')
+    parser.add_argument("--format", help="control print format (default: raw)", choices=['simple', 'typed', 'raw'], default='raw')
     parser.add_argument('isa_files', nargs='*', metavar="<.isa file>", help="ISA input files (compile/link/run only)")
     args = parser.parse_args()
 
