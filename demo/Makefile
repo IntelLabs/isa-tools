@@ -65,7 +65,9 @@ CFLAGS += -g
 CFLAGS += -Wno-unused-but-set-variable
 CFLAGS += -Wno-parentheses-equality
 
-CC=clang-16 -std=c2x
+ifeq ($(origin CC),default)
+  CC = clang-16 --std=c2x
+endif
 
 .PRECIOUS: simulator_%
 

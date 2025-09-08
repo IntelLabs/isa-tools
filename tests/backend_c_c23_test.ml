@@ -13,7 +13,10 @@ module TC = Tcheck
 
 let check_syntax (name : string) (code : string) : unit =
   let rt_header = BE.get_rt_header () in
-  let prog = "clang-16" in
+  let prog =
+    match Sys.getenv_opt "CC" with
+    | Some cc -> cc
+    | None -> "clang-16" in
   let args =
     [
       "-std=c2x";

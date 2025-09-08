@@ -12,8 +12,12 @@ LIB := $(BUILD_DIR)/libASL.a
 
 default: $(LIB)
 
-AR ?= ar
-CC ?= gcc
+ifeq ($(origin AR),default)
+  AR = ar
+endif
+ifeq ($(origin CC),default)
+  CC = gcc
+endif
 CPPFLAGS = -Iinclude
 CFLAGS = -g -Wall -Werror -Wconversion -std=c99 -fPIC
 OBJEXT ?= o
