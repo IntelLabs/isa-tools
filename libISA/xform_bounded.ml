@@ -2,7 +2,7 @@
  * ISA integer bounds transform
  *
  * Copyright (C) 2025-2025 Intel Corporation
- * SPDX-Licence-Identifier: BSD-3-Clause
+ * SPDX-License-Identifier: BSD-3-Clause
  *
  * Transforms any bounded integer expression to use a bounded
  * representation (i.e., the '__sint(N)' type).

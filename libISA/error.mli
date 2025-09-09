@@ -2,7 +2,7 @@
  * Error
  *
  * Copyright (C) 2022-2025 Intel Corporation
- * SPDX-Licence-Identifier: BSD-3-Clause
+ * SPDX-License-Identifier: BSD-3-Clause
  ****************************************************************)
 
 exception Unimplemented of (Loc.t * string * (Format.formatter -> unit))

@@ -2,7 +2,7 @@
 // Runtime bitvector support library for ASL's C backend
 //
 // Copyright (C) 2023-2025 Intel Corporation
-// SPDX-Licence-Identifier: BSD-3-Clause
+// SPDX-License-Identifier: BSD-3-Clause
 ////////////////////////////////////////////////////////////////
 
 #include "asl/bits1024.h"

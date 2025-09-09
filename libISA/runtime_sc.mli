@@ -3,7 +3,7 @@
  * This uses the C++ "Algorithmic C" library "ac_int.h"
  *
  * Copyright (C) 2022-2024 Intel Corporation
- * SPDX-Licence-Identifier: BSD-3-Clause
+ * SPDX-License-Identifier: BSD-3-Clause
  ****************************************************************)
 
 (** ISA to C runtime library support (C++) *)

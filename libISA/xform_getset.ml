@@ -12,7 +12,7 @@
  *     (2) procedure call which writes the modified value back.
  *
  * Copyright (C) 2022-2025 Intel Corporation
- * SPDX-Licence-Identifier: BSD-3-Clause
+ * SPDX-License-Identifier: BSD-3-Clause
  ****************************************************************)
 
 module AST = Isa_ast

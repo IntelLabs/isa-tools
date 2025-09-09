@@ -2,7 +2,7 @@
 // Runtime bitvector support library for ASL's C backend
 //
 // Copyright (C) 2023-2025 Intel Corporation
-// SPDX-Licence-Identifier: BSD-3-Clause
+// SPDX-License-Identifier: BSD-3-Clause
 ////////////////////////////////////////////////////////////////
 
 #define ASL_BITS_TYPE ASL_CC_INDIR(ASL_CC_INDIR(ASL_bits, N), _t)

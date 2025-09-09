@@ -2,7 +2,7 @@
  * Test cases for backends
  *
  * Copyright (C) 2024-2025 Intel Corporation
- * SPDX-Licence-Identifier: BSD-3-Clause
+ * SPDX-License-Identifier: BSD-3-Clause
  ****************************************************************)
 
 type backend = Backend_C | Backend_Verilog

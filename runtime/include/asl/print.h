@@ -2,7 +2,7 @@
 // Runtime print support for ASL's C backend
 //
 // Copyright (C) 2023-2025 Intel Corporation
-// SPDX-Licence-Identifier: BSD-3-Clause
+// SPDX-License-Identifier: BSD-3-Clause
 ////////////////////////////////////////////////////////////////
 
 #ifndef ASL_PRINT_H

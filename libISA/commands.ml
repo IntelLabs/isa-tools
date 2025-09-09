@@ -2,7 +2,7 @@
  * Command registry
  *
  * Copyright (C) 2024-2025 Intel Corporation
- * SPDX-Licence-Identifier: BSD-3-Clause
+ * SPDX-License-Identifier: BSD-3-Clause
  ****************************************************************)
 
 type command = Tcheck.Env.t -> Cpu.cpu -> bool

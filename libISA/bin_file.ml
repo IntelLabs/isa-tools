@@ -4,7 +4,7 @@
  * Simplistic binary file loader
  *
  * Copyright (C) 2023-2025 Intel Corporation
- * SPDX-Licence-Identifier: BSD-3-Clause
+ * SPDX-License-Identifier: BSD-3-Clause
  ****************************************************************)
 
 let byte (b : bytes) (o : int) : char = Bytes.get b o

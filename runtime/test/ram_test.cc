@@ -2,7 +2,7 @@
 // Tests for C runtime memory support library
 //
 // Copyright (C) 2023-2025 Intel Corporation
-// SPDX-Licence-Identifier: BSD-3-Clause
+// SPDX-License-Identifier: BSD-3-Clause
 ////////////////////////////////////////////////////////////////
 
 #include "asl/ram.h"

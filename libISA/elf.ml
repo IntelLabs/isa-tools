@@ -5,7 +5,7 @@
  *
  * Copyright Alastair Reid (c) 2019-2020
  * Copyright (C) 2024-2025 Intel Corporation
- * SPDX-Licence-Identifier: BSD-3-Clause
+ * SPDX-License-Identifier: BSD-3-Clause
  ****************************************************************)
 
 (* Turn off warnings about unused values.

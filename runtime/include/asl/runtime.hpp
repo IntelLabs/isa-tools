@@ -2,7 +2,7 @@
 // Runtime library for ASL's CPP backend
 //
 // Copyright (C) 2024-2025 Intel Corporation
-// SPDX-Licence-Identifier: BSD-3-Clause
+// SPDX-License-Identifier: BSD-3-Clause
 ////////////////////////////////////////////////////////////////
 
 #pragma once

@@ -4,7 +4,7 @@
  *
  * Copyright Arm Limited (c) 2017-2019
  * Copyright (C) 2022-2025 Intel Corporation
- * SPDX-Licence-Identifier: BSD-3-Clause
+ * SPDX-License-Identifier: BSD-3-Clause
  ****************************************************************)
 
 type 'a t

@@ -6,7 +6,7 @@
  * - Slice_Single to Slice_LoWd
  *
  * Copyright (C) 2023-2025 Intel Corporation
- * SPDX-Licence-Identifier: BSD-3-Clause
+ * SPDX-License-Identifier: BSD-3-Clause
  ****************************************************************)
 
 module AST = Isa_ast

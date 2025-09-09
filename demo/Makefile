@@ -2,7 +2,7 @@
 # Demo Makefile
 #
 # Copyright (C) 2022-2025 Intel Corporation
-# SPDX-Licence-Identifier: BSD-3-Clause
+# SPDX-License-Identifier: BSD-3-Clause
 ################################################################
 
 .default: test

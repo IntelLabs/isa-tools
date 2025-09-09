@@ -4,7 +4,7 @@
  * This is used to manage configuration files
  *
  * Copyright (C) 2023-2025 Intel Corporation
- * SPDX-Licence-Identifier: BSD-3-Clause
+ * SPDX-License-Identifier: BSD-3-Clause
  ****************************************************************)
 
 (** Read a JSON configuration file *)
