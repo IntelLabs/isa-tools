@@ -26,7 +26,7 @@ class desugar (ds : AST.declaration list option) =
         Visitor.ChangeTo (Isa_utils.mk_add_bits n x (Isa_utils.mk_cvt_int_bits n y))
       | Expr_TApply (i, [n], [x; y], _) when Ident.equal i sub_bits_int ->
         Visitor.ChangeTo (Isa_utils.mk_sub_bits n x (Isa_utils.mk_cvt_int_bits n y))
-      | Expr_TApply (i, [n], [x; y], _) when Ident.equal i sub_bits_int ->
+      | Expr_TApply (i, [n], [x; y], _) when Ident.equal i mul_bits_int ->
         Visitor.ChangeTo (Isa_utils.mk_mul_bits n x (Isa_utils.mk_cvt_int_bits n y))
       | Expr_TApply (i, szs, args, _) when Ident.equal i append_bits ->
         Visitor.ChangeTo (Isa_utils.mk_concat szs args)
