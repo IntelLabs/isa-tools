@@ -640,7 +640,7 @@ let rec stmt ?(short=false) (fmt : PP.formatter) (x : AST.stmt) : unit =
           nbsp fmt;
           expr fmt e;
           ( match oty with
-          | Some t -> nbsp fmt; colon fmt; ty fmt t
+          | Some t -> nbsp fmt; colon fmt; nbsp fmt; ty fmt t
           | None -> ()
           );
           nbsp fmt;
