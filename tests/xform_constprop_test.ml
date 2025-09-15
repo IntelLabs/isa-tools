@@ -321,27 +321,27 @@ let constprop_tests : unit Alcotest.test_case list =
        let b := x2;
        let c := x3;
        let d : Integer := 1;");
-    ("pattern in case stmt" , `Quick, test_cp_stmts
+    ("bool pattern in case stmt" , `Quick, test_cp_stmts
       "let a : Boolean := True;
-       let b : Integer := 1;
-       let c : Bits(1) := 0b1;
-       enumeration T { E1, E2 }; let d : T := E2;
-       var va : Boolean;
-       var vb : Integer;
-       var vc : Bits(1);
-       var vd : T;
-      "
+       var va : Boolean;"
+      "case va of when a => return; endcase;"
+      "case va of when True => return; endcase;");
+    ("int pattern in case stmt" , `Quick, test_cp_stmts
+      "let b : Integer := 1;
+       var vb : Integer;"
+      "case vb of when b => return; endcase;"
+      "case vb of when 1 => return; endcase;");
 
-      "case va of when a => return; endcase;
-       case vb of when b => return; endcase;
-       case vc of when c => return; endcase;
-       case vd of when d => return; endcase;"
-
-      "case va of when True => return; endcase;
-       case vb of when 1 => return; endcase;
-       case vc of when 0b1 => return; endcase;
-       case vd of when E2 => return; endcase;");
-
+    ("bit pattern in case stmt" , `Quick, test_cp_stmts
+      "let c : Bits(1) := 0b1;
+       var vc : Bits(1);"
+      "case vc of when c => return; endcase;"
+      "case vc of when 0b1 => return; endcase;");
+    ("enum pattern in case stmt" , `Quick, test_cp_stmts
+      "enumeration T { E1, E2 }; let d : T := E2;
+       var vd : T;"
+      "case vd of when d => return; endcase;"
+      "case vd of when E2 => return; endcase;");
     ("case stmt Integers", `Quick, test_cp_stmts
      "var i : Integer; function Foo(x : Integer) begin end"
      "case i of

@@ -472,84 +472,108 @@ let rec xform_declitem (env : Env.t) (isConst : bool) (x : AST.decl_item)
       let oty' = Option.map (xform_ty env) oty in
       DeclItem_Wildcard oty'
 
-let rec xform_stmts (env : Env.t) (xs : AST.stmt list) : AST.stmt list =
-  Env.nest env (fun env' -> List.concat_map (fun x -> xform_stmt env' x) xs)
+let rec xform_block (env : Env.t) (xs : AST.stmt list) : (AST.stmt list * bool) =
+  Env.nest env (fun env' ->
+      let (yss, live) = xform_stmt_list env' xs in
+      (List.concat yss, live)
+      )
 
-(** Evaluate statement *)
-and xform_stmt (env : Env.t) (x : AST.stmt) : AST.stmt list =
+and xform_stmt_list (env : Env.t) (xs : AST.stmt list) : (AST.stmt list list * bool) =
+  ( match xs with
+  | [] -> ([], true)
+  | (y :: ys) ->
+      let (y', live) = xform_stmt env y in
+      if live then
+          let (ys', lives) = xform_stmt_list env ys in
+          (y' :: ys', lives)
+      else
+          ([y'], false)
+  )
+
+(** Evaluate statement, detecting dead code paths *)
+and xform_stmt (env : Env.t) (x : AST.stmt) : (AST.stmt list * bool) =
   ( match x with
   | Stmt_VarDeclsNoInit (vs, ty, loc) ->
       let ty' = xform_ty env ty in
       List.iter (fun v -> Env.addLocalVar env v Values.bottom) vs;
-      [ Stmt_VarDeclsNoInit (vs, ty', loc) ]
+      ([ Stmt_VarDeclsNoInit (vs, ty', loc) ], true)
   | Stmt_VarDecl (is_constant, di, i, loc) ->
       let i' = xform_expr env i in
       let di' = xform_declitem env is_constant di (Some i') in
       (* todo: if is_constant, we should always be able to delete this declaration *)
-      [ Stmt_VarDecl (is_constant, di', i', loc) ]
+      ([ Stmt_VarDecl (is_constant, di', i', loc) ], true)
   | Stmt_Assign (l, r, loc) ->
       let r' = xform_expr env r in
       let l' = xform_lexpr env loc l (expr_value env r') in
       (* todo: delete assignment if possible *)
-      [ Stmt_Assign (l', r', loc) ]
+      ([ Stmt_Assign (l', r', loc) ], true)
   | Stmt_TCall (f, tes, es, throws, loc) ->
       let tes' = xform_exprs env tes in
       let es' = xform_exprs env es in
-      [ Stmt_TCall (f, tes', es', throws, loc) ]
+      ([Stmt_TCall (f, tes', es', throws, loc)], throws != AlwaysThrow)
   | Stmt_Return (e, loc) ->
       let e' = xform_expr env e in
       Env.fun_return env (expr_value env e');
-      [ Stmt_Return (e', loc) ]
+      ([ Stmt_Return (e', loc) ], false)
   | Stmt_Assert (e, loc) ->
       let e' = xform_expr env e in
       if e' = asl_true then
-          [] (* dead code elimination *)
+          ([], true) (* dead code elimination *)
+      else if e' = asl_false then
+          ([Stmt_Assert (e', loc)], false)
       else
           (* todo: add 'e' to the environment *)
-          [ Stmt_Assert (e', loc) ]
+          ([Stmt_Assert (e', loc)], true)
   | Stmt_Throw(e, loc) ->
       let e' = xform_expr env e in
       Env.throw env;
-      [ Stmt_Throw (e', loc) ]
-  | Stmt_Block (ss, loc) -> [ Stmt_Block (xform_stmts env ss, loc) ]
+      ([Stmt_Throw (e', loc)], false)
+  | Stmt_Block (ss, loc) ->
+      let (ss', live) = xform_block env ss in
+      ([Stmt_Block (ss', loc)], live)
   | Stmt_If (els, (e, el), loc) ->
       let rec xform env css =
         ( match css with
-        | [] -> ([], xform_stmts env e)
+        | [] -> ([], xform_block env e)
         | (c, s, loc) :: css' ->
             (* todo: each branch should assert c or not c *)
             let c' = xform_expr env c in
             if c' = asl_false then begin
               xform env css'
             end else if c' = asl_true then begin
-              let s' = xform_stmts env s in
+              let s' = xform_block env s in
               ([], s')
             end else begin
-              let (s', (css'', e')) =
+              let ((s', live), (css'', e')) =
                 Env.fork_join env
-                  (fun env' -> xform_stmts env' s)
+                  (fun env' -> xform_block env' s)
                   (fun env' -> xform env' css')
               in
-              ((c', s', loc) :: css'', e')
+              (((c', s', loc), live) :: css'', e')
             end
         )
       in
       ( match xform env els with
       | ([], e') -> e'
-      | (els', e') -> [Stmt_If (els', (e', el), loc)]
+      | (els', (e', live)) ->
+          let (els'', lives) = List.split els' in
+          let live' = List.fold_left (||) live lives in
+          ([Stmt_If (els'', (e', el), loc)], live')
       )
   | Stmt_Case (e, oty, alts, odefault, loc) ->
       let e' = xform_expr env e in
       let rec xform env alts =
-        match alts with
+        ( match alts with
         | [] ->
-            let odefault' =
-              Option.map (fun (s, loc) -> (xform_stmts env s, loc)) odefault
-            in
-            ([], odefault')
+            ( match odefault with
+            | None -> ([], (None, false))
+            | Some (s, loc) ->
+                let (s', live) = xform_block env s in
+                ([], (Some (s', loc), live))
+            )
         | Alt_Alt (ps, oc, s, loc) :: alts' ->
             Env.nest env (fun env' ->
-              let (ps', oc', s'), (alts'', odefault') =
+              let ((ps', oc', s', live'), (alts'', odefault')) =
                 Env.fork_join env'
                   (fun env ->
                     let ps' = match ps with
@@ -557,20 +581,21 @@ and xform_stmt (env : Env.t) (x : AST.stmt) : AST.stmt list =
                     | _   -> xform_patterns env ps
                     in
                     let oc' = Option.map (xform_expr env) oc in
-                    let s' = xform_stmts env s in
-                    (ps', oc', s'))
+                    let (s', live) = xform_block env s in
+                    (ps', oc', s', live))
                   (fun env -> xform env alts')
               in
-              (Alt_Alt (ps', oc', s', loc) :: alts'', odefault'))
+              ((Alt_Alt (ps', oc', s', loc), live') :: alts'', odefault'))
+        )
       in
-      let (alts', odefault') = xform env alts in
+      let (alts', (odefault', live_default)) = xform env alts in
 
       (* perform dead code elimination when the discriminant is a constant *)
       ( match value_of_constant env e' with
       | Some v ->
         (* simplify an alternative based on whether it matches the constant *)
         let env0 = Env.to_concrete env in
-        let simplify_alt alt =
+        let simplify_alt (alt, live) =
           ( match alt with
           | Alt_Alt (ps, oc, s, loc) ->
               let matches = List.exists (Eval.eval_pattern loc env0 v) ps in
@@ -579,7 +604,7 @@ and xform_stmt (env : Env.t) (x : AST.stmt) : AST.stmt list =
               ) else (
                 let ps' = if matches then [Pat_Wildcard] else ps in
                 let oc' = if oc = Some asl_true then None else oc in
-                Some (Alt_Alt (ps', oc', s, loc))
+                Some (Alt_Alt (ps', oc', s, loc), live)
               )
           )
         in
@@ -587,60 +612,73 @@ and xform_stmt (env : Env.t) (x : AST.stmt) : AST.stmt list =
 
         (* If the first match is a guaranteed match, eliminate all the other (dead) branches *)
         ( match alts'' with
-        | [Alt_Alt ([Pat_Wildcard], None, s, loc)] -> s
-        | _ -> [ Stmt_Case (e', oty, alts'', odefault', loc) ]
+        | [(Alt_Alt ([Pat_Wildcard], None, s, loc), live)] ->
+          (s, live)
+        | _ ->
+          let (alts''', lives) = List.split alts'' in
+          let live = List.fold_left (||) live_default lives in
+          ([Stmt_Case (e', oty, alts''', odefault', loc)], live)
         )
-      | _ -> [ Stmt_Case (e', oty, alts', odefault', loc) ]
+      | _ ->
+        let (alts'', lives) = List.split alts' in
+        let live' = List.fold_left (||) live_default lives in
+        ([Stmt_Case (e', oty, alts'', odefault', loc)], live')
       )
-  | Stmt_For (v, ty, start, dir, stop, b, loc) -> (
+  | Stmt_For (v, ty, start, dir, stop, b, loc) ->
       let ty' = xform_ty env ty in
       let start' = xform_expr env start in
       let stop' = xform_expr env stop in
-      match (value_of_constant env start', value_of_constant env stop') with
+      ( match (value_of_constant env start', value_of_constant env stop') with
       | Some x, Some y when !unroll_loops ->
           let rec eval (i : Value.value) =
             let c =
-              match dir with
+              ( match dir with
               | Direction_Up -> Value.eval_leq loc i y
               | Direction_Down -> Value.eval_leq loc y i
+              )
             in
             if c then
-              let b' =
+              let (b', live) =
                 Env.nest env (fun env' ->
                     Env.addLocalConst env' v (Values.singleton i);
-                    xform_stmts env' b)
+                    xform_block env' b)
               in
               let i' =
-                match dir with
+                ( match dir with
                 | Direction_Up -> Value.eval_inc loc i
                 | Direction_Down -> Value.eval_dec loc i
+                )
               in
-              Stmt_Block (b', loc) :: eval i'
-            else []
+              let (bs, live') = eval i' in
+              (Stmt_Block (b', loc) :: bs, live && live')
+            else
+              ([], true)
           in
           eval x
       | _ ->
-          let b' = Env.fixpoint env (fun env' ->
+          let (b', live) = Env.fixpoint env (fun env' ->
               Env.addLocalVar env' v Values.bottom;
-              xform_stmts env' b)
+              xform_block env' b)
           in
-          [ Stmt_For (v, ty', start', dir, stop', b', loc) ])
+          ([Stmt_For (v, ty', start', dir, stop', b', loc)], live)
+      )
     | Stmt_While(c, b, loc) ->
-          let (c', b') = Env.fixpoint env  (fun env' ->
+          let (c', b') = Env.fixpoint env (fun env' ->
               let c' = xform_expr env' c in
-              let b' = xform_stmts env' b in
+              let (b', _) = xform_block env' b in
               (c', b'))
           in
-          [ Stmt_While(c', b', loc) ]
+          (* while loops are always conservatively considered live *)
+          ([Stmt_While(c', b', loc)], true)
     | Stmt_Repeat(b, c, pos, loc) ->
-          let (c', b') = Env.fixpoint env  (fun env' ->
-              let b' = xform_stmts env' b in
+          let (c', b', live') = Env.fixpoint env  (fun env' ->
+              let (b', live) = xform_block env' b in
               let c' = xform_expr env' c in
-              (c', b'))
+              (c', b', live))
           in
-          [ Stmt_Repeat(b', c', pos, loc) ]
+          ([Stmt_Repeat(b', c', pos, loc)], live')
     | Stmt_Try(tb, pos, catchers, odefault, loc) ->
-          let tb' = Env.nest env (fun env' -> xform_stmts env' tb) in
+          let (tb', _) = Env.nest env (fun env' -> xform_block env' tb) in
 
           (* If an exception was thrown, we don't know what variables have
            * been assigned to before the exception. So we forget all mutable
@@ -649,7 +687,7 @@ and xform_stmt (env : Env.t) (x : AST.stmt) : AST.stmt list =
           let catchers' = List.map (function Catcher_Guarded (v, tc, b, loc) ->
               Env.nest env (fun env' ->
                 Env.addLocalConst env' v Values.bottom;
-                let b' = xform_stmts env' b in
+                let (b', _) = xform_block env' b in
                 Catcher_Guarded (v, tc, b', loc)
                 )
             )
@@ -657,7 +695,7 @@ and xform_stmt (env : Env.t) (x : AST.stmt) : AST.stmt list =
           in
           let odefault' = Option.map (fun (s, loc) ->
               Env.nest env (fun env' ->
-                let s' = xform_stmts env s in
+                let (s', _) = xform_block env s in
                 (s', loc)
                 )
             )
@@ -666,12 +704,16 @@ and xform_stmt (env : Env.t) (x : AST.stmt) : AST.stmt list =
           (* We don't know whether an exception was thrown or which
            * catcher executed so we discard all mutable variable values. *)
           Env.zapMutables env;
-          [ Stmt_Try(tb', pos, catchers', odefault', loc) ]
+          (* try-catch is conservatively always considered live *)
+          ([Stmt_Try(tb', pos, catchers', odefault', loc)], true)
     | Stmt_UCall _
       ->
         raise
           (Error.Unimplemented (Loc.Unknown, "statement", fun fmt -> FMTAST.stmt fmt x))
     )
+
+let xform_stmts (env : Env.t) (xs : AST.stmt list) : AST.stmt list =
+  fst (xform_block env xs)
 
 (** Create local environment and add parameters and arguments *)
 let mk_fun_env (env : Eval.GlobalEnv.t) (fty : AST.function_type) : Env.t =
