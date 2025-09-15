@@ -69,7 +69,6 @@ val eq_gt : formatter -> unit
 val gt : formatter -> unit
 val gt_eq : formatter -> unit
 val gt_gt : formatter -> unit
-val lbrace_lbrace : formatter -> unit
 val lt : formatter -> unit
 val lt_eq : formatter -> unit
 val lt_lt : formatter -> unit
@@ -78,7 +77,6 @@ val plus : formatter -> unit
 val plus_colon : formatter -> unit
 val star_colon : formatter -> unit
 val plus_plus : formatter -> unit
-val rbrace_rbrace : formatter -> unit
 val semicolon : formatter -> unit
 val slash : formatter -> unit
 val star : formatter -> unit

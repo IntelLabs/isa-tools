@@ -79,7 +79,6 @@ let eq_gt (fmt : PP.formatter) : unit = delimiter fmt "=>"
 let gt (fmt : PP.formatter) : unit = delimiter fmt ">"
 let gt_eq (fmt : PP.formatter) : unit = delimiter fmt ">="
 let gt_gt (fmt : PP.formatter) : unit = delimiter fmt ">>"
-let lbrace_lbrace (fmt : PP.formatter) : unit = delimiter fmt "{{"
 let lt (fmt : PP.formatter) : unit = delimiter fmt "<"
 let lt_eq (fmt : PP.formatter) : unit = delimiter fmt "<="
 let lt_lt (fmt : PP.formatter) : unit = delimiter fmt "<<"
@@ -89,7 +88,6 @@ let plus_colon (fmt : PP.formatter) : unit = delimiter fmt "+:"
 let minus_colon (fmt : PP.formatter) : unit = delimiter fmt "-:"
 let star_colon (fmt : PP.formatter) : unit = delimiter fmt "*:"
 let plus_plus (fmt : PP.formatter) : unit = delimiter fmt "++"
-let rbrace_rbrace (fmt : PP.formatter) : unit = delimiter fmt "}}"
 let semicolon (fmt : PP.formatter) : unit = delimiter fmt ";"
 let slash (fmt : PP.formatter) : unit = delimiter fmt "/"
 let star (fmt : PP.formatter) : unit = delimiter fmt "*"
@@ -504,9 +502,9 @@ let rec lexpr (fmt : PP.formatter) (x : AST.lexpr) : unit =
       nbsp fmt;
       funname fmt f;
       if !show_type_params then (
-        lbrace_lbrace fmt;
+        lbrace fmt;
         exprs fmt tes;
-        rbrace_rbrace fmt);
+        rbrace fmt);
       throws fmt can_throw;
       parens fmt (fun _ -> exprs fmt es)
   | LExpr_ReadWrite (f, g, tes, es, can_throw) ->
@@ -516,9 +514,9 @@ let rec lexpr (fmt : PP.formatter) (x : AST.lexpr) : unit =
       nbsp fmt;
       funname fmt g;
       if !show_type_params then (
-        lbrace_lbrace fmt;
+        lbrace fmt;
         exprs fmt tes;
-        rbrace_rbrace fmt);
+        rbrace fmt);
       throws fmt can_throw;
       parens fmt (fun _ -> exprs fmt es)
 
@@ -579,11 +577,11 @@ let rec stmt ?(short=false) (fmt : PP.formatter) (x : AST.stmt) : unit =
       semicolon fmt
   | Stmt_TCall (f, tes, args, can_throw, loc) ->
       funname fmt f;
-      if !show_type_params then (
-        lbrace_lbrace fmt;
-        exprs fmt tes;
-        rbrace_rbrace fmt);
       throws fmt can_throw;
+      if !show_type_params then (
+        lbrace fmt;
+        exprs fmt tes;
+        rbrace fmt);
       parens fmt (fun _ -> exprs fmt args);
       semicolon fmt
   | Stmt_UCall (f, args, can_throw, loc) ->
