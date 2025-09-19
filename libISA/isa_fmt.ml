@@ -894,7 +894,7 @@ let declaration ?(short=false) (fmt : PP.formatter) (x : AST.declaration) : unit
               | Some v -> Format.fprintf fmt "%a => %a" varname p Value.pp_value v
               ))) ps
       | Decl_FunFFI (nm, is_export, f, ps, loc) ->
-          Format.fprintf fmt "%t %a %t %s = %a %t {%a};"
+          Format.fprintf fmt "%t %a %t \"%s\" = %a %t {%a};"
             kw_foreign
             ffi_direction is_export
             kw_function
@@ -907,14 +907,14 @@ let declaration ?(short=false) (fmt : PP.formatter) (x : AST.declaration) : unit
               | Some v -> Format.fprintf fmt "%a => %a" varname p Value.pp_value v
               ))) ps
       | Decl_VarFFI (nm, is_export, v, loc) ->
-          Format.fprintf fmt "%t %a %t %s = %a;"
+          Format.fprintf fmt "%t %a %t \"%s\" = %a;"
             kw_foreign
             ffi_direction is_export
             kw_var
             nm
             varname v
       | Decl_TypeFFI (nm, is_export, t, loc) ->
-          Format.fprintf fmt "%t %a %t %s = %a;"
+          Format.fprintf fmt "%t %a %t \"%s\" = %a;"
             kw_foreign
             ffi_direction is_export
             kw_type
