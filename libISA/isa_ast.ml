@@ -170,7 +170,7 @@ and alt =
 type function_type = {
   parameters : (Ident.t * ty option) list;
   args : (Ident.t * ty * expr option) list;
-  setter_arg : (Ident.t * ty) option; (* only present in assigment functions *)
+  setter_arg : (Ident.t * ty) option; (* only present in assignment functions *)
   rty : ty;
   use_array_syntax : bool; (* definition uses [], not () *)
   is_getter_setter : bool;
