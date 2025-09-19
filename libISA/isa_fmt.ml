@@ -105,6 +105,7 @@ let kw_array (fmt : PP.formatter) : unit = keyword fmt "array"
 let kw_as (fmt : PP.formatter) : unit = delimiter fmt "as"
 let kw_assert (fmt : PP.formatter) : unit = keyword fmt "assert"
 let kw_begin (fmt : PP.formatter) : unit = keyword fmt "begin"
+let kw_bitfield (fmt : PP.formatter) : unit = keyword fmt "bitfield"
 let kw_bits (fmt : PP.formatter) : unit = keyword fmt "bits"
 let kw_case (fmt : PP.formatter) : unit = keyword fmt "case"
 let kw_catch (fmt : PP.formatter) : unit = keyword fmt "catch"
@@ -115,12 +116,21 @@ let kw_downto (fmt : PP.formatter) : unit = keyword fmt "downto"
 let kw_else (fmt : PP.formatter) : unit = keyword fmt "else"
 let kw_elsif (fmt : PP.formatter) : unit = keyword fmt "elsif"
 let kw_end (fmt : PP.formatter) : unit = keyword fmt "end"
+let kw_endcase (fmt : PP.formatter) : unit = keyword fmt "endcase"
+let kw_endfor (fmt : PP.formatter) : unit = keyword fmt "endfor"
+let kw_endif (fmt : PP.formatter) : unit = keyword fmt "endif"
+let kw_endtry (fmt : PP.formatter) : unit = keyword fmt "endtry"
+let kw_endwhile (fmt : PP.formatter) : unit = keyword fmt "endwhile"
 let kw_enumeration (fmt : PP.formatter) : unit = keyword fmt "enumeration"
-let kw_function (fmt : PP.formatter) : unit = keyword fmt "function"
+let kw_export (fmt : PP.formatter) : unit = keyword fmt "export"
 let kw_for (fmt : PP.formatter) : unit = keyword fmt "for"
+let kw_foreign (fmt : PP.formatter) : unit = keyword fmt "foreign"
+let kw_function (fmt : PP.formatter) : unit = keyword fmt "function"
 let kw_if (fmt : PP.formatter) : unit = keyword fmt "if"
+let kw_import (fmt : PP.formatter) : unit = keyword fmt "import"
 let kw_let (fmt : PP.formatter) : unit = keyword fmt "let"
 let kw_of (fmt : PP.formatter) : unit = keyword fmt "of"
+let kw_optimize (fmt : PP.formatter) : unit = keyword fmt "optimize"
 let kw_record (fmt : PP.formatter) : unit = keyword fmt "record"
 let kw_repeat (fmt : PP.formatter) : unit = keyword fmt "repeat"
 let kw_return (fmt : PP.formatter) : unit = keyword fmt "return"
@@ -138,9 +148,11 @@ let kw_underscore_readwrite (fmt : PP.formatter) : unit = keyword fmt "__readwri
 let kw_underscore_write (fmt : PP.formatter) : unit = keyword fmt "__write"
 let kw_unknown (fmt : PP.formatter) : unit = keyword fmt "UNSPECIFIED"
 let kw_until (fmt : PP.formatter) : unit = keyword fmt "until"
+let kw_use (fmt : PP.formatter) : unit = keyword fmt "use"
 let kw_var (fmt : PP.formatter) : unit = keyword fmt "var"
 let kw_when (fmt : PP.formatter) : unit = keyword fmt "when"
 let kw_while (fmt : PP.formatter) : unit = keyword fmt "while"
+let kw_with (fmt : PP.formatter) : unit = keyword fmt "with"
 let kw_xor (fmt : PP.formatter) : unit = delimiter fmt "xor"
 
 let varnames (fmt : PP.formatter) (xs : Ident.t list) : unit =
@@ -342,15 +354,17 @@ and expr (fmt : PP.formatter) (x : AST.expr) : unit =
       brackets fmt (fun _ -> slices fmt ss)
   | Expr_WithChanges (t, e, cs) ->
       if !show_type_params then braces fmt (fun _ -> ty fmt t);
-      Format.fprintf fmt "(%a with { %a })"
+      Format.fprintf fmt "(%a %t { %a })"
         expr e
+        kw_with
         changes cs
   | Expr_Record (tc, tes, fas) ->
       tycon fmt tc;
       if not (Utils.is_empty tes) then parens fmt (fun _ -> pp_args fmt tes);
       braces fmt (fun _ -> commasep fmt (field_assignment fmt) fas)
   | Expr_ArrayInit es ->
-      Format.fprintf fmt "array (%a)"
+      Format.fprintf fmt "%t (%a)"
+        kw_array
         exprs es
   | Expr_In (e, p) ->
       Format.fprintf fmt "(%a IN %a)"
@@ -578,7 +592,7 @@ let rec stmt ?(short=false) (fmt : PP.formatter) (x : AST.stmt) : unit =
       parens fmt (fun _ -> pp_args fmt args);
       semicolon fmt;
   | Stmt_Return (e, loc) ->
-      PP.fprintf fmt "return %a;" expr e
+      PP.fprintf fmt "%t %a;" kw_return expr e
   | Stmt_Assert (e, loc) ->
       kw_assert fmt;
       nbsp fmt;
@@ -590,8 +604,10 @@ let rec stmt ?(short=false) (fmt : PP.formatter) (x : AST.stmt) : unit =
       expr fmt e;
       semicolon fmt
   | Stmt_Block (ss, loc) ->
-      Format.fprintf fmt "begin%a@,end;"
+      Format.fprintf fmt "%t%a@,%t;"
+        kw_begin
         (indented_block ~short) ss
+        kw_end
   | Stmt_If (els, (e, el), loc) ->
       vbox fmt (fun _ ->
           if short then
@@ -615,7 +631,7 @@ let rec stmt ?(short=false) (fmt : PP.formatter) (x : AST.stmt) : unit =
                 kw_else fmt;
                 indented_block fmt e
               end;
-              Format.fprintf fmt "@,endif;"
+              Format.fprintf fmt "@,%t;" kw_endif
           end
       )
   | Stmt_Case (e, oty, alts, ob, loc) ->
@@ -655,24 +671,32 @@ let rec stmt ?(short=false) (fmt : PP.formatter) (x : AST.stmt) : unit =
                       delimiter fmt "when _ =>";
                       indented_block fmt b)
                     fmt ob);
-              Format.fprintf fmt "@,endcase;"
+              Format.fprintf fmt "@,%t;" kw_endcase
           end
       )
   | Stmt_For (v, typ, f, dir, t, b, loc) ->
-      Format.fprintf fmt "for %a : %a := %a %a %a do%a@,endfor;"
+      Format.fprintf fmt "%t %a : %a := %a %a %a %t%a@,%t;"
+        kw_for
         varname                 v
         ty                      typ
         expr                    f
         direction               dir
         expr                    t
+        kw_do
         (indented_block ~short) b
+        kw_endfor
   | Stmt_While (c, b, loc) ->
-      Format.fprintf fmt "while %a do%a@,endwhile;"
+      Format.fprintf fmt "%t %a %t%a@,%t;"
+        kw_while
         expr                    c
+        kw_do
         (indented_block ~short) b
+        kw_endwhile
   | Stmt_Repeat (b, c, pos, loc) ->
-      Format.fprintf fmt "repeat%a@,until %a;"
+      Format.fprintf fmt "%t%a@,%t %a;"
+        kw_repeat
         (indented_block ~short) b
+        kw_until
         expr                    c
   | Stmt_Try (b, pos, cs, ob, loc) ->
       kw_try fmt;
@@ -685,7 +709,8 @@ let rec stmt ?(short=false) (fmt : PP.formatter) (x : AST.stmt) : unit =
           indented fmt (fun _ ->
               cutsep fmt
                 (fun (AST.Catcher_Guarded (v, tc, b, loc)) ->
-                  Format.fprintf fmt "when %a : %a =>"
+                  Format.fprintf fmt "%t %a : %a =>"
+                    kw_when
                     varname v
                     tycon tc;
                   indented_block fmt b)
@@ -697,7 +722,7 @@ let rec stmt ?(short=false) (fmt : PP.formatter) (x : AST.stmt) : unit =
                   indented_block fmt b)
                 fmt ob);
       end;
-      Format.fprintf fmt "@,endtry;"
+      Format.fprintf fmt "@,%t;" kw_endtry
   )
 
 and indented_block ?(short=false) (fmt : PP.formatter) (xs : AST.stmt list) : unit =
@@ -739,7 +764,7 @@ let function_type (fmt : PP.formatter) (fty : AST.function_type) : unit =
   Format.fprintf fmt " -> %a" ty fty.rty
 
 let ffi_direction (fmt : PP.formatter) (is_export : bool): unit =
-  Format.fprintf fmt "%s" (if is_export then "export" else "import")
+  Format.fprintf fmt "%t" (if is_export then kw_export else kw_import)
 
 let declaration ?(short=false) (fmt : PP.formatter) (x : AST.declaration) : unit =
   vbox fmt (fun _ ->
@@ -798,7 +823,8 @@ let declaration ?(short=false) (fmt : PP.formatter) (x : AST.declaration) : unit
               cut fmt);
           semicolon fmt
       | Decl_Typedef (tc, [], Type_Bits(n,fs), loc) when fs <> [] ->
-          PP.fprintf fmt "bitfield %a = {@,"
+          PP.fprintf fmt "%t %a = {@,"
+            kw_bitfield
             tycon tc;
           commasep fmt (regfield fmt) fs;
           PP.fprintf fmt "} : Bits(%a);@,"
@@ -857,31 +883,41 @@ let declaration ?(short=false) (fmt : PP.formatter) (x : AST.declaration) : unit
               kw_end fmt
           end
       | Decl_FunInstance (f, ps, loc) ->
-          Format.fprintf fmt "optimize function %a with {%a};"
+          Format.fprintf fmt "%t %t %a %t {%a};"
+            kw_optimize
+            kw_function
             funname f
+            kw_with
             (fun fmt -> commasep fmt (fun (p, sz) ->
               ( match sz with
               | None -> Format.fprintf fmt "%a => _" varname p
               | Some v -> Format.fprintf fmt "%a => %a" varname p Value.pp_value v
               ))) ps
       | Decl_FunFFI (nm, is_export, f, ps, loc) ->
-          Format.fprintf fmt "foreign %a function %s = %a with {%a};"
+          Format.fprintf fmt "%t %a %t %s = %a %t {%a};"
+            kw_foreign
             ffi_direction is_export
+            kw_function
             nm
             funname f
+            kw_with
             (fun fmt -> commasep fmt (fun (p, sz) ->
               ( match sz with
               | None -> Format.fprintf fmt "%a => _" varname p
               | Some v -> Format.fprintf fmt "%a => %a" varname p Value.pp_value v
               ))) ps
       | Decl_VarFFI (nm, is_export, v, loc) ->
-          Format.fprintf fmt "foreign %a var %s = %a;"
+          Format.fprintf fmt "%t %a %t %s = %a;"
+            kw_foreign
             ffi_direction is_export
+            kw_var
             nm
             varname v
       | Decl_TypeFFI (nm, is_export, t, loc) ->
-          Format.fprintf fmt "foreign %a type %s = %a;"
+          Format.fprintf fmt "%t %a %t %s = %a;"
+            kw_foreign
             ffi_direction is_export
+            kw_type
             nm
             ty t
       | Decl_Operator1 (op, fs, loc) ->
@@ -912,8 +948,10 @@ let declaration ?(short=false) (fmt : PP.formatter) (x : AST.declaration) : unit
           expr fmt e;
           semicolon fmt
       | Decl_Use (p1, p2, loc) ->
-          Format.fprintf fmt "use %a as %a;"
+          Format.fprintf fmt "%t %a %t %a;"
+            kw_use
             funname p1
+            kw_as
             funname p2
       )
   )
