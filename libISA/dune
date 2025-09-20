@@ -76,6 +76,7 @@
    xform_case
    xform_constprop
    xform_desugar
+   xform_foreign
    xform_getset
    xform_hoist_lets
    xform_int_bitslices
