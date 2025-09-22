@@ -413,7 +413,7 @@ let get_regfield (loc : Loc.t) (rfs : (AST.slice list * Ident.t) list) (f : Iden
 (** Get named fields of a register and calculate type of concatenating them *)
 let get_regfields (loc : Loc.t) (rfs : (AST.slice list * Ident.t) list)
     (fs : Ident.t list) : AST.slice list * AST.ty =
-  let ss = List.flatten (List.map (get_regfield_info loc rfs) fs) in
+  let ss = List.concat (List.map (get_regfield_info loc rfs) fs) in
   (ss, type_bits (slices_width ss))
 
 (****************************************************************)

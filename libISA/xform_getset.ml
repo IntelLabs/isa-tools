@@ -99,7 +99,7 @@ let xform_decl (replacer : replaceClass) (d : AST.declaration) :
 
 let xform_decls (ds : AST.declaration list) : AST.declaration list =
   let replacer = new replaceClass ds in
-  List.flatten (List.map (xform_decl replacer) ds)
+  List.concat (List.map (xform_decl replacer) ds)
 
 (****************************************************************
  * Command: :xform_getset

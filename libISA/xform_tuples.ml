@@ -128,7 +128,7 @@ let xform_decl (d : AST.declaration) : AST.declaration list =
       [d']
 
 let xform_decls (ds : AST.declaration list) : AST.declaration list =
-  List.flatten (List.map xform_decl ds)
+  List.concat (List.map xform_decl ds)
 
 (****************************************************************
  * Command: :xform_tuples

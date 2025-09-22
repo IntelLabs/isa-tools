@@ -140,7 +140,7 @@ let xform_decls (ds : AST.declaration list) : AST.declaration list =
   let replacer = new replaceClass ds in
   ds
   |> List.map (xform_decl replacer)
-  |> List.flatten
+  |> List.concat
   (* Re-hoist function prototypes because the transformation adds new ones *)
   |> hoist_prototypes
 
