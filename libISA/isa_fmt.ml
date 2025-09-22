@@ -757,6 +757,7 @@ let function_type (fmt : PP.formatter) (fty : AST.function_type) : unit =
   );
   PP.pp_print_option
     (fun _ (v, ty) ->
+      nbsp fmt;
       colon_eq fmt;
       nbsp fmt;
       varty fmt v ty)
