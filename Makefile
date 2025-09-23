@@ -6,6 +6,10 @@
 # SPDX-License-Identifier: BSD-3-Clause
 ################################################################
 
+ifeq ($(findstring print-directory, $(MAKEFLAGS)),)
+  MAKEFLAGS += --no-print-directory
+endif
+
 .DEFAULT_GOAL: all
 
 VERSION = 0.2.0
