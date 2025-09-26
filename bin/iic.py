@@ -326,7 +326,6 @@ def mk_script(args, output_directory):
         script.append(":filter_reachable_from exports")
         if args.Obounded: script.append(":xform_bounded")
         if args.show_final_isa:
-            script.append(f":show --format=raw")
             script.append(f":show --format={args.format}")
         else:
             script.append(f":{backend_generator[args.backend]} --output-dir={output_directory} --basename={args.basename} --num-c-files=1")
