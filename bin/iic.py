@@ -23,6 +23,7 @@ import string
 import subprocess
 import sys
 import tempfile
+import textwrap
 
 ################################################################
 # The base script
@@ -138,6 +139,8 @@ base_script = """
 // This works better after constant propagation/monomorphization
 // because that can eliminate/simplify guards on the clauses of the case statement.
 :xform_case
+
+{xform_foreign}
 
 {wrap_variables}
 
@@ -325,6 +328,7 @@ def mk_script(args, output_directory):
         script.append(":filter_unlisted_functions imports")
         script.append(":filter_reachable_from exports")
         if args.Obounded: script.append(":xform_bounded")
+        if args.transform_foreign: script.append(":xform_foreign")
         if args.show_final_isa:
             script.append(f":show --format={args.format}")
         else:
@@ -336,17 +340,24 @@ def mk_script(args, output_directory):
         'generate_c':  generate_c,
         'split_state': "",
         'suppress_bitslice_xform': "",
+        'xform_foreign': "",
         'xform_int_bitslices': "",
         'track_valid': "",
         'wrap_variables': "",
     }
     if args.instrument_unknown: substitutions['track_valid'] = ":xform_valid track-valid"
+    if args.transform_foreign:
+        substitutions["xform_foreign"] = textwrap.dedent("""\
+            // For every imported/exported variable, declared using
+            // 'foreign import/export var', generate a pair of functions to read/write
+            // the variable. The functions are imported/exported into/from ISA
+            // correspondingly.
+            :xform_foreign""")
     if args.transform_int_slices:
         substitutions["xform_int_bitslices"] = textwrap.dedent("""\
             // Eliminate slices of integers by first converting the integer to a bitvector.
             // e.g., if "x : integer", then "x[1 +: 8]" to "cvt_int_bits(x, 9)[1 +: 8]"
-            :xform_int_bitslices
-            """)
+            :xform_int_bitslices""")
     if args.wrap_variables: substitutions['wrap_variables'] = ":xform_wrap"
     if not args.auto_case_split:
         substitutions['auto_case_split'] = '--no-auto-case-split'
@@ -509,6 +520,7 @@ def main() -> int:
     parser.add_argument("--new-ffi", help="use the new FFI", action="store_true", default=False)
     parser.add_argument("--runtime-checks", help="perform runtime checks (array bounds, etc.)", action=argparse.BooleanOptionalAction)
     parser.add_argument("--split-state", help="split state into multiple structs", action=argparse.BooleanOptionalAction)
+    parser.add_argument("--transform-foreign", help="process foreign import/export variable declarations", action=argparse.BooleanOptionalAction)
     parser.add_argument("--transform-int-slices", help="convert integer slices to bit slices", action=argparse.BooleanOptionalAction)
     parser.add_argument("--instrument-unknown", help="instrument assignments of UNKNOWN", action=argparse.BooleanOptionalAction)
     parser.add_argument("--wrap-variables", help="wrap global variables into functions", action=argparse.BooleanOptionalAction)
