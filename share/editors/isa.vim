@@ -30,6 +30,7 @@ syn keyword isaDecl        function let var requires ensures implicit optimize f
 syn keyword isaDecl        __builtin __operator1 __operator2
 syn keyword isaDecl        module endmodule import export interface file use as with
 syn keyword isaConstant    False True
+syn keyword isaTodo        contained todo TODO
 
 syn match   isaIdentifier  "\<[A-Za-z_][A-Za-z0-9_]*\>"
 syn match   isaNumber      "\<\d\+\>"
@@ -41,8 +42,8 @@ syn match   isaReturns     "->"
 syn match   isaMapsto      "=>"
 syn match   isaCoCo        "::"
 
-syn region  isaMultilineComment start="/\*" end="\*/"
-syn region  isaTrailingComment  start="//" end="$"
+syn region  isaMultilineComment start="/\*" end="\*/" contains=isaTodo
+syn region  isaTrailingComment  start="//" end="$" contains=isaTodo
 syn region  isaString           start=/"/ skip=/\\./ end=/"/
 
 hi def link isaMultilineComment comment
@@ -61,5 +62,6 @@ hi def link isaOperator        Special
 hi def link isaDelimiter       Normal
 hi def link isaNumber          Number
 hi def link isaString          String
+hi def link isaTodo            Todo
 
 let b:current_syntax = "isa"
