@@ -28,7 +28,7 @@ syn keyword isaStmt        endif endtry endwhile
 
 syn keyword isaDecl        function let var requires ensures implicit optimize foreign pure impure
 syn keyword isaDecl        __builtin __operator1 __operator2
-syn keyword isaDecl        module endmodule import export interface file use as
+syn keyword isaDecl        module endmodule import export interface file use as with
 syn keyword isaConstant    False True
 
 syn match   isaIdentifier  "\<[A-Za-z_][A-Za-z0-9_]*\>"
