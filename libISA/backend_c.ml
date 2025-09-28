@@ -1811,10 +1811,9 @@ let mk_ffi_import_wrapper
 
   (pp_proto, pp_wrapper)
 
-(* Build ffi wrapper functions *)
-let mk_ffi_wrappers (is_import : bool) (decl_map : (AST.declaration list) Bindings.t) (c_names : string list) :
-    (PP.formatter -> unit) * (PP.formatter -> unit) =
-  let direction = if is_import then "Import" else "Export" in
+let mk_ffi_infos (is_import : bool) (decl_map : AST.declaration list Bindings.t)
+    (c_names : string list) :
+    (Ident.t * Ident.t * AST.function_type * Loc.t) list =
   let missing : string list ref = ref [] in
   let infos = List.filter_map (fun c_name ->
       let asl_ident = Ident.mk_fident c_name in
@@ -1830,9 +1829,16 @@ let mk_ffi_wrappers (is_import : bool) (decl_map : (AST.declaration list) Bindin
     ) c_names
   in
   if not (Utils.is_empty !missing) then begin
+    let direction = if is_import then "Import" else "Export" in
     List.iter (PP.eprintf "Error: %sed function '%s' is not defined\n" direction) !missing;
     exit 1
   end;
+  infos
+
+(* Build ffi wrapper functions *)
+let mk_ffi_wrappers (is_import : bool)
+    (infos : (Ident.t * Ident.t * AST.function_type * Loc.t) list) :
+    (PP.formatter -> unit) * (PP.formatter -> unit) =
   let (mk_protos, mk_defns) =
     infos
     |> List.map (fun (c_name, asl_name, fty, loc) ->
@@ -2126,8 +2132,13 @@ let _ =
 
     ffi_track_enums decl_map exports;
     ffi_track_return_types decls';
-    let (ffi_import_protos, ffi_import_defns) = mk_ffi_wrappers true decl_map imports in
-    let (ffi_export_protos, ffi_export_defns) = mk_ffi_wrappers false decl_map (cfg_exports @ exports) in
+
+    let ffi_import_infos = mk_ffi_infos true decl_map imports in
+    let (ffi_import_protos, ffi_import_defns) = mk_ffi_wrappers true ffi_import_infos in
+
+    let ffi_export_infos = mk_ffi_infos false decl_map (cfg_exports @ exports) in
+    let (ffi_export_protos, ffi_export_defns) = mk_ffi_wrappers false ffi_export_infos in
+
     let ffi_protos (fmt : PP.formatter) : unit =
         wrap_extern true fmt (fun fmt ->
           mk_ffi_enums fmt;
