@@ -1839,6 +1839,32 @@ let mk_ffi_infos (is_import : bool) (decl_map : AST.declaration list Bindings.t)
   end;
   infos
 
+let mk_new_ffi_infos (is_import : bool)
+    (decl_map : AST.declaration list Bindings.t) (ds : AST.declaration list) :
+    (Ident.t * Ident.t * AST.function_type * Loc.t) list =
+  List.filter_map (fun x ->
+      match x with
+      | AST.Decl_FunFFI (nm, is_export, f, ps, loc) when is_export = not is_import ->
+          let c_ident = Ident.mk_ident nm in
+          let info = ( match Bindings.find_opt f decl_map with
+          | Some ds ->
+              ( match List.find_opt (function AST.Decl_FunType _ -> true | _ -> false) ds with
+              | Some (AST.Decl_FunType (_, fty, loc)) -> Some (c_ident, f, fty, loc)
+              | _ -> None
+              )
+          | _ -> None
+          ) in
+          if Option.is_none info then begin
+              let direction = if is_import then "Import" else "Export" in
+              let pp fmt = FMT.declaration fmt x in
+              let fname = Ident.name_with_tag f in
+              raise (InternalError
+                (loc, PP.asprintf "%sed function '%s' is not defined" direction fname, pp, __LOC__))
+          end;
+          info
+      | _ -> None)
+    ds
+
 (* Build ffi wrapper functions *)
 let mk_ffi_wrappers (is_import : bool)
     (infos : (Ident.t * Ident.t * AST.function_type * Loc.t) list) :
@@ -2138,10 +2164,16 @@ let _ =
     ffi_track_return_types decls';
 
     let ffi_import_infos = mk_ffi_infos true decl_map imports in
-    let (ffi_import_protos, ffi_import_defns) = mk_ffi_wrappers true ffi_import_infos in
+    let new_ffi_import_infos = mk_new_ffi_infos true decl_map decls' in
+    let (ffi_import_protos, ffi_import_defns) =
+      mk_ffi_wrappers true (ffi_import_infos @ new_ffi_import_infos)
+    in
 
     let ffi_export_infos = mk_ffi_infos false decl_map (cfg_exports @ exports) in
-    let (ffi_export_protos, ffi_export_defns) = mk_ffi_wrappers false ffi_export_infos in
+    let new_ffi_export_infos = mk_new_ffi_infos false decl_map decls' in
+    let (ffi_export_protos, ffi_export_defns) =
+      mk_ffi_wrappers false (ffi_export_infos @ new_ffi_export_infos)
+    in
 
     let ffi_protos (fmt : PP.formatter) : unit =
         wrap_extern true fmt (fun fmt ->
