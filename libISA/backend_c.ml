@@ -1818,14 +1818,18 @@ let mk_ffi_infos (is_import : bool) (decl_map : AST.declaration list Bindings.t)
   let infos = List.filter_map (fun c_name ->
       let asl_ident = Ident.mk_fident c_name in
       let c_ident = Ident.mk_ident c_name in
-      ( match Bindings.find_opt asl_ident decl_map with
-      | Some (Decl_FunType (_, fty, loc) :: _) -> Some (c_ident, asl_ident, fty, loc)
-      | _ ->
-          if not (is_enumerated_type c_ident) then begin
-              missing := c_name :: !missing
-          end;
-          None
-      )
+      let info = ( match Bindings.find_opt asl_ident decl_map with
+      | Some ds ->
+          ( match List.find_opt (function AST.Decl_FunType _ -> true | _ -> false) ds with
+          | Some (AST.Decl_FunType (_, fty, loc)) -> Some (c_ident, asl_ident, fty, loc)
+          | _ -> None
+          )
+      | _ -> None
+      ) in
+      if Option.is_none info && not (is_enumerated_type c_ident) then begin
+          missing := c_name :: !missing
+      end;
+      info
     ) c_names
   in
   if not (Utils.is_empty !missing) then begin
