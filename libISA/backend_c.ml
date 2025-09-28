@@ -1997,8 +1997,11 @@ let mk_ffi_config (decls : AST.declaration list) : (string list * AST.declaratio
  ****************************************************************)
 
 let get_rt_header (_ : unit) : string list =
-  let module Runtime = (val (!runtime) : RuntimeLib) in
+  let module Runtime = (val !runtime : RuntimeLib) in
   Runtime.file_header
+
+let runtime_header (fmt : PP.formatter) : unit =
+  List.iter (PP.fprintf fmt "%s\n") (get_rt_header ())
 
 (* the name of the pointer to a given struct *)
 let struct_ptr (s : string) : string = s ^ "_ptr"
@@ -2034,7 +2037,7 @@ let emit_c_source (filename : string) ?(index : int option) (includes : string l
   let code_suffix = if !is_cxx then ".cpp" else ".c" in
   let filename = filename ^ suffix index ^ code_suffix in
   Utils.to_file filename (fun fmt ->
-      List.iter (PP.fprintf fmt "%s\n") (get_rt_header ());
+      runtime_header fmt;
       List.iter (PP.fprintf fmt "#include \"%s\"\n") includes;
       f fmt
   )
@@ -2079,7 +2082,7 @@ let generate_files (num_c_files : int) (dirname : string) (basename : string)
 
   let basename_t = basename ^ "_types" in
   emit_c_header !is_cxx dirname basename_t (fun fmt ->
-      List.iter (PP.fprintf fmt "%s\n") (get_rt_header ());
+      runtime_header fmt;
       wrap_extern (not !is_cxx) fmt (fun fmt ->
           type_decls ds |> Isa_utils.topological_sort |> List.rev |> declarations fmt;
           Format.fprintf fmt "@,"
@@ -2099,12 +2102,12 @@ let generate_files (num_c_files : int) (dirname : string) (basename : string)
 
   let basename_e = basename ^ "_exceptions" in
   emit_c_header !is_cxx dirname basename_e (fun fmt ->
-      List.iter (PP.fprintf fmt "%s\n") (get_rt_header ());
+      runtime_header fmt;
       wrap_extern (not !is_cxx) fmt (fun fmt -> exceptions fmt ds)
   );
   let basename_v = basename ^ "_vars" in
   emit_c_header !is_cxx dirname basename_v (fun fmt ->
-      List.iter (PP.fprintf fmt "%s\n") (get_rt_header ());
+      runtime_header fmt;
       extern_declarations fmt !global_vars;
       List.iter (fun (s, ds) -> state_struct fmt s !ds) !struct_vars;
       List.iter
