@@ -8,7 +8,7 @@ begin
     return Std::Bits::Unsigned(x);
 end
 
-// XFORM-LABEL: function FUT.0{}(x : Bits(8)) -> __sint(9)
+// XFORM-LABEL: function FUT.0{}(x : Bits(8)) -> __sint(9){{$}}
 // XFORM-NEXT:  begin
 // XFORM-NEXT:      return Std::SInt::Resize.0{8, 9}(Std::SInt::Unsigned.0{8}(x), 9);
 // XFORM-NEXT:  end

@@ -9,7 +9,7 @@ begin
 end
 
 // still not what we want to see - look at 'let y ...'
-// XFORM:       function FUT.0{}(x : __sint(5)) -> __sint(5)
+// XFORM:       function FUT.0{}(x : __sint(5)) -> __sint(5){{$}}
 // XFORM-NEXT:  begin
 // XFORM-NEXT:      let y : __sint(5) := x;
 // XFORM-NEXT:      return y;

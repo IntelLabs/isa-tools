@@ -23,22 +23,22 @@ begin
     return x * y;
 end
 
-// XFORM-LABEL: function FUT4.0{}(x : __sint(4), y : __sint(4)) -> __sint(8)
+// XFORM-LABEL: function FUT4.0{}(x : __sint(4), y : __sint(4)) -> __sint(8){{$}}
 // XFORM-NEXT:  begin
 // XFORM-NEXT:      return Std::SInt::Multiply.0{8}(Std::SInt::Resize.0{4, 8}(x, 8), Std::SInt::Resize.0{4, 8}(y, 8));
 // XFORM-NEXT:  end
 
-// XFORM-LABEL: function FUT3.0{}(x : __sint(4), y : __sint(4)) -> __sint(8)
+// XFORM-LABEL: function FUT3.0{}(x : __sint(4), y : __sint(4)) -> __sint(8){{$}}
 // XFORM-NEXT:  begin
 // XFORM-NEXT:      return Std::SInt::Multiply.0{8}(Std::SInt::Resize.0{4, 8}(x, 8), Std::SInt::Resize.0{4, 8}(y, 8));
 // XFORM-NEXT:  end
 
-// XFORM-LABEL: function FUT2.0{}(x : __sint(3), y : __sint(4)) -> __sint(5)
+// XFORM-LABEL: function FUT2.0{}(x : __sint(3), y : __sint(4)) -> __sint(5){{$}}
 // XFORM-NEXT:  begin
 // XFORM-NEXT:      return Std::SInt::Resize.0{7, 5}(Std::SInt::Multiply.0{7}(Std::SInt::Resize.0{3, 7}(x, 7), Std::SInt::Resize.0{4, 7}(y, 7)), 5);
 // XFORM-NEXT:  end
 
-// XFORM-LABEL: function FUT1.0{}(x : __sint(2), y : __sint(3)) -> __sint(3)
+// XFORM-LABEL: function FUT1.0{}(x : __sint(2), y : __sint(3)) -> __sint(3){{$}}
 // XFORM-NEXT:  begin
 // XFORM-NEXT:      return Std::SInt::Resize.0{5, 3}(Std::SInt::Multiply.0{5}(Std::SInt::Resize.0{2, 5}(x, 5), Std::SInt::Resize.0{3, 5}(y, 5)), 3);
 // XFORM-NEXT:  end

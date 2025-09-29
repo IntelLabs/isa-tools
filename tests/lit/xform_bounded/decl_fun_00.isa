@@ -8,7 +8,7 @@ begin
     return x;
 end
 
-// XFORM-LABEL: function FUT.0{}(x : __sint(5)) -> __sint(5)
+// XFORM-LABEL: function FUT.0{}(x : __sint(5)) -> __sint(5){{$}}
 // XFORM-NEXT:  begin
 // XFORM-NEXT:      return x;
 // XFORM-NEXT:  end

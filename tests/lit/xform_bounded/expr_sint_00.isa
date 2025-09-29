@@ -8,7 +8,7 @@ begin
     return Std::Bits::Signed(x);
 end
 
-// XFORM-LABEL: function FUT.0{}(x : Bits(8)) -> __sint(8)
+// XFORM-LABEL: function FUT.0{}(x : Bits(8)) -> __sint(8){{$}}
 // XFORM-NEXT:  begin
 // XFORM-NEXT:      return Std::SInt::Signed.0{8}(x);
 // XFORM-NEXT:  end
