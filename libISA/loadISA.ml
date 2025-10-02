@@ -327,7 +327,7 @@ let read_expr (tcenv : TC.Env.t) (loc : Loc.t) (s : string) : AST.expr =
 
 let read_stmt (tcenv : TC.Env.t) (s : string) : AST.stmt list =
   let lexbuf = Lexing.from_string s in
-  let s = ASL_Parser.stmt_command_start ASL_Lexer.token lexbuf in
+  let s = ISA_Parser.stmt_command_start ISA_Lexer.token lexbuf in
   TC.tc_stmt tcenv s
 
 let read_stmts (tcenv : TC.Env.t) (s : string) : AST.stmt list =
