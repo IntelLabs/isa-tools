@@ -186,6 +186,7 @@ let relation :=
 
 let relational_operator :=
     | "==" ; { Binop_Eq }
+    | "=" ;  { raise (Parse_error_locn (Range($symbolstartpos, $endpos), "Use '==' instead of '=' for comparisons.")) }
     | "!=" ; { Binop_NtEq }
     | ">"  ; { Binop_Gt }
     | ">=" ; { Binop_GtEq }
