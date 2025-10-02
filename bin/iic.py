@@ -336,6 +336,7 @@ def mk_script(args, output_directory):
         return "\n".join(script)
 
     substitutions = {
+        'bounded_int': "",
         'command':     " ".join(sys.argv),
         'generate_c':  generate_c,
         'split_state': "",
@@ -365,8 +366,6 @@ def mk_script(args, output_directory):
         substitutions['auto_case_split'] = '--auto-case-split'
     if args.Obounded:
         substitutions['bounded_int'] = ':xform_bounded'
-    else:
-        substitutions['bounded_int'] = ''
     if args.backend in ["ac", "sc"]: substitutions['suppress_bitslice_xform'] = "--notransform"
 
     script = base_script.format(**substitutions)
