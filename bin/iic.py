@@ -584,7 +584,7 @@ def main() -> int:
         iii_cmd.append("--runtime-checks" if args.runtime_checks else "--no-runtime-checks")
         if args.Obounded: iii_cmd.append("--exec=:xform_bounded")
         iii_cmd.extend([
-            "--exec=let result = main();",
+            "--exec=let result := main();",
             "--exec=:quit",
         ])
         iii_cmd.extend(args.isa_files)
