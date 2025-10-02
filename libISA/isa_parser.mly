@@ -159,7 +159,7 @@ let expr :=
     | conditional_expression
     | e = expression ; "with" ; "{" ; changes = separated_nonempty_list(",", change) ; "}" ;
       { Expr_WithChanges(Isa_utils.type_unknown, e, changes) }
-    | "__let" ; v = ident ; ":" ; t = ty ; ":=" ; e = expr ; "__in" ; b = expr ; { Expr_Let(v, t, e, b) }
+    | "__let" ; v = ident ; ":" ; t = ty ; becomes ; e = expr ; "__in" ; b = expr ; { Expr_Let(v, t, e, b) }
     | "__assert" ; e1 = expr ; "__in" ; e2 = expr ; { Expr_Assert(e1, e2, Range($symbolstartpos, $endpos)) }
 
 let expression :=
@@ -386,12 +386,17 @@ let assignment_statement :=
         { Stmt_VarDeclsNoInit(v :: vs, t, Range($symbolstartpos, $endpos)) }
     | "var" ; v = ident ; ":" ; t = ty ; ";" ;
         { Stmt_VarDeclsNoInit([v], t, Range($symbolstartpos, $endpos)) }
-    | "var" ; dis = decl_item ; ":=" ; i = expr ; ";" ;
+    | "var" ; dis = decl_item ; becomes ; i = expr ; ";" ;
         { Stmt_VarDecl(false, dis, i, Range($symbolstartpos, $endpos)) }
-    | "let" ; dis = decl_item ; ":=" ; i = expr ; ";" ;
+    | "let" ; dis = decl_item ; becomes ; i = expr ; ";" ;
         { Stmt_VarDecl(true, dis, i, Range($symbolstartpos, $endpos)) }
-    | l = lexpr ; ":=" ; r = expr ; ";" ;
+    | l = lexpr ; becomes ; r = expr ; ";" ;
         { Stmt_Assign(l, r, Range($symbolstartpos, $endpos)) }
+
+(* This rule is just to give a better error message *)
+let becomes :=
+    | ":=" ; { () }
+    | "=" ;  { raise (Parse_error_locn (Range($symbolstartpos, $endpos), "Use ':=' instead of '=' for assignment.")) }
 
 let ty_opt :=
     | ":" ; ty = ty ; { Some ty }
@@ -464,7 +469,7 @@ let alt_cond :=
 
 let repetitive_statement :=
     | "for" ;
-      v = ident ; vt = ty_opt ; ":=" ;
+      v = ident ; vt = ty_opt ; becomes ;
       f = expr ; dir = direction ; t = expr ;
       "do" ;
       b = block ;
@@ -575,7 +580,7 @@ let function_header :=
 
     (* Write form *)
     | b = builtin ; "function" ; f = path ; throws=throws ;
-      formals = formals_opt ; ":=" ; value=ident ; ":" ; value_ty=ty ;
+      formals = formals_opt ; becomes ; value=ident ; ":" ; value_ty=ty ;
       { let (ps, args, is_getter_setter, array_syntax) = formals in
         let fty = { parameters=ps; args; setter_arg=Some(value,value_ty); rty=Isa_utils.type_unit; use_array_syntax=array_syntax; is_getter_setter=true; throws; is_builtin=b } in
         (f, fty)
@@ -594,8 +599,8 @@ let formals_with_default :=
       }
 
 let formal_with_default :=
-    | imp = option("implicit") ; v = ident ; ":" ; ty = ty ;                   { (Option.is_some imp, (v, ty, None)) }
-    | imp = option("implicit") ; v = ident ; ":" ; ty = ty ; ":=" ; d = expr ; { (Option.is_some imp, (v, ty, Some d)) }
+    | imp = option("implicit") ; v = ident ; ":" ; ty = ty ;                      { (Option.is_some imp, (v, ty, None)) }
+    | imp = option("implicit") ; v = ident ; ":" ; ty = ty ; becomes ; d = expr ; { (Option.is_some imp, (v, ty, Some d)) }
 
 let returntype_opt :=
     | "->" ; ty = ty ; { ty }
@@ -616,7 +621,7 @@ let parameter_value :=
 let variable_declaration :=
     | "var" ; v = path ; ":" ; ty = ty ; ";" ;
         { Decl_Var(v, ty, Range($symbolstartpos, $endpos)) }
-    | "let" ; v = path ; ty = ty_opt ; ":=" ; e = expr ; ";" ;
+    | "let" ; v = path ; ty = ty_opt ; becomes ; e = expr ; ";" ;
         { Decl_Const(v, ty, e, Range($symbolstartpos, $endpos)) }
 
 (****************************************************************
