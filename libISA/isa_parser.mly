@@ -431,24 +431,29 @@ let arg :=
     | v = ident ; "=>" ; e = expr ; { (Some v, e) }
     | e = expr ;                    { (None,   e) }
 
+(* This rule is just to give a better error message *)
+let semi :=
+    | ";" ; { () }
+    | { raise (Parse_error_locn (Range($symbolstartpos, $endpos), "Missing semicolon after end/endif/...")) }
+
 let compound_statement :=
     | conditional_statement
     | repetitive_statement
     | catch_statement
-    | "begin" ; b = block ; "end" ; ";" ; { Stmt_Block(b, Range($symbolstartpos, $endpos)) }
+    | "begin" ; b = block ; "end" ; semi ; { Stmt_Block(b, Range($symbolstartpos, $endpos)) }
 
 let conditional_statement :=
     | "if" ; c = expr ;
       "then" ; t = block ;
       els = s_elsif* ;
       f = optional_else ;
-      one_of("end", "endif") ; ";" ;
+      one_of("end", "endif") ; semi ;
       { let loc = Range($symbolstartpos, $endpos(t)) in
         Stmt_If((c, t, loc)::els, f, Range($symbolstartpos, $endpos)) }
     | "case" ; e = expr ; "of" ;
       alts = nonempty_list(alt) ;
       ob = otherwise? ;
-      one_of("end", "endcase") ; ";" ;
+      one_of("end", "endcase") ; semi ;
       { Stmt_Case(e, None, alts, ob, Range($symbolstartpos, $endpos)) }
 
 let s_elsif :=
@@ -474,11 +479,11 @@ let repetitive_statement :=
       f = expr ; dir = direction ; t = expr ;
       "do" ;
       b = block ;
-      one_of("end", "endfor") ; ";" ;
+      one_of("end", "endfor") ; semi ;
       { Stmt_For(v, Option.value vt ~default:(Type_Integer(None)), f, dir, t, b, Range($symbolstartpos, $endpos)) }
     | "while" ; c = expr ; "do" ;
       b = block ;
-      one_of("end", "endwhile") ; ";" ;
+      one_of("end", "endwhile") ; semi ;
       { Stmt_While(c, b, Range($symbolstartpos, $endpos)) }
     | "repeat" ; b = block ; "until" ; c = expr ; ";" ; pos = pos ;
       { Stmt_Repeat(b, c, pos, Range($symbolstartpos, $endpos)) }
@@ -492,7 +497,7 @@ let catch_statement :=
       "catch" ; pos = pos ;
       cs = catcher* ;
       ob = otherwise? ;
-      one_of("end", "endtry") ; ";" ;
+      one_of("end", "endtry") ; semi ;
       { Stmt_Try(b, pos, cs, ob, Range($symbolstartpos, $endpos)) }
 
 let catcher :=
