@@ -9,6 +9,7 @@
  (modules iii)
  (flags
   (-cclib -lstdc++ -linkall))
+ (link_flags (-ccopt -Wl,--rpath,\$ORIGIN/../lib))
  (libraries libISA linenoise))
 
 (install
