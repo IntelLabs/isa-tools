@@ -21,6 +21,6 @@ end
 
 // CHECK:               function F.0{}() -> Integer{{$}}
 // CHECK-NEXT:          begin
-// CHECK-NEXT{LITERAL}:     v_Write.0{{}}(0, 1);
+// CHECK-NEXT:              v_Write.0{}(0, 1);
 // CHECK-NEXT:              return v_Read.0{}(0);
 // CHECK-NEXT:          end
