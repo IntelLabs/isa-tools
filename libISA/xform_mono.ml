@@ -190,7 +190,8 @@ class monoClass
       collector#get_params
 
 
-    method mk_monomorphic_decl (genv : Eval.GlobalEnv.t) (instance : Instance.t) (d : AST.declaration) : AST.declaration option =
+    method mk_monomorphic_decl (genv : Eval.GlobalEnv.t) (instance : Instance.t)
+        (d : AST.declaration) : AST.declaration option =
       let (_, values) = instance in
       let nm = Instance.mk_monomorphic_name Loc.Unknown instance in
       let env = Xform_constprop.mkEnv genv values in
@@ -251,7 +252,9 @@ class monoClass
         None
       )
 
-    method monomorphize_fun (genv : Eval.GlobalEnv.t) (is_assignment : bool) (f : Ident.t) (ps : AST.expr list) (args : AST.expr list) : (Ident.t * AST.expr list) option =
+    method monomorphize_fun (genv : Eval.GlobalEnv.t) (is_assignment : bool)
+        (f : Ident.t) (ps : AST.expr list) (args : AST.expr list)
+        : (Ident.t * AST.expr list) option =
       let* instance = self#find_requested_instance is_assignment f ps args in
       let* d = IdentTable.find_opt decl_lookup_table f in
       if self#create_monomorphic_instance genv instance d then (
@@ -274,6 +277,18 @@ class monoClass
         None
       )
 
+    method monomorphize_fun_instance (genv : Eval.GlobalEnv.t)
+        (f : Ident.t) (ps : (Ident.t * Value.value option) list)
+        : Ident.t option =
+      let instance = (f, List.map (fun (p, v) -> (p, Option.get v)) ps) in
+      let* d = IdentTable.find_opt decl_lookup_table f in
+      if self#create_monomorphic_instance genv instance d then (
+        let nm' = Instance.mk_monomorphic_name Loc.Unknown instance in
+        Some nm'
+      ) else (
+        None
+      )
+
     method! vtype x =
       ( match x with
       | Type_Constructor (tc, es) ->
@@ -291,7 +306,8 @@ class monoClass
       | _ -> DoChildren
       )
 
-    method find_requested_instance (is_assignment : bool) (f : Ident.t) (ps : AST.expr list) (args : AST.expr list) : Instance.t option =
+    method find_requested_instance (is_assignment : bool) (f : Ident.t)
+        (ps : AST.expr list) (args : AST.expr list) : Instance.t option =
       let* f_requests = IdentTable.find_opt requests f in
       List.find_map (fun (p_request, a_request) ->
         (* When monomorphizing calls to assignment functions, we don't use the final argument *)
@@ -423,15 +439,24 @@ class monoClass
       (* Clear type info for each new declaration being processed *)
       self#clear_local_type_info ();
 
+      ( match d with
       (* If declaration is a function, add argument type info, then regardless
          of declaration process it *)
-      ( match d with
       | Decl_FunType (_, fty, _)
       | Decl_FunDefn (_, fty, _, _)
       ->
           List.iter (fun (i, ty, _) -> self#update_local_type_info i ty) fty.args;
           Option.iter (fun (i, ty) -> self#update_local_type_info i ty) fty.setter_arg;
           DoChildren
+      (* In foreign function declaration, replace imported/exported function
+         with monomorphized version *)
+      | Decl_FunFFI (nm, is_export, f, ps, loc) ->
+          (
+            let* f' = self#monomorphize_fun_instance genv f ps in
+            let d' = AST.Decl_FunFFI (nm, is_export, f', [], loc) in
+            Some (ChangeDoChildrenPost (d', Fun.id))
+          )
+          |> Option.value ~default:DoChildren
       | _ -> DoChildren
       )
 
@@ -486,7 +511,9 @@ let mk_implicit_request (d : AST.declaration) : (Ident.t * request) option =
 let mk_explicit_request (decl_lookup_table : AST.declaration IdentTable.t)
     (d : AST.declaration) : (Ident.t * request) option =
   let* (f, r) = ( match d with
-  | Decl_FunInstance (f, args, loc) ->
+  | Decl_FunFFI (_, _, f, args, loc)
+  | Decl_FunInstance (f, args, loc)
+    when List.length args > 0 ->
       let* d' = IdentTable.find_opt decl_lookup_table f in
       ( match d' with
       | Decl_FunType (f, fty, _)
