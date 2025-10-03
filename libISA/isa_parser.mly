@@ -674,7 +674,7 @@ let binop :=
 let ffi_definition :=
     | "foreign"; is_export=ffi_direction;
       "function"; nm = STRINGLIT; "="; f=path;
-      "with"; "{"; ps = separated_list(",", parameter_value);"}"; ";";
+      "with"; "{"; ps = separated_list(",", ffi_parameter_value);"}"; ";";
       { Decl_FunFFI(nm, is_export, f, ps, Range($symbolstartpos, $endpos)) }
     | "foreign"; is_export=ffi_direction;
       "var"; nm=STRINGLIT; "="; v=path; ";";
@@ -682,6 +682,9 @@ let ffi_definition :=
     | "foreign"; is_export=ffi_direction;
       "type"; nm=STRINGLIT; "="; t=ty; ";";
       { Decl_TypeFFI(nm, is_export, t, Range($symbolstartpos, $endpos)) }
+
+let ffi_parameter_value :=
+    | p = ident ; "=>" ; v = literal_expression ; { (p, Some v) }
 
 let ffi_direction :=
     | "import" ; { false }
