@@ -9,19 +9,19 @@ begin
     throw E;
 end
 
-function FUT!() -> Integer
+function FUT!()
 begin
     Always_Throw!();
-    return 0;
+    FUT!();
 end
 
-// CHECK:       function FUT.0!{}() -> Integer
+// CHECK:       function FUT.0!{}()
 // CHECK:       begin
 // CHECK-NEXT:      Always_Throw.0!{}();
 // CHECK-NEXT:  end
 
 function main() -> Integer
 begin
-    Std::Print::Integer::Dec(FUT!());
+    FUT!();
     return 0;
 end
