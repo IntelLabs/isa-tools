@@ -462,8 +462,7 @@ let mk_implicit_request (d : AST.declaration) : (Ident.t * request) option =
   | Decl_FunDefn (f, fty, _, _)
     when not fty.is_builtin && not (Utils.is_empty fty.parameters)
     ->
-      let required = List.map fst fty.parameters in
-      let ps = List.map (fun (x, _) -> (x, Ident.in_list x required, None)) fty.parameters in
+      let ps = List.map (fun (x, _) -> (x, true, None)) fty.parameters in
       let formals = List.map (fun (x, _, _) -> (x, false, None)) fty.args in
       Some (f, (ps, formals))
   | _ ->
