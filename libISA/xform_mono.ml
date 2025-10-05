@@ -295,7 +295,10 @@ class monoClass
       let* (p_request, a_request) = IdentTable.find_opt requests f in
       (* When monomorphizing calls to assignment functions, we don't use the final argument *)
       let a_request' = if is_assignment then Utils.init a_request else a_request in
-      (* Format.printf "Monomorphizing %a %d %d %d %d\n" Ident.pp f (List.length args) (List.length a_request') (List.length ps) (List.length p_request); *)
+      if !verbose then
+        Format.printf "Monomorphizing %a %d %d %d %d\n" Ident.pp f
+          (List.length args) (List.length a_request')
+          (List.length ps) (List.length p_request);
       assert (List.length args == List.length a_request');
       assert (List.length ps == List.length p_request);
       let matches = ref [] in (* accumulate matching args *)
@@ -312,7 +315,9 @@ class monoClass
           (p_request @ a_request')
           (ps @ args)
       in
-      (* Format.printf "Matching against %a%a = %a\n" Ident.pp f ppRequest (p_request, a_request) Format.pp_print_bool is_match; *)
+      if !verbose then
+        Format.printf "Matching against %a%a = %a\n" Ident.pp f
+          ppRequest (p_request, a_request) Format.pp_print_bool is_match;
       if is_match && not (Utils.is_empty !matches) then
           Some (f, List.rev !matches)
       else
