@@ -125,7 +125,7 @@ class monoClass
     (genv : Eval.GlobalEnv.t)
     (global_type_info : AST.ty Bindings.t)
     (decl_lookup_table : AST.declaration IdentTable.t)
-    (requests : request IdentTable.t)
+    (requests : request list IdentTable.t)
     (ds : AST.declaration list) =
   object (self)
     inherit nopIsaVisitor
@@ -292,36 +292,38 @@ class monoClass
       )
 
     method find_requested_instance (is_assignment : bool) (f : Ident.t) (ps : AST.expr list) (args : AST.expr list) : Instance.t option =
-      let* (p_request, a_request) = IdentTable.find_opt requests f in
-      (* When monomorphizing calls to assignment functions, we don't use the final argument *)
-      let a_request' = if is_assignment then Utils.init a_request else a_request in
-      if !verbose then
-        Format.printf "Monomorphizing %a %d %d %d %d\n" Ident.pp f
-          (List.length args) (List.length a_request')
-          (List.length ps) (List.length p_request);
-      assert (List.length args == List.length a_request');
-      assert (List.length ps == List.length p_request);
-      let matches = ref [] in (* accumulate matching args *)
-      let is_match = List.for_all2 (fun (var, required, ov) arg ->
-          if required then
-              ( match (ov, const_expr arg) with
-              | (Some expected_v, Some v) when Value.eq_value expected_v v -> matches := (var, v) :: !matches; true
-              | (None, Some v) -> matches := (var, v) :: !matches; true
-              | (_, _) -> false
-              )
-          else
-              true
-          )
-          (p_request @ a_request')
-          (ps @ args)
-      in
-      if !verbose then
-        Format.printf "Matching against %a%a = %a\n" Ident.pp f
-          ppRequest (p_request, a_request) Format.pp_print_bool is_match;
-      if is_match && not (Utils.is_empty !matches) then
-          Some (f, List.rev !matches)
-      else
-          None
+      let* f_requests = IdentTable.find_opt requests f in
+      List.find_map (fun (p_request, a_request) ->
+        (* When monomorphizing calls to assignment functions, we don't use the final argument *)
+        let a_request' = if is_assignment then Utils.init a_request else a_request in
+        if !verbose then
+          Format.printf "Monomorphizing %a %d %d %d %d\n" Ident.pp f
+            (List.length args) (List.length a_request')
+            (List.length ps) (List.length p_request);
+        assert (List.length args == List.length a_request');
+        assert (List.length ps == List.length p_request);
+        let matches = ref [] in (* accumulate matching args *)
+        let is_match = List.for_all2 (fun (var, required, ov) arg ->
+            if required then
+                ( match (ov, const_expr arg) with
+                | (Some expected_v, Some v) when Value.eq_value expected_v v -> matches := (var, v) :: !matches; true
+                | (None, Some v) -> matches := (var, v) :: !matches; true
+                | (_, _) -> false
+                )
+            else
+                true
+            )
+            (p_request @ a_request')
+            (ps @ args)
+        in
+        if !verbose then
+          Format.printf "Matching against %a%a = %a\n" Ident.pp f
+            ppRequest (p_request, a_request) Format.pp_print_bool is_match;
+        if is_match && not (Utils.is_empty !matches) then
+            Some (f, List.rev !matches)
+        else
+            None
+      ) f_requests
 
     method! vexpr x =
       ( match x with
@@ -479,7 +481,7 @@ let mk_implicit_request (d : AST.declaration) : (Ident.t * request) option =
 
 
 (* Transform a function instantiation declaration into a request (i.e., a more convenient
- * representation of the request
+ * representation of the request)
  *)
 let mk_explicit_request (decl_lookup_table : AST.declaration IdentTable.t)
     (d : AST.declaration) : (Ident.t * request) option =
@@ -513,6 +515,15 @@ let mk_explicit_request (decl_lookup_table : AST.declaration IdentTable.t)
     Format.printf "Explicit request %a%a\n" Ident.pp f ppRequest r;
   Some (f, r)
 
+let extend_with (t : request list IdentTable.t)
+    (requests : (Ident.t * request) Seq.t) : unit =
+  let replace (f, r) =
+    IdentTable.find_opt t f
+    |> (function Some rs -> r :: rs | None -> [ r ])
+    |> IdentTable.replace t f
+  in
+  Seq.iter replace requests
+
 let monomorphize (ds : AST.declaration list) : AST.declaration list =
   Eval.trace_exceptions := false;
   let genv = Eval.build_constant_environment ds in
@@ -525,7 +536,8 @@ let monomorphize (ds : AST.declaration list) : AST.declaration list =
   in
   let implicit_requests = Seq.filter_map mk_implicit_request (List.to_seq ds) in
   let explicit_requests = Seq.filter_map (mk_explicit_request decl_lookup_table) (List.to_seq ds) in
-  let requests = IdentTable.of_seq (Seq.append implicit_requests explicit_requests) in
+  let requests = IdentTable.of_seq (Seq.map (fun (f, r) -> f, [r]) implicit_requests) in
+  let () = extend_with requests explicit_requests in
   let mono = new monoClass genv global_type_info decl_lookup_table requests ds in
   let ds' = List.map (visit_decl (mono :> isaVisitor)) ds in
   let instances = mono#getInstances in
