@@ -1,10 +1,11 @@
-// RUN: %aslrun %s --transform-foreign --import=Helper --extra-c=%S/ffi_export_03.c | filecheck %s
+// RUN: %aslrun %s --transform-foreign --extra-c=%S/ffi_export_03.c | filecheck %s
 // Copyright (C) 2025-2025 Intel Corporation
 
 // UNSUPPORTED: interpreter
 
 // Helper function imported from C
 function Helper() -> ();
+foreign import function "Helper" = Helper with {};
 
 var v : array [1] of Integer;
 

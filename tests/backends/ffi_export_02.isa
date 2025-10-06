@@ -1,4 +1,4 @@
-// RUN: %aslrun %s --transform-foreign --import=Helper --extra-c=%S/ffi_export_02.c | filecheck %s
+// RUN: %aslrun %s --transform-foreign --extra-c=%S/ffi_export_02.c | filecheck %s
 // Copyright (C) 2025-2025 Intel Corporation
 
 // UNSUPPORTED: interpreter
@@ -9,6 +9,7 @@
 
 // Helper function imported from C
 function Helper() -> ();
+foreign import function "Helper" = Helper with {};
 
 var v : Integer;
 
@@ -20,5 +21,6 @@ begin
     Helper();
     Std::Print::Integer::Dec(v); Print("\n");
     // CHECK: 2
+
     return 0;
 end
