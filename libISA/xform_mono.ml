@@ -458,7 +458,7 @@ let generate_prototype (x : AST.declaration) : AST.declaration option =
  * a function with respect to the function type parameters.
  *)
 let mk_implicit_request (d : AST.declaration) : (Ident.t * request) option =
-  ( match d with
+  let* (f, r) = ( match d with
   (* Function width parameters are treated as implicit requests to monomorphize a function.
    * Note that these can be overridden by explicit requests that might add
    * additional arguments.
@@ -472,13 +472,18 @@ let mk_implicit_request (d : AST.declaration) : (Ident.t * request) option =
       Some (f, (ps, formals))
   | _ ->
       None
-  )
+  ) in
+  if !verbose then
+    Format.printf "Implicit request %a%a\n" Ident.pp f ppRequest r;
+  Some (f, r)
+
 
 (* Transform a function instantiation declaration into a request (i.e., a more convenient
  * representation of the request
  *)
-let mk_explicit_request (decl_lookup_table : AST.declaration IdentTable.t) (d : AST.declaration) : (Ident.t * request) option =
-  ( match d with
+let mk_explicit_request (decl_lookup_table : AST.declaration IdentTable.t)
+    (d : AST.declaration) : (Ident.t * request) option =
+  let* (f, r) = ( match d with
   | Decl_FunInstance (f, args, loc) ->
       let* d' = IdentTable.find_opt decl_lookup_table f in
       ( match d' with
@@ -503,7 +508,10 @@ let mk_explicit_request (decl_lookup_table : AST.declaration IdentTable.t) (d : 
       )
   | _ ->
       None
-  )
+  ) in
+  if !verbose then
+    Format.printf "Explicit request %a%a\n" Ident.pp f ppRequest r;
+  Some (f, r)
 
 let monomorphize (ds : AST.declaration list) : AST.declaration list =
   Eval.trace_exceptions := false;
