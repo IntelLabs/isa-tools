@@ -684,7 +684,7 @@ let ffi_definition :=
       { Decl_TypeFFI(nm, is_export, t, Range($symbolstartpos, $endpos)) }
 
 let ffi_parameter_value :=
-    | p = ident ; "=>" ; v = literal_expression ; { (p, Some v) }
+    | p = ident ; "=>" ; v = literal_expression ; { (p, v) }
 
 let ffi_direction :=
     | "import" ; { false }

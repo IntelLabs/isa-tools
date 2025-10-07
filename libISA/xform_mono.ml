@@ -278,9 +278,9 @@ class monoClass
       )
 
     method monomorphize_fun_instance (genv : Eval.GlobalEnv.t)
-        (f : Ident.t) (ps : (Ident.t * Value.value option) list)
+        (f : Ident.t) (ps : (Ident.t * Value.value) list)
         : Ident.t option =
-      let instance = (f, List.map (fun (p, v) -> (p, Option.get v)) ps) in
+      let instance = (f, ps) in
       let* d = IdentTable.find_opt decl_lookup_table f in
       if self#create_monomorphic_instance genv instance d then (
         let nm' = Instance.mk_monomorphic_name Loc.Unknown instance in
@@ -510,31 +510,34 @@ let mk_implicit_request (d : AST.declaration) : (Ident.t * request) option =
  *)
 let mk_explicit_request (decl_lookup_table : AST.declaration IdentTable.t)
     (d : AST.declaration) : (Ident.t * request) option =
+  let mk_request f args =
+    let* d' = IdentTable.find_opt decl_lookup_table f in
+    ( match d' with
+    | Decl_FunType (f, fty, _) | Decl_FunDefn (f, fty, _, _) ->
+        let mk_arg_request ignore arg : (Ident.t * bool * Value.value option) =
+          if List.mem arg ignore then
+            (arg, false, None)
+          else
+            ( match List.assoc_opt arg args with
+            | None -> (arg, false, None)
+            | Some ov -> (arg, true, ov)
+            )
+        in
+        let p_names = List.map fst fty.parameters in
+        let ps = List.map (mk_arg_request []) p_names in
+        let formals =
+          List.map (fun (x, _, _) -> mk_arg_request p_names x) fty.args
+        in
+        Some (f, (ps, formals))
+    | _ ->
+        None
+    )
+  in
   let* (f, r) = ( match d with
-  | Decl_FunFFI (_, _, f, args, loc)
-  | Decl_FunInstance (f, args, loc)
-    when List.length args > 0 ->
-      let* d' = IdentTable.find_opt decl_lookup_table f in
-      ( match d' with
-      | Decl_FunType (f, fty, _)
-      | Decl_FunDefn (f, fty, _, _)
-        ->
-          let mk_arg_request ignore arg : (Ident.t * bool * Value.value option) =
-              if List.mem arg ignore then
-                (arg, false, None)
-              else
-                ( match List.assoc_opt arg args with
-                | None -> (arg, false, None)
-                | Some ov -> (arg, true, ov)
-                )
-          in
-          let p_names = List.map fst fty.parameters in
-          let ps = List.map (mk_arg_request []) p_names in
-          let formals = List.map (fun (x, _, _) -> mk_arg_request p_names x) fty.args in
-          Some (f, (ps, formals))
-      | _ ->
-          None
-      )
+  | Decl_FunFFI (_, _, f, ps, loc) when List.length ps > 0 ->
+      mk_request f (List.map (fun (p, v) -> (p, Some v)) ps)
+  | Decl_FunInstance (f, ps, loc) when List.length ps > 0 ->
+      mk_request f ps
   | _ ->
       None
   ) in

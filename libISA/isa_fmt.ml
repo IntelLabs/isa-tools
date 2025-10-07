@@ -900,11 +900,9 @@ let declaration ?(short=false) (fmt : PP.formatter) (x : AST.declaration) : unit
             nm
             funname f
             kw_with
-            (fun fmt -> commasep fmt (fun (p, sz) ->
-              ( match sz with
-              | None -> Format.fprintf fmt "%a => _" varname p
-              | Some v -> Format.fprintf fmt "%a => %a" varname p Value.pp_value v
-              ))) ps
+            (fun fmt -> commasep fmt (fun (p, v) ->
+              Format.fprintf fmt "%a => %a" varname p Value.pp_value v
+              )) ps
       | Decl_VarFFI (nm, is_export, v, loc) ->
           Format.fprintf fmt "%t %a %t \"%s\" = %a;"
             kw_foreign
