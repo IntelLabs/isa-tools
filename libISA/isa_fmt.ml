@@ -740,7 +740,7 @@ let parameters (fmt : PP.formatter) (xs : (Ident.t * AST.ty option) list) :
 let formal (fmt : PP.formatter) (x : Ident.t * AST.ty * AST.expr option) : unit =
   let (v, t, od) = x in
   varty fmt v t;
-  Option.iter (expr fmt) od
+  Option.iter (Format.fprintf fmt " %t %a" colon_eq expr) od
 
 let formals (fmt : PP.formatter) (xs : (Ident.t * AST.ty * AST.expr option) list) : unit =
   commasep fmt (formal fmt) xs
