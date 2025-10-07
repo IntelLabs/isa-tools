@@ -228,6 +228,16 @@ ASL_zero_extend_bits(N, N, int width, ASL_BITS_TYPE x, ASL_int_t n)
 #include "set_slice_template_c.h"
 #undef M
 
+#define M 2048
+#include "sign_extend_bits_template_c.h"
+#include "set_slice_template_c.h"
+#undef M
+
+#define M 4096
+#include "sign_extend_bits_template_c.h"
+#include "set_slice_template_c.h"
+#undef M
+
 #undef ASL_BITS_LIMBS_64
 #undef ASL_BITS_LIMBS_32
 #undef ASL_BITS_TYPE

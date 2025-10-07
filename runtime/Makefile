@@ -22,7 +22,9 @@ CPPFLAGS = -Iinclude
 CFLAGS = -g -Wall -Werror -Wconversion -std=c99 -fPIC
 OBJEXT ?= o
 
-C_FILES = bits1024.c \
+C_FILES = bits4096.c \
+          bits2048.c \
+          bits1024.c \
           bits128.c \
           bits256.c \
           bits512.c \

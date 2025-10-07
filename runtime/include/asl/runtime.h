@@ -46,6 +46,8 @@ typedef uint64_t ASL_bits32_t;
 #include "asl/bits256.h"
 #include "asl/bits512.h"
 #include "asl/bits1024.h"
+#include "asl/bits2048.h"
+#include "asl/bits4096.h"
 #include "asl/integer.h"
 #include "asl/print.h"
 
