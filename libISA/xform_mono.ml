@@ -235,7 +235,9 @@ class monoClass
         )
       )
 
-    method monomorphize_type (genv : Eval.GlobalEnv.t) (d : AST.declaration) (szs : Value.value list) : Ident.t option =
+    method monomorphize_type (genv : Eval.GlobalEnv.t) (tc : Ident.t)
+        (szs : Value.value list) : Ident.t option =
+      let* d = IdentTable.find_opt decl_lookup_table tc in
       let (tc, tvs) =
         ( match d with
         | Decl_Typedef (tc, ps, _, _) -> (tc, ps)
@@ -296,8 +298,8 @@ class monoClass
           | Some [] -> DoChildren
           | Some sizes ->
               Option.value
-                (let* d = IdentTable.find_opt decl_lookup_table tc in
-                 let* tc' = self#monomorphize_type genv d sizes in
+                (
+                 let* tc' = self#monomorphize_type genv tc sizes in
                  Some (ChangeDoChildrenPost (AST.Type_Constructor (tc', []), Fun.id))
                 )
                 ~default:DoChildren
@@ -348,8 +350,8 @@ class monoClass
           | Some [] -> DoChildren
           | Some sizes ->
               Option.value
-                ( let* d = IdentTable.find_opt decl_lookup_table tc in
-                  let* tc' = self#monomorphize_type genv d sizes in
+                (
+                  let* tc' = self#monomorphize_type genv tc sizes in
                   Some (ChangeDoChildrenPost (AST.Expr_Record (tc', [], fs), Fun.id))
                 )
                 ~default:DoChildren
