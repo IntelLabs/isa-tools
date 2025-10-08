@@ -16,14 +16,21 @@
  ****************************************************************)
 
 module AST = Isa_ast
+module FMT = Isa_fmt
 open Isa_utils
 open Identset
 
-let getFunReturnType (d : AST.declaration) : AST.ty =
-  ( match d with
-  | Decl_FunDefn (f, fty, body, loc) -> fty.rty
-  | _ -> raise (Utils.InternalError (Loc.Unknown, "function definition expected", (fun fmt -> Isa_fmt.declaration fmt d), __LOC__))
-  )
+let getFunReturnType (ds : AST.declaration list) : AST.ty =
+  let rty = List.find_map
+    (function
+     | AST.Decl_FunDefn (f, fty, body, loc) -> Some fty.rty
+     | _ -> None
+    ) ds
+  in
+  match rty with
+  | Some rty -> rty
+  | None -> raise (Utils.InternalError
+      (Loc.Unknown, "function definition expected", (fun fmt -> FMT.declarations fmt ds), __LOC__))
 
 let rmwVariables = new Isa_utils.nameSupply "__rmw"
 
@@ -33,10 +40,18 @@ class replaceClass (ds : AST.declaration list) =
     val mutable le_vars : (AST.lexpr * Ident.t) list = []
 
     val decl_lookup_table =
+      let table : AST.declaration list IdentTable.t = IdentTable.create 16 in
       ds
-      |> List.to_seq
-      |> Seq.filter_map monomorphizable_fun_decl_to_ident_and_decl
-      |> IdentTable.of_seq
+      |> List.filter_map monomorphizable_fun_decl_to_ident_and_decl
+      |> List.iter (fun (f, d) ->
+           let updated =
+             match IdentTable.find_opt table f with
+             | Some ds -> d :: ds
+             | None -> [ d ]
+           in
+           IdentTable.replace table f (List.rev updated)
+         );
+      table
 
     method! vlexpr e =
       match e with
@@ -56,8 +71,8 @@ class replaceClass (ds : AST.declaration list) =
             let wrap_stmts (ss : AST.stmt list) = function
               | AST.LExpr_ReadWrite (f, g, tes, es, throws), v ->
                   let e = AST.Expr_TApply (f, tes, es, throws) in
-                  let fd = Option.get (IdentTable.find_opt decl_lookup_table f) in
-                  let rty = getFunReturnType fd in
+                  let fds = Option.get (IdentTable.find_opt decl_lookup_table f) in
+                  let rty = getFunReturnType fds in
                   let r = AST.Stmt_VarDecl (false, AST.DeclItem_Var (v, Some rty), e, loc) in
                   let w = AST.Stmt_TCall (g, tes, es @ [ Expr_Var v ], throws, loc) in
                   [ r ] @ ss @ [ w ]

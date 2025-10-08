@@ -125,12 +125,12 @@ class monoClass
     (genv : Eval.GlobalEnv.t)
     (global_type_info : AST.ty Bindings.t)
     (type_decl_lookup_table : AST.declaration IdentTable.t)
-    (fun_decl_lookup_table : AST.declaration IdentTable.t)
+    (fun_decl_lookup_table : AST.declaration list IdentTable.t)
     (requests : request list IdentTable.t)
     (ds : AST.declaration list) =
   object (self)
     inherit nopIsaVisitor
-    val mutable instances : AST.declaration Instances.t = Instances.empty
+    val mutable instances : AST.declaration list Instances.t = Instances.empty
 
     val mutable local_type_info : AST.ty Bindings.t = Bindings.empty
 
@@ -219,17 +219,41 @@ class monoClass
           let d' = AST.Decl_FunDefn (nm, fty', body', loc) in
           let d' = visit_decl (self :> isaVisitor) d' in
           Some d'
+      | Decl_FunType (_, fty, loc) ->
+          let rty' = Xform_constprop.xform_ty env fty.rty in
+          let pnames = List.map fst values in
+          let atys' = List.filter (fun (v, _, _) -> not (List.mem v pnames)) fty.args
+                   |> List.map (fun (v, ty, od) -> (v, Xform_constprop.xform_ty env ty, Option.map (Xform_constprop.xform_expr env) od))
+          in
+          let setter_arg' = Option.map (fun (v, t) -> (v, Xform_constprop.xform_ty env t)) fty.setter_arg in
+          let fty' = { fty with parameters=[]; args=atys'; rty=rty'; setter_arg=setter_arg' } in
+          let d' = AST.Decl_FunType (nm, fty', loc) in
+          let d' = visit_decl (self :> isaVisitor) d' in
+          Some d'
       | _ ->
           None
       )
 
-    method create_monomorphic_instance (genv : Eval.GlobalEnv.t) (instance : Instance.t) (d : AST.declaration) : bool =
+    method mk_monomorphic_decls (genv : Eval.GlobalEnv.t) (instance : Instance.t)
+        (ds : AST.declaration list) : AST.declaration list option =
+          assert (List.length ds > 0);
+          let rec aux ds acc =
+            match ds with
+            | d :: ds' ->
+                let* d' = self#mk_monomorphic_decl genv instance d in
+                aux ds' (d' :: acc)
+            | [] -> Some (List.rev acc)
+          in
+          aux ds []
+
+    method create_monomorphic_instance (genv : Eval.GlobalEnv.t)
+        (instance : Instance.t) (ds : AST.declaration list) : bool =
       if Instances.mem instance instances then (
         true
       ) else (
-        ( match self#mk_monomorphic_decl genv instance d with
-        | Some d' ->
-          instances <- Instances.add instance d' instances;
+        ( match self#mk_monomorphic_decls genv instance ds with
+        | Some ds' ->
+          instances <- Instances.add instance ds' instances;
           true
         | None ->
           false
@@ -248,7 +272,7 @@ class monoClass
       in
       assert (List.length tvs == List.length szs);
       let instance = (tc, List.combine tvs szs) in
-      if self#create_monomorphic_instance genv instance d then (
+      if self#create_monomorphic_instance genv instance [ d ] then (
         let nm' = Instance.mk_monomorphic_name Loc.Unknown instance in
         Some nm'
       ) else (
@@ -259,12 +283,13 @@ class monoClass
         (f : Ident.t) (ps : AST.expr list) (args : AST.expr list)
         : (Ident.t * AST.expr list) option =
       let* instance = self#find_requested_instance is_assignment f ps args in
-      let* d = IdentTable.find_opt fun_decl_lookup_table f in
-      if self#create_monomorphic_instance genv instance d then (
+      let* ds = IdentTable.find_opt fun_decl_lookup_table f in
+      if self#create_monomorphic_instance genv instance ds then (
         let nm' = Instance.mk_monomorphic_name Loc.Unknown instance in
         let args' =
-            ( match d with
-            | Decl_FunDefn (f, fty, _, _) ->
+            ( match ds with
+            | Decl_FunDefn (f, fty, _, _) :: _
+            | Decl_FunType (f, fty, _) :: _ ->
                let tvs = List.map fst (snd instance) in
                let arg_names = List.map (fun (x, _, _) -> x) fty.args in
                let args' : AST.expr list = Utils.filter_map2
@@ -280,12 +305,12 @@ class monoClass
         None
       )
 
-    method monomorphize_fun_instance (genv : Eval.GlobalEnv.t)
+    method monomorphize_foreign_fun (genv : Eval.GlobalEnv.t)
         (f : Ident.t) (ps : (Ident.t * Value.value) list)
         : Ident.t option =
       let instance = (f, ps) in
-      let* d = IdentTable.find_opt fun_decl_lookup_table f in
-      if self#create_monomorphic_instance genv instance d then (
+      let* ds = IdentTable.find_opt fun_decl_lookup_table f in
+      if self#create_monomorphic_instance genv instance ds then (
         let nm' = Instance.mk_monomorphic_name Loc.Unknown instance in
         Some nm'
       ) else (
@@ -455,7 +480,7 @@ class monoClass
          with monomorphized version *)
       | Decl_FunFFI (nm, is_export, f, ps, loc) when List.length ps > 0 ->
           (
-            let* f' = self#monomorphize_fun_instance genv f ps in
+            let* f' = self#monomorphize_foreign_fun genv f ps in
             let d' = AST.Decl_FunFFI (nm, is_export, f', [], loc) in
             Some (ChangeDoChildrenPost (d', Fun.id))
           )
@@ -477,13 +502,6 @@ let build_global_type_info (ds : AST.declaration list) =
   in
   List.fold_left add_type_info Bindings.empty ds
 
-(* Generate a function prototype from a function definition *)
-let generate_prototype (x : AST.declaration) : AST.declaration option =
-  ( match x with
-  | Decl_FunDefn (qid, fty, _, loc) -> Some (Decl_FunType (qid, fty, loc))
-  | _ -> None
-  )
-
 (* Transform a function declaration into an implicit request to monomorphize
  * a function with respect to the function type parameters.
  *)
@@ -493,8 +511,8 @@ let mk_implicit_request (d : AST.declaration) : (Ident.t * request) option =
    * Note that these can be overridden by explicit requests that might add
    * additional arguments.
    *)
+  (* Ignoring Decl_FunDefn since it must be accompanied by Decl_FunType *)
   | Decl_FunType (f, fty, _)
-  | Decl_FunDefn (f, fty, _, _)
     when not fty.is_builtin && not (Utils.is_empty fty.parameters)
     ->
       let ps = List.map (fun (x, _) -> (x, true, None)) fty.parameters in
@@ -511,30 +529,31 @@ let mk_implicit_request (d : AST.declaration) : (Ident.t * request) option =
 (* Transform a function instantiation declaration into a request (i.e., a more convenient
  * representation of the request)
  *)
-let mk_explicit_request (decl_lookup_table : AST.declaration IdentTable.t)
+let mk_explicit_request (decl_lookup_table : AST.declaration list IdentTable.t)
     (d : AST.declaration) : (Ident.t * request) option =
   let mk_request f args =
-    let* d' = IdentTable.find_opt decl_lookup_table f in
-    ( match d' with
-    | Decl_FunType (f, fty, _) | Decl_FunDefn (f, fty, _, _) ->
-        let mk_arg_request ignore arg : (Ident.t * bool * Value.value option) =
-          if List.mem arg ignore then
-            (arg, false, None)
-          else
-            ( match List.assoc_opt arg args with
-            | None -> (arg, false, None)
-            | Some ov -> (arg, true, ov)
-            )
-        in
-        let p_names = List.map fst fty.parameters in
-        let ps = List.map (mk_arg_request []) p_names in
-        let formals =
-          List.map (fun (x, _, _) -> mk_arg_request p_names x) fty.args
-        in
-        Some (f, (ps, formals))
-    | _ ->
-        None
-    )
+    let* ds = IdentTable.find_opt decl_lookup_table f in
+    List.find_map (function
+      (* Ignoring Decl_FunDefn since it must be accompanied by Decl_FunType *)
+      | AST.Decl_FunType (f, fty, _) when not fty.is_builtin ->
+          let mk_arg_request ignore arg : (Ident.t * bool * Value.value option) =
+            if List.mem arg ignore then
+              (arg, false, None)
+            else
+              ( match List.assoc_opt arg args with
+              | None -> (arg, false, None)
+              | Some ov -> (arg, true, ov)
+              )
+          in
+          let p_names = List.map fst fty.parameters in
+          let ps = List.map (mk_arg_request []) p_names in
+          let formals =
+            List.map (fun (x, _, _) -> mk_arg_request p_names x) fty.args
+          in
+          Some (f, (ps, formals))
+      | _ ->
+          None
+    ) ds
   in
   let* (f, r) = ( match d with
   | Decl_FunFFI (_, _, f, ps, loc) when List.length ps > 0 ->
@@ -568,10 +587,18 @@ let monomorphize (ds : AST.declaration list) : AST.declaration list =
     |> IdentTable.of_seq
   in
   let fun_decl_lookup_table =
+    let table : AST.declaration list IdentTable.t = IdentTable.create 16 in
     ds
-    |> List.to_seq
-    |> Seq.filter_map monomorphizable_fun_decl_to_ident_and_decl
-    |> IdentTable.of_seq
+    |> List.filter_map monomorphizable_fun_decl_to_ident_and_decl
+    |> List.iter (fun (f, d) ->
+         let updated =
+           match IdentTable.find_opt table f with
+           | Some ds -> d :: ds
+           | None -> [ d ]
+         in
+         IdentTable.replace table f (List.rev updated)
+       );
+    table
   in
   let implicit_requests = Seq.filter_map mk_implicit_request (List.to_seq ds) in
   let explicit_requests = Seq.filter_map (mk_explicit_request fun_decl_lookup_table) (List.to_seq ds) in
@@ -582,10 +609,9 @@ let monomorphize (ds : AST.declaration list) : AST.declaration list =
       genv global_type_info type_decl_lookup_table fun_decl_lookup_table requests ds
   in
   let ds' = List.map (visit_decl (mono :> isaVisitor)) ds in
-  let instances = mono#getInstances in
-  let protos = List.filter_map generate_prototype instances in
+  let instances = List.concat mono#getInstances in
   Eval.trace_exceptions := true;
-  ds' @ protos @ instances
+  ds' @ instances
 
 (****************************************************************
  * Command: :xform_monomorphize

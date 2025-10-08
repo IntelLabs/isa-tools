@@ -532,6 +532,7 @@ let monomorphizable_type_decl_name (d : AST.declaration) : Ident.t option =
 let monomorphizable_fun_decl_name (d : AST.declaration) : Ident.t option =
   ( match d with
   | Decl_FunDefn (f, fty, b, loc) -> Some f
+  | Decl_FunType (f, fty, loc) -> Some f
   | _ -> None
   )
 

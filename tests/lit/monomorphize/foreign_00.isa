@@ -6,11 +6,7 @@ begin
     return n + m;
 end
 
-// TODO imported function, hence function definition should not be needed
-function F2(n : Integer, m : Integer) -> Integer
-begin
-    return n + m;
-end
+function F2(n : Integer, m : Integer) -> Integer;
 
 function F3(x : Bits(n), m : Integer)
 begin
@@ -31,10 +27,7 @@ foreign import function "F3_2_8" = F3 with {n => 2, m => 8};
 // CHECK-NEXT:     return n + 8;
 // CHECK-NEXT: end
 
-// CHECK:      function F2_m_8.0{}(n : Integer) -> Integer{{$}}
-// CHECK-NEXT: begin
-// CHECK-NEXT:     return n + 8;
-// CHECK-NEXT: end
+// CHECK:      function F2_m_8.0{}(n : Integer) -> Integer;{{$}}
 
 // CHECK:      function F3_n_2_m_8.0{}(x : Bits(2)) -> (){{$}}
 // CHECK-NEXT: begin
