@@ -141,7 +141,32 @@ begin
     return "HexStr is deprecated: use print functions instead";
 end
 
+function deprecated_boolean_string_append(x : Boolean, y : String) -> String
+begin
+    return "String append is deprecated: use print functions instead";
+end
+
 function deprecated_string_boolean_append(x : String, y : Boolean) -> String
+begin
+    return "String append is deprecated: use print functions instead";
+end
+
+function deprecated_bits_string_append(x : Bits(n), y : String) -> String
+begin
+    return "String append is deprecated: use print functions instead";
+end
+
+function deprecated_string_bits_append(x : String, y : Bits(n)) -> String
+begin
+    return "String append is deprecated: use print functions instead";
+end
+
+function deprecated_int_string_append(x : Integer, y : String) -> String
+begin
+    return "String append is deprecated: use print functions instead";
+end
+
+function deprecated_string_int_append(x : String, y : Integer) -> String
 begin
     return "String append is deprecated: use print functions instead";
 end
@@ -151,8 +176,14 @@ begin
     return "String append is deprecated: use print functions instead";
 end
 
-__operator2 ++ = deprecated_string_string_append;
 __operator2 ++ = deprecated_string_boolean_append;
+__operator2 ++ = deprecated_boolean_string_append;
+__operator2 ++ = deprecated_string_bits_append;
+__operator2 ++ = deprecated_bits_string_append;
+__operator2 ++ = deprecated_string_int_append;
+__operator2 ++ = deprecated_int_string_append;
+__operator2 ++ = deprecated_string_string_append;
+
 
 ////////////////////////////////////////////////////////////////
 // I/O functions
