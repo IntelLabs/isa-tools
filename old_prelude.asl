@@ -230,6 +230,8 @@ begin
     print_char(c);
 end
 
+use Std::RAM as __RAM;
+
 function asl_ram_init(a : Integer, ram : Std::RAM(a), val : Bits(64)) -> ()
 begin
     Std::RAM::Init(ram, val);
