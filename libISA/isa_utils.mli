@@ -128,7 +128,8 @@ val decl_loc : AST.declaration -> Loc.t
 
 val decl_name : AST.declaration -> Ident.t option
 
-val monomorphizable_decl_to_ident_and_decl : AST.declaration -> (Ident.t * AST.declaration) option
+val monomorphizable_type_decl_to_ident_and_decl : AST.declaration -> (Ident.t * AST.declaration) option
+val monomorphizable_fun_decl_to_ident_and_decl : AST.declaration -> (Ident.t * AST.declaration) option
 
 (** Create mapping from identifiers to all declarations with that name.
  *

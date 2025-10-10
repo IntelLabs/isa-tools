@@ -520,17 +520,28 @@ let decl_name (x : declaration) : Ident.t option =
   | Decl_Use (p1, p2, loc) -> None
   )
 
-(** Similar to decl_name but for declarations that are monomorphizable *)
-let monomorphizable_decl_name (d : AST.declaration) : Ident.t option =
+(** Similar to decl_name but for type declarations that are monomorphizable *)
+let monomorphizable_type_decl_name (d : AST.declaration) : Ident.t option =
   ( match d with
   | Decl_Record (v, ps, fs, loc) -> Some v
   | Decl_Typedef (v, ps, ty, loc) -> Some v
+  | _ -> None
+  )
+
+(** Similar to decl_name but for function declarations that are monomorphizable *)
+let monomorphizable_fun_decl_name (d : AST.declaration) : Ident.t option =
+  ( match d with
   | Decl_FunDefn (f, fty, b, loc) -> Some f
   | _ -> None
   )
 
-let monomorphizable_decl_to_ident_and_decl (d : AST.declaration) : (Ident.t * AST.declaration) option =
-  monomorphizable_decl_name d |> Option.map (fun i -> (i, d))
+let monomorphizable_type_decl_to_ident_and_decl (d : AST.declaration) :
+    (Ident.t * AST.declaration) option =
+  monomorphizable_type_decl_name d |> Option.map (fun i -> (i, d))
+
+let monomorphizable_fun_decl_to_ident_and_decl (d : AST.declaration) :
+    (Ident.t * AST.declaration) option =
+  monomorphizable_fun_decl_name d |> Option.map (fun i -> (i, d))
 
 (** Create mapping from identifiers to all declarations with that name.
  *

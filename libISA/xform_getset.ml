@@ -35,7 +35,7 @@ class replaceClass (ds : AST.declaration list) =
     val decl_lookup_table =
       ds
       |> List.to_seq
-      |> Seq.filter_map monomorphizable_decl_to_ident_and_decl
+      |> Seq.filter_map monomorphizable_fun_decl_to_ident_and_decl
       |> IdentTable.of_seq
 
     method! vlexpr e =

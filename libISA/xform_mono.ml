@@ -124,7 +124,8 @@ class param_collector =
 class monoClass
     (genv : Eval.GlobalEnv.t)
     (global_type_info : AST.ty Bindings.t)
-    (decl_lookup_table : AST.declaration IdentTable.t)
+    (type_decl_lookup_table : AST.declaration IdentTable.t)
+    (fun_decl_lookup_table : AST.declaration IdentTable.t)
     (requests : request list IdentTable.t)
     (ds : AST.declaration list) =
   object (self)
@@ -237,7 +238,7 @@ class monoClass
 
     method monomorphize_type (genv : Eval.GlobalEnv.t) (tc : Ident.t)
         (szs : Value.value list) : Ident.t option =
-      let* d = IdentTable.find_opt decl_lookup_table tc in
+      let* d = IdentTable.find_opt type_decl_lookup_table tc in
       let (tc, tvs) =
         ( match d with
         | Decl_Typedef (tc, ps, _, _) -> (tc, ps)
@@ -258,7 +259,7 @@ class monoClass
         (f : Ident.t) (ps : AST.expr list) (args : AST.expr list)
         : (Ident.t * AST.expr list) option =
       let* instance = self#find_requested_instance is_assignment f ps args in
-      let* d = IdentTable.find_opt decl_lookup_table f in
+      let* d = IdentTable.find_opt fun_decl_lookup_table f in
       if self#create_monomorphic_instance genv instance d then (
         let nm' = Instance.mk_monomorphic_name Loc.Unknown instance in
         let args' =
@@ -283,7 +284,7 @@ class monoClass
         (f : Ident.t) (ps : (Ident.t * Value.value) list)
         : Ident.t option =
       let instance = (f, ps) in
-      let* d = IdentTable.find_opt decl_lookup_table f in
+      let* d = IdentTable.find_opt fun_decl_lookup_table f in
       if self#create_monomorphic_instance genv instance d then (
         let nm' = Instance.mk_monomorphic_name Loc.Unknown instance in
         Some nm'
@@ -560,17 +561,26 @@ let monomorphize (ds : AST.declaration list) : AST.declaration list =
   Eval.trace_exceptions := false;
   let genv = Eval.build_constant_environment ds in
   let global_type_info = build_global_type_info ds in
-  let decl_lookup_table =
+  let type_decl_lookup_table =
     ds
     |> List.to_seq
-    |> Seq.filter_map monomorphizable_decl_to_ident_and_decl
+    |> Seq.filter_map monomorphizable_type_decl_to_ident_and_decl
+    |> IdentTable.of_seq
+  in
+  let fun_decl_lookup_table =
+    ds
+    |> List.to_seq
+    |> Seq.filter_map monomorphizable_fun_decl_to_ident_and_decl
     |> IdentTable.of_seq
   in
   let implicit_requests = Seq.filter_map mk_implicit_request (List.to_seq ds) in
-  let explicit_requests = Seq.filter_map (mk_explicit_request decl_lookup_table) (List.to_seq ds) in
+  let explicit_requests = Seq.filter_map (mk_explicit_request fun_decl_lookup_table) (List.to_seq ds) in
   let requests = IdentTable.of_seq (Seq.map (fun (f, r) -> f, [r]) implicit_requests) in
   let () = extend_with requests explicit_requests in
-  let mono = new monoClass genv global_type_info decl_lookup_table requests ds in
+  let mono =
+    new monoClass
+      genv global_type_info type_decl_lookup_table fun_decl_lookup_table requests ds
+  in
   let ds' = List.map (visit_decl (mono :> isaVisitor)) ds in
   let instances = mono#getInstances in
   let protos = List.filter_map generate_prototype instances in
