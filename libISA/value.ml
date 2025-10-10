@@ -239,24 +239,7 @@ let from_maskLit (x : string) : value =
   VMask (mkMask n (Z.of_string_base 2 v) (Z.of_string_base 2 m))
 
 let from_stringLit (x : string) : value =
-  let r = ref "" in
-  let rec unescape (i : int) : unit =
-    if i < String.length x then
-      let c = String.get x i in
-      if c = '\\' then (
-        assert (i + 1 < String.length x);
-        let c = String.get x (i + 1) in
-        if c = '\\' then r := !r ^ String.make 1 '\\'
-        else if c = 'n' then r := !r ^ String.make 1 '\n'
-        else if c = 't' then r := !r ^ String.make 1 '\t'
-        else r := !r ^ String.make 1 c;
-        unescape (i + 2))
-      else (
-        r := !r ^ String.make 1 c;
-        unescape (i + 1))
-  in
-  unescape 0;
-  VString !r
+  VString x
 
 (****************************************************************)
 (** {2 Control over trace generation}                           *)
