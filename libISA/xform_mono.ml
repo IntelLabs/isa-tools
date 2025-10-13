@@ -450,7 +450,7 @@ class monoClass
           DoChildren
       (* In foreign function declaration, replace imported/exported function
          with monomorphized version *)
-      | Decl_FunFFI (nm, is_export, f, ps, loc) ->
+      | Decl_FunFFI (nm, is_export, f, ps, loc) when List.length ps > 0 ->
           (
             let* f' = self#monomorphize_fun_instance genv f ps in
             let d' = AST.Decl_FunFFI (nm, is_export, f', [], loc) in
