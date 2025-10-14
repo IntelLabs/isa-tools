@@ -181,15 +181,13 @@ let rec repl (tcenv : TC.Env.t) (cpu : Cpu.cpu) : unit =
  * Command: :filter_unlisted_functions
  ****************************************************************)
 
-(* Replace a function definition with a function declaration
- * (i.e., delete the function body) if it occurs in the list
- * of functions to be deleted.
+(* Delete a function definition if it occurs in the list of functions to be
+ * deleted.
  *)
 let delete_function (discard : Ident.t list) (x : AST.declaration) =
   ( match x with
-  | AST.Decl_FunDefn (f, fty, _, loc) when List.mem f discard ->
-    AST.Decl_FunType (f, fty, loc)
-  | _ -> x
+  | AST.Decl_FunDefn (f, _, _, _) when List.mem f discard -> None
+  | _ -> Some x
   )
 
 let read_group_idents (group : string) : Ident.t list =
@@ -202,7 +200,7 @@ let _ =
   let group = ref "" in
   let cmd (tcenv : Tcheck.Env.t) (cpu : Cpu.cpu) : bool =
     let functions = read_group_idents !group in
-    Commands.declarations := List.map (delete_function functions) !Commands.declarations;
+    Commands.declarations := List.filter_map (delete_function functions) !Commands.declarations;
     true
   in
   let args = [
