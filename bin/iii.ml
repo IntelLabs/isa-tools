@@ -196,11 +196,29 @@ let read_group_idents (group : string) : Ident.t list =
   let ys = Ident.mk_idents nms in
   xs @ ys
 
+let read_foreign_idents (is_export : bool) (ds : AST.declaration list) :
+    Ident.t list =
+  List.filter_map (fun d ->
+      match d with
+      | Decl_FunFFI (nm, is_export, f, [], loc) -> Some f
+      | Decl_FunFFI (nm, is_export, f, ps, loc) ->
+          let name = Ident.name_with_tag f in
+          raise (Utils.InternalError
+            (loc, Format.asprintf "No specialized function '%s' created" name,
+             (fun fmt -> FMT.declaration fmt d), __LOC__ ))
+      | _ -> None
+    ) ds
+
+let read_foreign_import_idents (ds : AST.declaration list) : Ident.t list =
+  read_foreign_idents false ds
+
 let _ =
   let group = ref "" in
   let cmd (tcenv : Tcheck.Env.t) (cpu : Cpu.cpu) : bool =
-    let functions = read_group_idents !group in
-    Commands.declarations := List.filter_map (delete_function functions) !Commands.declarations;
+    let group_idents = read_group_idents !group in
+    let foreign_idents = read_foreign_import_idents !Commands.declarations in
+    let discarded = group_idents @ foreign_idents in
+    Commands.declarations := List.filter_map (delete_function discarded) !Commands.declarations;
     true
   in
   let args = [
@@ -239,6 +257,9 @@ let _ =
  * Command: :filter_reachable_from
  ****************************************************************)
 
+let read_foreign_export_idents (ds : AST.declaration list) : Ident.t list =
+  read_foreign_idents true ds
+
 let _ =
   let keep_builtins = ref true in
   let group = ref "" in
@@ -249,10 +270,13 @@ let _ =
       )
   in
   let cmd (tcenv : Tcheck.Env.t) (cpu : Cpu.cpu) : bool =
-    let roots = read_group_idents !group in
+    let group_idents = read_group_idents !group in
+    let foreign_idents = read_foreign_export_idents !Commands.declarations in
+    let roots = group_idents @ foreign_idents in
     let prims = if !keep_builtins then List.filter_map builtin_funname !Commands.declarations else [] in
     if Utils.is_empty roots then (
-      Printf.printf "Group '%s' is empty in :filter_reachable_from %s\n" !group !group;
+      Printf.printf "No foreign export declarations and group '%s' is empty in \
+                     :filter_reachable_from %s\n" !group !group;
       false
     ) else (
       Commands.declarations := Isa_utils.reachable_decls (roots @ prims) !Commands.declarations;
