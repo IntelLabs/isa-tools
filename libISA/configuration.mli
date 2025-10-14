@@ -14,7 +14,7 @@ val read_configuration_file : string -> unit
 val get_strings : string -> string list
 
 (** Read list of strings from all previously read configuration files *)
-val get_record_entries : string -> (string * string list) list
+val get_records : string -> (string * (string * string list) list) list
 
 (****************************************************************
  * End

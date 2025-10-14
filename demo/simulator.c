@@ -225,6 +225,7 @@ int main(int argc, const char* argv[])
 
         // Initialize all the state structs
         ASL_initialize_threadlocal_state(&Processor0);
+        Processor0.client_ptr = (void*)"P0";
         ASL_initialize_global_state(&Global);
 
         // Set the state pointers
@@ -251,6 +252,7 @@ int main(int argc, const char* argv[])
 
         Print_State();
         for(int i = 0; i < steps && !ASL_IsHalted(); ++i) {
+                printf("Stepping processor %s\n", (char*)threadlocal_state_ptr->client_ptr);
                 ASL_Step();
                 Print_State();
         }

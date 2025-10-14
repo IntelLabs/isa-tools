@@ -7,12 +7,15 @@
 Print_State();
 // CHECK: RUNNING PC=64'x{{[0-9a-fA-F]+}} R=[ 64'x0 64'x0 64'x0 64'x0 ]
 :step
+// CHECK: Stepping processor P0
 Print_State();
 // CHECK: RUNNING PC=64'x{{[0-9a-fA-F]+}} R=[ 64'x0 64'x1 64'x0 64'x0 ]
 :step
+// CHECK: Stepping processor P0
 Print_State();
 // CHECK: RUNNING PC=64'x{{[0-9a-fA-F]+}} R=[ 64'x0 64'x1 64'x0 64'x1 ]
 :step
+// CHECK: Stepping processor P0
 Print_State();
 // CHECK: HALTED PC=64'x{{[0-9a-fA-F]+}} R=[ 64'x0 64'x1 64'x0 64'x1 ]
 

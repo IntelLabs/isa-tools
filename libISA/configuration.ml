@@ -34,6 +34,25 @@ let get_entry (key : string) (tree : Safe.t) : Safe.t option =
   | _ -> None
   )
 
+(* Attempt to get a list and convert all elements of the list *)
+let get_element_list (get_element : Safe.t -> 'a option) (tree : Safe.t) : 'a list option =
+  ( match tree with
+  | `List es -> Utils.flatten_map_option get_element es
+  | _ -> None
+  )
+
+(* Attempt to get a record and convert all the entries of the record *)
+let get_record (get_entry : Safe.t -> 'a option) (tree : Safe.t) : (string * 'a) list option =
+  ( match tree with
+  | `Assoc kvs ->
+      Utils.flatten_map_option
+        (fun (key, entry) ->
+            Option.bind (get_entry entry) (fun entry' ->
+            Some (key, entry')))
+        kvs
+  | _ -> None
+  )
+
 (* Read list of strings from Json files by key *)
 let get_list_by_key (key : string) (files : Safe.t list) : string list =
   List.concat_map
@@ -55,18 +74,12 @@ let read_configuration_file (filename : string) : unit =
 let get_strings (key : string) : string list =
   get_list_by_key key !configurations
 
-(** Read list of strings from all previously read configuration files *)
-let get_record_entries (key : string) : (string * string list) list =
+(** Read list of records from all previously read configuration files *)
+let get_records (key : string) : (string * (string * string list) list) list =
   let trees = List.filter_map (get_entry key) !configurations in
-  let keys = List.filter_map (fun tree ->
-      ( match tree with
-      | `Assoc kvs -> Some (List.map fst kvs)
-      | _ -> None
-      ))
-      trees
-      |> List.concat
-  in
-  List.map (fun key -> (key, get_list_by_key key trees)) keys
+  let get tree = get_record (get_record (get_element_list get_string)) tree in
+  let rs = Utils.flatten_map_option get trees |> Option.value ~default:[] in
+  List.concat rs
 
 (****************************************************************
  * End

@@ -2006,9 +2006,10 @@ let runtime_header (fmt : PP.formatter) : unit =
 (* the name of the pointer to a given struct *)
 let struct_ptr (s : string) : string = s ^ "_ptr"
 
-let state_struct (fmt : PP.formatter) (name : string) (vs : AST.declaration list) : unit =
+let state_struct (fmt : PP.formatter) (name : string) (vs : AST.declaration list) (client_fields : string list) : unit =
   PP.fprintf fmt "struct %s {@," name;
   indented fmt (fun _ -> declarations fmt vs);
+  indented fmt (fun _ -> List.iter (Format.fprintf fmt "%s\n") client_fields);
   PP.fprintf fmt "@,};@,@,"
 
 let wrap_multi_include_protection (basename : string) (fmt : PP.formatter) (f : PP.formatter -> 'a) : 'a =
@@ -2048,7 +2049,7 @@ let regexps_match (res : Str.regexp list) (s : string) : bool =
 let generate_files (num_c_files : int) (dirname : string) (basename : string)
     (ffi_prototypes : PP.formatter -> unit)
     (ffi_definitions : PP.formatter -> unit)
-    (structs : (Str.regexp list * string) list)
+    (structs : (Str.regexp list * string * string list) list)
     (ds : AST.declaration list) : unit =
 
   (* Construct
@@ -2057,17 +2058,17 @@ let generate_files (num_c_files : int) (dirname : string) (basename : string)
    * - the association list 'structs' from struct names to variable declarations
    * - a list of all declarations of mutable and immutable variables not associated with a struct
    *)
-  let struct_vars = ref (List.map (fun (_, s) -> (s, ref [])) structs) in
+  let struct_vars = ref (List.map (fun (_, s, cfs) -> (s, (ref [], cfs))) structs) in
   let global_vars : AST.declaration list ref = ref [] in
   List.iter (fun d ->
       ( match d with
       | AST.Decl_Var (v, _, _) ->
           let name = Ident.name v in
-          let entry = List.find_opt (fun (res, _) -> regexps_match res name) structs in
+          let entry = List.find_opt (fun (res, _, _) -> regexps_match res name) structs in
           ( match entry with
-          | Some (_, s) ->
+          | Some (_, s, _) ->
               var_ptrs := Bindings.add v (s, struct_ptr s) !var_ptrs;
-              let ds = List.assoc s !struct_vars in
+              let (ds, _) = List.assoc s !struct_vars in
               ds := d :: !ds
           | None ->
               global_vars := d :: !global_vars
@@ -2109,7 +2110,7 @@ let generate_files (num_c_files : int) (dirname : string) (basename : string)
   emit_c_header !is_cxx dirname basename_v (fun fmt ->
       runtime_header fmt;
       extern_declarations fmt !global_vars;
-      List.iter (fun (s, ds) -> state_struct fmt s !ds) !struct_vars;
+      List.iter (fun (s, (ds, cfs)) -> state_struct fmt s !ds cfs) !struct_vars;
       List.iter
         (fun (s, _) -> PP.fprintf fmt "extern struct %s *%s;@," s (struct_ptr s))
         !struct_vars
@@ -2233,9 +2234,16 @@ let _ =
      *   thread_local_ptr->GPR[i]
      * Note that immutable variables are not put in structs
      *)
-    let structs = if !opt_split_state then
-        let map = Configuration.get_record_entries "split_state" in
-        List.map (fun (s, res) -> (List.map Str.regexp res), s) map
+    let structs : (Str.regexp list * string * string list) list =
+      if !opt_split_state then
+        let map = Configuration.get_records "split_state" in
+        List.map (fun (s, state) ->
+            let res = Option.value (List.assoc_opt "variables" state) ~default:[] in
+            let client_fields = Option.value (List.assoc_opt "client_fields" state) ~default:[] in
+            let regexps = List.map Str.regexp res in
+            (regexps, s, client_fields)
+          )
+          map
       else
         []
     in
