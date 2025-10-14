@@ -287,6 +287,25 @@ let pointer (fmt : PP.formatter) (x : Ident.t) : unit =
   | _ -> ()
   )
 
+(* The named pointer used to access state structs can be either
+ * a global variable or a function argument that is added to every function
+ * declaration and is passed to every function call.
+ * This is a list of all the state structs that are added as function
+ * arguments.
+ *
+ * Note that it is the users responsibility to use a name that will not
+ * clash with names (e.g., of types, variables, ...) used in the original spec.
+ *)
+
+let extra_fun_args : string list ref = ref []
+
+let extra_arg_decl (fmt : PP.formatter) (s : string) : unit =
+  PP.fprintf fmt "struct %s *%s_ptr" s s
+
+let extra_arg (fmt : PP.formatter) (s : string) : unit =
+  PP.fprintf fmt "%s_ptr" s
+
+
 (* Any global state can register an initializer to be run on a global variable.
  * This is currently only used for RAM blocks.
  *)
@@ -389,7 +408,11 @@ let helper_functions = Identset.mk_bindings [
 
 let rec apply (loc : Loc.t) (fmt : PP.formatter) (f : unit -> unit) (args : AST.expr list) : unit =
   f ();
-  parens fmt (fun _ -> exprs loc fmt args)
+  parens fmt (fun _ ->
+    commasep extra_arg fmt !extra_fun_args;
+    if not (Utils.is_empty !extra_fun_args || Utils.is_empty args) then PP.fprintf fmt ", ";
+    exprs loc fmt args
+  )
 
 and unop (loc : Loc.t) (fmt : PP.formatter) (op : string) (x : AST.expr) : unit =
   PP.fprintf fmt "(%s %a)"
@@ -1084,7 +1107,11 @@ let function_header (loc : Loc.t) (fmt : PP.formatter) (f : Ident.t) (fty : AST.
   | Type_Tuple([]) -> PP.fprintf fmt "void "; ident fmt f
   | t -> varty loc fmt f t
   );
-  parens fmt (fun _ -> commasep (formal loc) fmt fty.args)
+  parens fmt (fun _ ->
+    commasep extra_arg_decl fmt !extra_fun_args;
+    if not (Utils.is_empty !extra_fun_args || Utils.is_empty fty.args) then PP.fprintf fmt ", ";
+    commasep (formal loc) fmt fty.args
+  )
 
 let function_body (loc : Loc.t) (fmt : PP.formatter) (b : AST.stmt list) (rty : AST.ty) : unit =
   with_catch_label (fun catcher ->
@@ -1652,9 +1679,10 @@ let mk_ffi_export_wrapper
 
   let pp_c_function_header fmt _ =
     pp_c_ret_type fmt;
+    let pp_extra_args = List.map (fun s fmt -> extra_arg_decl fmt s) !extra_fun_args in
     PP.fprintf fmt " %a(%a)"
       ident c_name
-      (commasep (fun fmt pp -> pp fmt)) (pp_input_decls @ pp_output_arg_decls)
+      (commasep (fun fmt pp -> pp fmt)) (pp_extra_args @ pp_input_decls @ pp_output_arg_decls)
   in
 
   (* generate body of export wrapper *)
@@ -1667,9 +1695,12 @@ let mk_ffi_export_wrapper
         varty loc fmt asl_ret_name rty;
         PP.fprintf fmt " = "
     );
-    PP.fprintf fmt "%a(%a);@,"
-      ident asl_name
-      (commasep Ident.pp) input_args;
+    PP.fprintf fmt "%a("
+      ident asl_name;
+    commasep extra_arg fmt !extra_fun_args;
+    if not (Utils.is_empty !extra_fun_args || Utils.is_empty input_args) then PP.fprintf fmt ", ";
+    commasep Ident.pp fmt input_args;
+    PP.fprintf fmt ");@,";
     PP.fprintf fmt "if (ASL_exception._exc.ASL_tag != ASL_no_exception) ASL_error(\"%a\", \"uncaught exception\");@,"
       ident asl_name;
     pp_funlist pp_output_cvts fmt;
@@ -2007,9 +2038,9 @@ let runtime_header (fmt : PP.formatter) : unit =
 let struct_ptr (s : string) : string = s ^ "_ptr"
 
 let state_struct (fmt : PP.formatter) (name : string) (vs : AST.declaration list) (client_fields : string list) : unit =
-  PP.fprintf fmt "struct %s {@," name;
+  PP.fprintf fmt "struct %s {" name;
   indented fmt (fun _ -> declarations fmt vs);
-  indented fmt (fun _ -> List.iter (Format.fprintf fmt "%s\n") client_fields);
+  indented fmt (fun _ -> List.iter (PP.fprintf fmt "%s@,") client_fields);
   PP.fprintf fmt "@,};@,@,"
 
 let wrap_multi_include_protection (basename : string) (fmt : PP.formatter) (f : PP.formatter -> 'a) : 'a =
@@ -2085,21 +2116,29 @@ let generate_files (num_c_files : int) (dirname : string) (basename : string)
   emit_c_header !is_cxx dirname basename_t (fun fmt ->
       runtime_header fmt;
       wrap_extern (not !is_cxx) fmt (fun fmt ->
+          List.iter
+            (fun (s, _) -> if List.mem s !extra_fun_args then PP.fprintf fmt "struct %s;@," s)
+            !struct_vars;
           type_decls ds |> Isa_utils.topological_sort |> List.rev |> declarations fmt;
           PP.fprintf fmt "@,"
       )
   );
 
-  if !new_ffi then begin
-      (* Emit *_ffi.h file even if generating C++ for other files *)
-      let basename_ffi = basename ^ "_ffi" in
-      emit_c_header false dirname basename_ffi (fun fmt ->
+  let basename_ffi = basename ^ "_ffi" in
+  (* Emit *_ffi.h file even if generating C++ for other files *)
+  emit_c_header false dirname basename_ffi (fun fmt ->
+      if !new_ffi then begin
           PP.fprintf fmt "#include <stdint.h>@,";
           PP.fprintf fmt "#include <stdbool.h>@,";
+          List.iter (fun (s, (ds, cfs)) ->
+              if List.mem s !extra_fun_args then begin
+                  PP.fprintf fmt "extern struct %s *%s;@,@," s (struct_ptr s)
+              end
+          ) !struct_vars;
           wrap_extern !is_cxx fmt ffi_prototypes;
           PP.fprintf fmt "@,"
-      )
-  end;
+      end
+  );
 
   let basename_e = basename ^ "_exceptions" in
   emit_c_header !is_cxx dirname basename_e (fun fmt ->
@@ -2110,15 +2149,18 @@ let generate_files (num_c_files : int) (dirname : string) (basename : string)
   emit_c_header !is_cxx dirname basename_v (fun fmt ->
       runtime_header fmt;
       extern_declarations fmt !global_vars;
-      List.iter (fun (s, (ds, cfs)) -> state_struct fmt s !ds cfs) !struct_vars;
       List.iter
-        (fun (s, _) -> PP.fprintf fmt "extern struct %s *%s;@," s (struct_ptr s))
+        (fun (s, (ds, cfs)) ->
+            state_struct fmt s !ds cfs;
+            PP.fprintf fmt "extern struct %s *%s;@,@," s (struct_ptr s);
+            PP.fprintf fmt "void ASL_initialize_%s(struct %s *p);@,@," s s
+        )
         !struct_vars
   );
 
   let header_suffix = if !is_cxx then ".hpp" else ".h" in
   let gen_h_filenames =
-    List.map (fun s -> s ^ header_suffix) [ basename_t; basename_e; basename_v ]
+    List.map (fun s -> s ^ header_suffix) [ basename_t; basename_e; basename_v; basename_ffi ]
   in
 
   let filename_e = Filename.concat dirname basename_e in
@@ -2128,15 +2170,13 @@ let generate_files (num_c_files : int) (dirname : string) (basename : string)
   emit_c_source filename_v gen_h_filenames (fun fmt ->
       declarations fmt !global_vars;
       List.iter
-        (fun (s, _) -> PP.fprintf fmt "struct %s *%s;@," s (struct_ptr s))
-        !struct_vars;
-      List.iter
         (fun (s, _) ->
+            PP.fprintf fmt "struct %s *%s;@,@," s (struct_ptr s);
             PP.fprintf fmt "void ASL_initialize_%s(struct %s *p) {@," s s;
             List.iter
               (fun (s', i) -> if s = s' then PP.fprintf fmt "  %s@," i;)
               !initializers;
-            PP.fprintf fmt "}@,"
+            PP.fprintf fmt "}@,@,"
         )
         !struct_vars;
   );
@@ -2240,6 +2280,10 @@ let _ =
         List.map (fun (s, state) ->
             let res = Option.value (List.assoc_opt "variables" state) ~default:[] in
             let client_fields = Option.value (List.assoc_opt "client_fields" state) ~default:[] in
+            let use_as_ptr = Option.value (List.assoc_opt "should_add_fun_arg" state) ~default:["no"] in
+            if use_as_ptr = ["yes"] then begin
+                extra_fun_args := s :: !extra_fun_args
+            end;
             let regexps = List.map Str.regexp res in
             (regexps, s, client_fields)
           )

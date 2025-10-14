@@ -21,7 +21,8 @@
         },
         "threadlocal_state" : {
             "variables": [".*"],
-            "client_fields": ["void* client_ptr;"]
+            "client_fields": ["void* client_ptr;"],
+            "should_add_fun_arg": ["yes"]
         }
     }
 }
