@@ -325,7 +325,7 @@ and eval_slice (loc : Loc.t) (env : Env.t) (x : AST.slice) : value * value =
       (lo', wd')
 
 (** Evaluate expression *)
-and eval_expr (loc : Loc.t) (env : Env.t) (x : AST.expr) : value =
+and eval_expr' (loc : Loc.t) (env : Env.t) (x : AST.expr) : value =
   match x with
   | Expr_If (els, e) ->
       let rec eval_if xs d =
@@ -440,8 +440,20 @@ and eval_expr (loc : Loc.t) (env : Env.t) (x : AST.expr) : value =
       (* todo: dynamic type/constraint check *)
       eval_expr loc env e
 
+and eval_expr (loc : Loc.t) (env : Env.t) (x : AST.expr) : value =
+  ( try
+      eval_expr' loc env x
+    with
+  | ex ->
+    if !trace_exceptions then begin
+      Printf.printf "  %s: runtime exception thrown in %s\n%!" (Loc.to_string loc) (pp_expr x)
+    end;
+    raise ex
+  )
+
+
 (** Evaluate L-expression in write-mode (i.e., this is not a read-modify-write) *)
-and eval_lexpr (loc : Loc.t) (env : Env.t) (x : AST.lexpr) (r : value) : unit =
+and eval_lexpr' (loc : Loc.t) (env : Env.t) (x : AST.lexpr) (r : value) : unit =
   ( match x with
   | LExpr_Wildcard -> ()
   | LExpr_Var v -> Env.setVar loc env v r
@@ -503,6 +515,17 @@ and eval_lexpr (loc : Loc.t) (env : Env.t) (x : AST.lexpr) (r : value) : unit =
       eval_proccall loc env setter tvs (vs @ [ r ])
   | _ ->
       raise (InternalError (loc, "eval_lexpr: could not handle", (fun fmt -> FMT.lexpr fmt x), __LOC__))
+  )
+
+and eval_lexpr (loc : Loc.t) (env : Env.t) (x : AST.lexpr) (r : value) : unit =
+  ( try
+      eval_lexpr' loc env x r
+    with
+  | ex ->
+    if !trace_exceptions then begin
+      Printf.printf "  %s: runtime exception thrown in %s\n%!" (Loc.to_string loc) (pp_lexpr x)
+    end;
+    raise ex
   )
 
 (** Evaluate L-expression in read-modify-write mode.
@@ -719,9 +742,6 @@ and eval_funcall (loc : Loc.t) (env : Env.t) (f : Ident.t) (tvs : value list)
   | Throw (l, exc) -> raise (Throw (l, exc))
   | EndExecution _ as e -> raise e
   | ex ->
-    if !trace_exceptions then begin
-      Printf.printf "  %s: runtime exception thrown in %s\n%!" (Loc.to_string loc) (Ident.to_string f)
-    end;
     raise ex
 
 (** Evaluate call to procedure *)
