@@ -42,7 +42,7 @@ open Builtin_idents
  *    Any subexpressions that do not fit this pattern are
  *    treated as uninterpreted terms in the polynomial.
  *
- * 2) As we construct the polynomial, multiple occurences
+ * 2) As we construct the polynomial, multiple occurrences
  *    of the same monomial (such as "x" or "x * y") are
  *    collected together.
  *

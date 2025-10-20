@@ -166,7 +166,7 @@ __builtin function __TracePageTableWalk
 // Emit an error message to trace
 __builtin function __TraceError(kind : String, event : String) -> ();
 
-// Emit an informational memory to trace
+// Emit an informational message to trace
 __builtin function __TraceEvent(kind : String, event : String) -> ();
 
 function Std::Bits::Add_int(implicit n : Integer, left : Bits(n), right : Integer) -> Bits(n)
