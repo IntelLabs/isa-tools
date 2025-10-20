@@ -196,12 +196,12 @@ let read_group_idents (group : string) : Ident.t list =
   let ys = Ident.mk_idents nms in
   xs @ ys
 
-let read_foreign_idents (is_export : bool) (ds : AST.declaration list) :
+let read_foreign_idents (export : bool) (ds : AST.declaration list) :
     Ident.t list =
   List.filter_map (fun d ->
       match d with
-      | Decl_FunFFI (nm, is_export, f, [], loc) -> Some f
-      | Decl_FunFFI (nm, is_export, f, ps, loc) ->
+      | Decl_FunFFI (nm, is_export, f, [], loc) when is_export = export -> Some f
+      | Decl_FunFFI (nm, is_export, f, ps, loc) when is_export = export ->
           let name = Ident.name_with_tag f in
           raise (Utils.InternalError
             (loc, Format.asprintf "No specialized function '%s' created" name,
