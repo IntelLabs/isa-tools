@@ -180,8 +180,10 @@ base_script = """
 
 // Deleting the ISA definitions of any functions on the import list may
 // result in additional dead code (i.e., functions that are only used by
-// those functions) so delete any unreachable functions
-:filter_reachable_from exports
+// those functions) so delete any unreachable functions.
+// Also delete built-in functions, since subsequent transformations should not
+// introduce new calls to the functions in the standard library.
+:filter_reachable_from --no-keep-builtins exports
 
 // Check that all definitions are bitwidth-monomorphic and report a useful
 // error message if they are not.
