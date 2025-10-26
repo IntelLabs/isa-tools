@@ -37,13 +37,13 @@ let new_ffi : bool ref = ref false
 
 let wrap_extern (add_wrapper : bool) (fmt : PP.formatter) (f : PP.formatter -> 'a) : 'a =
   if add_wrapper then (
-    PP.fprintf fmt "@.#ifdef __cplusplus@.";
-    PP.fprintf fmt "extern \"C\" {@.";
-    PP.fprintf fmt "#endif@,@.";
+    PP.fprintf fmt "@,#ifdef __cplusplus@,";
+    PP.fprintf fmt "extern \"C\" {@,";
+    PP.fprintf fmt "#endif@,@,";
     let r = f fmt in
-    PP.fprintf fmt "@.#ifdef __cplusplus@.";
-    PP.fprintf fmt "}@.";
-    PP.fprintf fmt "#endif@,@.";
+    PP.fprintf fmt "@,#ifdef __cplusplus@,";
+    PP.fprintf fmt "}@,";
+    PP.fprintf fmt "#endif@,@,";
     r
   ) else (
     f fmt
@@ -1650,16 +1650,16 @@ let mk_ffi_export_wrapper
     PP.fprintf fmt "return %a;" (fun fmt _ -> pp_c_ret_value fmt) ()
   in
 
-  let pp_proto fmt = PP.fprintf fmt "%a;@." pp_c_function_header ()
+  let pp_proto fmt = PP.fprintf fmt "%a;@," pp_c_function_header ()
   in
 
   let pp_wrapper fmt =
-    PP.fprintf fmt "// Export wrapper for %a@.@." ident c_name;
+    PP.fprintf fmt "// Export wrapper for %a@,@," ident c_name;
     wrap_extern true fmt (fun fmt ->
       pp_proto fmt;
       PP.fprintf fmt "%a {" pp_c_function_header ();
       indented fmt (fun _ -> pp_export_body fmt);
-      PP.fprintf fmt "@,}@."
+      PP.fprintf fmt "@,}@,"
     )
   in
 
@@ -1797,16 +1797,16 @@ let mk_ffi_import_wrapper
     PP.fprintf fmt "return %a;" (fun fmt _ -> pp_asl_ret_value fmt) ()
   in
 
-  let pp_proto fmt = PP.fprintf fmt "%a;@." pp_c_function_header ()
+  let pp_proto fmt = PP.fprintf fmt "%a;@," pp_c_function_header ()
   in
 
   let pp_wrapper fmt =
-    PP.fprintf fmt "// Import wrapper for %a@.@." ident c_name;
+    PP.fprintf fmt "// Import wrapper for %a@,@," ident c_name;
     wrap_extern true fmt pp_proto;
     function_header loc fmt asl_name fty;
     PP.fprintf fmt "@,{@,";
     indented fmt (fun _ -> pp_import_body fmt);
-    PP.fprintf fmt "@,}@."
+    PP.fprintf fmt "@,}@,"
   in
 
   (pp_proto, pp_wrapper)
@@ -1978,19 +1978,19 @@ let get_rt_header (_ : unit) : string list =
 let struct_ptr (s : string) : string = s ^ "_ptr"
 
 let state_struct (fmt : PP.formatter) (name : string) (vs : AST.declaration list) : unit =
-  PP.fprintf fmt "struct %s {@." name;
+  PP.fprintf fmt "struct %s {@," name;
   indented fmt (fun _ -> declarations fmt vs);
-  PP.fprintf fmt "@.};@.@."
+  PP.fprintf fmt "@,};@,@,"
 
 let wrap_multi_include_protection (basename : string) (fmt : PP.formatter) (f : PP.formatter -> 'a) : 'a =
   let macro =
     String.uppercase_ascii basename
     |> String.map (fun c -> if List.mem c [ '.'; '/'; '-' ] then '_' else c)
   in
-  PP.fprintf fmt "#ifndef %s@." macro;
-  PP.fprintf fmt "#define %s@,@." macro;
+  PP.fprintf fmt "#ifndef %s@," macro;
+  PP.fprintf fmt "#define %s@,@," macro;
   let r = f fmt in
-  PP.fprintf fmt "#endif  // %s@." macro;
+  PP.fprintf fmt "#endif  // %s@," macro;
   r
 
 let emit_c_header (is_cxx : bool) (dirname : string) (basename : string) (f : PP.formatter -> unit) : unit =
@@ -2064,10 +2064,10 @@ let generate_files (num_c_files : int) (dirname : string) (basename : string)
       (* Emit *_ffi.h file even if generating C++ for other files *)
       let basename_ffi = basename ^ "_ffi" in
       emit_c_header false dirname basename_ffi (fun fmt ->
-          Format.fprintf fmt "#include <stdint.h>@.";
-          Format.fprintf fmt "#include <stdbool.h>@.";
+          Format.fprintf fmt "#include <stdint.h>@,";
+          Format.fprintf fmt "#include <stdbool.h>@,";
           wrap_extern !is_cxx fmt ffi_prototypes;
-          Format.fprintf fmt "@."
+          Format.fprintf fmt "@,"
       )
   end;
 

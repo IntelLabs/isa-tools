@@ -1091,7 +1091,7 @@ let cg_HLIR_Global (fmt : PP.formatter) (x : HLIR.global) : unit =
         Ident.pp v
         (cg_HLIR_Type loc) ty;
       Format.fprintf fmt " // %a" Loc.pp loc;
-      Format.fprintf fmt "@.@."
+      Format.fprintf fmt "@,@,"
   | Function (f, r, loc) ->
       let cg_args_call fmt args =
         if not (Utils.is_empty args) then
@@ -1120,15 +1120,15 @@ let cg_HLIR_Global (fmt : PP.formatter) (x : HLIR.global) : unit =
           if not (Utils.is_empty t_operands) then Format.fprintf fmt ", ";
           Format.fprintf fmt "%a" (commasep cg_target_call) t_targets
         end;
-        Format.fprintf fmt "@."
+        Format.fprintf fmt "@,"
       in
 
       (* todo: return type seems to be broken *)
-      Format.fprintf fmt "func.func @%a (%a) -> (%a)@."
+      Format.fprintf fmt "func.func @%a (%a) -> (%a)@,"
         Ident.pp f
         (commasep (cg_HLIR_Ident loc)) r.inputs
         (commasep (cg_HLIR_IdentType loc)) r.outputs;
-      Format.fprintf fmt "{@.";
+      Format.fprintf fmt "{@,";
 
       let (return_target, cf_blocks) = hlir_to_cf r in
       let is_first = ref true in (* The first block doesn't get a label *)
@@ -1143,14 +1143,14 @@ let cg_HLIR_Global (fmt : PP.formatter) (x : HLIR.global) : unit =
       cg_target_decl fmt return_target;
       indented fmt (fun _ ->
         ( match return_target with
-        | (_, []) -> Format.fprintf fmt "func.return@."
-        | (_, rs) -> Format.fprintf fmt "func.return %a : %a@."
+        | (_, []) -> Format.fprintf fmt "func.return@,"
+        | (_, rs) -> Format.fprintf fmt "func.return %a : %a@,"
                        (commasep (cg_HLIR_IdentName loc)) rs
                        (commasep (cg_HLIR_IdentType loc)) rs
         )
       );
 
-      Format.fprintf fmt "}@."
+      Format.fprintf fmt "}@,"
   )
 
 (****************************************************************
@@ -1719,13 +1719,13 @@ let rec stmt (env : environment) (fmt : PP.formatter) (x : AST.stmt) : unit =
       | Expr_Tuple [] -> ()
       | _ ->
         let (t, _) = expr loc env fmt e in
-        PP.fprintf fmt "asl.return %a : %a@."
+        PP.fprintf fmt "asl.return %a : %a@,"
           varident t
           (pp_type loc) !return_type
       )
   | Stmt_Assert (e, loc) ->
       let (t, _) = expr loc env fmt e in
-      PP.fprintf fmt "asl.assert \"%s\", \"%s\", %a@."
+      PP.fprintf fmt "asl.assert \"%s\", \"%s\", %a@,"
         (String.escaped (Loc.to_string loc))
         (String.escaped (Utils.to_string2 (Fun.flip FMT.expr e)))
         varident t
@@ -1950,12 +1950,12 @@ let declaration (fmt : PP.formatter) ?(is_extern : bool option) (x : AST.declara
           return_type := fty.rty;
           indented_block env fmt b;
           ( match fty.rty with
-          | Type_Tuple([]) -> PP.fprintf fmt "asl.return@."
+          | Type_Tuple([]) -> PP.fprintf fmt "asl.return@,"
           | _ -> ()
           );
-          PP.fprintf fmt "}@.@."
+          PP.fprintf fmt "}@,@,"
       | Decl_Var (v, ty, loc) ->
-          PP.fprintf fmt "asl.global \"%a\" : %a@.@."
+          PP.fprintf fmt "asl.global \"%a\" : %a@,@,"
             ident v
             (pp_type loc) ty
       | _ ->

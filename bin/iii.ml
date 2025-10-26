@@ -350,7 +350,7 @@ let _ =
           List.iter (Format.printf "%a@,@." (FMT.declaration ~short:false)) ds;
     | filename ->
         Utils.to_file filename (fun fmt ->
-          List.iter (Format.fprintf fmt "%a@,@." (FMT.declaration ~short:false)) ds;
+          List.iter (Format.fprintf fmt "%a@,@," (FMT.declaration ~short:false)) ds;
         )
     );
     true
