@@ -1654,7 +1654,7 @@ let mk_ffi_export_wrapper
   in
 
   let pp_wrapper fmt =
-    PP.fprintf fmt "// Export wrapper for %a@,@," ident c_name;
+    PP.fprintf fmt "// Export wrapper for '%a'@,@," ident c_name;
     wrap_extern true fmt (fun fmt ->
       pp_proto fmt;
       PP.fprintf fmt "%a {" pp_c_function_header ();
@@ -1801,7 +1801,7 @@ let mk_ffi_import_wrapper
   in
 
   let pp_wrapper fmt =
-    PP.fprintf fmt "// Import wrapper for %a@,@," ident c_name;
+    PP.fprintf fmt "// Import wrapper for '%a'@,@," ident c_name;
     wrap_extern true fmt pp_proto;
     function_header loc fmt asl_name fty;
     PP.fprintf fmt "@,{@,";
