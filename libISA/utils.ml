@@ -27,8 +27,7 @@ let to_string2 (pp : Format.formatter -> unit) : string =
 let to_file (filename : string) (pp : Format.formatter -> unit) : unit =
   let chan = open_out filename in
   let fmt = Format.formatter_of_out_channel chan in
-  pp fmt;
-  Format.pp_print_flush fmt ();
+  Format.fprintf fmt "@[<v 0>%t@]@?" pp;
   close_out chan
 
 let null_formatter : Format.formatter =
