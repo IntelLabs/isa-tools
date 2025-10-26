@@ -645,6 +645,12 @@ module Runtime : RT.RuntimeLib = struct
 
   (* Foreign Function Interface (FFI) *)
 
+  let ffi_c2asl_cint (fmt : PP.formatter) (x : RT.rt_expr) : unit =
+    PP.fprintf fmt "((%t)%a)" ty_int RT.pp_expr x
+
+  let ffi_asl2c_cint (fmt : PP.formatter) (x : RT.rt_expr) : unit =
+    PP.fprintf fmt "((int)%a)" RT.pp_expr x
+
   let ffi_c2asl_integer_small (fmt : PP.formatter) (x : RT.rt_expr) : unit =
     PP.fprintf fmt "((%a)%a)" ty_sint int_width RT.pp_expr x
 
@@ -659,13 +665,13 @@ module Runtime : RT.RuntimeLib = struct
 
   let ffi_c2asl_bits_small (n : int) (fmt : PP.formatter) (x : RT.rt_expr) : unit =
     assert (List.mem n [8; 16; 32; 64]);
-    PP.fprintf fmt "((%a) %a)"
+    PP.fprintf fmt "((%a)%a)"
       ty_bits n
       RT.pp_expr x
 
   let ffi_asl2c_bits_small (n : int) (fmt : PP.formatter) (x : RT.rt_expr) : unit =
     assert (List.mem n [8; 16; 32; 64]);
-    PP.fprintf fmt "((uint%d_t) %a)"
+    PP.fprintf fmt "((uint%d_t)%a)"
       n
       RT.pp_expr x
 

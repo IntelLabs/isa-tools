@@ -115,12 +115,15 @@ __builtin function Std::Print(x : String) -> ();
 
 __builtin function Std::End_Execution(success : Boolean) -> ();
 
+__builtin type Builtin::Foreign::CInt; // C int
 // todo: these should all have size parameters
 __builtin type Builtin::Foreign::UInts; // uint64_t[size/64]
 __builtin type Builtin::Foreign::UInt; // uint{size}_t
 __builtin type Builtin::Foreign::SInt; // sint{size}_t
 __builtin type Builtin::Foreign::Int; // int
 
+__builtin function Builtin::Foreign::CInt::To_Integer(x : Builtin::Foreign::CInt) -> Integer;
+__builtin function Builtin::Foreign::CInt::From_Integer(x : Integer) -> Builtin::Foreign::CInt;
 __builtin function Builtin::Foreign::UInts::To_Bits(implicit size : {0..}, x : Builtin::Foreign::UInts(size)) -> Bits(size);
 __builtin function Builtin::Foreign::UInts::From_Bits(implicit size : {0..}, x : Bits(size)) -> Builtin::Foreign::UInts(size);
 __builtin function Builtin::Foreign::UInt::To_Bits(implicit size : {8, 16, 32, 64}, x : Builtin::Foreign::UInt(size)) -> Bits(size);

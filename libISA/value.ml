@@ -614,6 +614,12 @@ let eval_prim (f : Ident.t) (tvs : value list) (vs : value list) : value option 
       Some (VBits (prim_append_bits x y))
   | [ _ ], [ VInt w; VInt n ] when Ident.equal f Builtin_idents.mk_mask ->
       Some (VBits (prim_mk_mask w n))
+
+  | [], [ VInt x ] when Ident.equal f cint_to_integer ->
+      Some (VInt x)
+  | [], [ VInt x ] when Ident.equal f cint_from_integer ->
+      Some (VInt x)
+
   (* The remaining primops all have side effects *)
   | [],  [ VInt x ]          when Ident.equal f print_int_hex ->
       prim_print_int_hex x;    Some (VTuple [])

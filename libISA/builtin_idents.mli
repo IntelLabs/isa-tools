@@ -85,10 +85,14 @@ val mk_mask : Ident.t
 val mask_int : Ident.t
 
 (* FFI support *)
+val cint_type         : Ident.t
 val uints_type        : Ident.t
 val uint_type         : Ident.t
 val sint_type         : Ident.t
 val int_type          : Ident.t
+
+val cint_to_integer   : Ident.t
+val cint_from_integer : Ident.t
 val uints_to_bits     : Ident.t
 val uints_from_bits   : Ident.t
 val uint_to_bits      : Ident.t

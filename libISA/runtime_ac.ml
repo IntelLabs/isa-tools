@@ -718,6 +718,13 @@ module Runtime : RT.RuntimeLib = struct
     PP.fprintf fmt "ASL_end_execution(%a)" RT.pp_expr x
 
   (* Foreign Function Interface (FFI) *)
+
+  let ffi_c2asl_cint (fmt : PP.formatter) (x : RT.rt_expr) : unit =
+    PP.fprintf fmt "((%a)%a)" ty_sintN int_width RT.pp_expr x
+
+  let ffi_asl2c_cint (fmt : PP.formatter) (x : RT.rt_expr) : unit =
+    PP.fprintf fmt "%a.to_int()" RT.pp_expr x
+
   let ffi_c2asl_integer_small (fmt : PP.formatter) (x : RT.rt_expr) : unit =
     PP.fprintf fmt "((%a)%a)" ty_sintN int_width RT.pp_expr x
 

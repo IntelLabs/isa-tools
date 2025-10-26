@@ -137,11 +137,14 @@ let true_ident        = Ident.mk_ident "True"
 let false_ident       = Ident.mk_ident "False"
 
 (* FFI support *)
+let cint_type         = Ident.mk_ident "Builtin::Foreign::CInt"
 let uints_type        = Ident.mk_ident "Builtin::Foreign::UInts"
 let uint_type         = Ident.mk_ident "Builtin::Foreign::UInt"
 let sint_type         = Ident.mk_ident "Builtin::Foreign::UInt"
 let int_type          = Ident.mk_ident "Builtin::Foreign::Int"
 
+let cint_to_integer   = Ident.mk_fident "Builtin::Foreign::CInt::To_Integer"
+let cint_from_integer = Ident.mk_fident "Builtin::Foreign::CInt::From_Integer"
 let uints_to_bits     = Ident.mk_fident "Builtin::Foreign::UInts::To_Bits"
 let uints_from_bits   = Ident.mk_fident "Builtin::Foreign::UInts::From_Bits"
 let uint_to_bits      = Ident.mk_fident "Builtin::Foreign::UInt::To_Bits"

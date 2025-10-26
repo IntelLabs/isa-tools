@@ -545,6 +545,8 @@ and funcall (loc : Loc.t) (fmt : PP.formatter) (f : Ident.t) (tes : AST.expr lis
       let f' = Identset.Bindings.find f helper_functions in
       apply loc fmt (fun _ -> ident_str fmt f') args
 
+  | ([],     [x])   when Ident.equal f cint_to_integer -> Runtime.ffi_c2asl_cint fmt (mk_expr loc x)
+  | ([],     [x])   when Ident.equal f cint_from_integer -> Runtime.ffi_asl2c_cint fmt (mk_expr loc x)
   (* todo: how to manifest the result array?
   | ([size], [x;_]) when Ident.equal f uints_to_bits -> Runtime.ffi_c2asl_bits_large fmt size x result
   | ([size], [x;_]) when Ident.equal f uints_from_bits -> Runtime.ffi_asl2c_bits_large fmt size x result
@@ -738,6 +740,8 @@ and varty ?(const_ref = false) (loc : Loc.t) (fmt : PP.formatter) (v : Ident.t) 
     Runtime.ty_ram fmt;
     nbsp fmt;
     ident fmt v
+  | Type_Constructor (i, []) when Ident.equal i Builtin_idents.cint_type ->
+    PP.fprintf fmt "int %a" ident v
   | Type_Constructor (i, [size]) when Ident.equal i Builtin_idents.uints_type ->
     let size' = const_int_expr loc size in
     let chunks = (size' + 63) / 64 in
@@ -1428,6 +1432,15 @@ let mk_ffi_conversion (loc : Loc.t) (indirect : bool) (c_name : Ident.t) (asl_na
         c_name = c_name;
         pp_c_type = Some (fun fmt -> PP.fprintf fmt "enum %a%a" ident tc ptr ());
         pp_c_decl = (fun fmt -> PP.fprintf fmt "enum %a %a%a" ident tc ptr () ident c_name);
+        pp_asl_to_c = (fun fmt -> PP.fprintf fmt "%a%a = %a;" ptr () ident c_name ident asl_name);
+        pp_c_to_asl = (fun fmt -> PP.fprintf fmt "%a %a = %a%a;" ident tc ident asl_name ptr () ident c_name);
+      }
+  | Type_Constructor (tc, []) when Ident.equal tc cint_type ->
+      { asl_name = asl_name;
+        asl_type = asl_type;
+        c_name = c_name;
+        pp_c_type = Some (fun fmt -> PP.fprintf fmt "int%a" ptr ());
+        pp_c_decl = (fun fmt -> PP.fprintf fmt "int %a%a" ptr () ident c_name);
         pp_asl_to_c = (fun fmt -> PP.fprintf fmt "%a%a = %a;" ptr () ident c_name ident asl_name);
         pp_c_to_asl = (fun fmt -> PP.fprintf fmt "%a %a = %a%a;" ident tc ident asl_name ptr () ident c_name);
       }
