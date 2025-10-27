@@ -11,11 +11,11 @@ begin
     return Std::Bits::All_Ones(6);
 end
 
-function main() -> Integer
+function main() -> Builtin::Foreign::CInt
 begin
     Std::Print::Bits::Hex(Test0()); Print("\n");
     // CHECK: 0'x0
     Std::Print::Bits::Hex(Test6()); Print("\n");
     // CHECK: 6'x3f
-    return 0;
+    return Builtin::Foreign::CInt::From_Integer(0);
 end

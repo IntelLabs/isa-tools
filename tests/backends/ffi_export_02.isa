@@ -15,12 +15,12 @@ var v : Integer;
 
 foreign export var "v" = v;
 
-function main() -> Integer
+function main() -> Builtin::Foreign::CInt
 begin
     v := 1;
     Helper();
     Std::Print::Integer::Dec(v); Print("\n");
     // CHECK: 2
 
-    return 0;
+    return Builtin::Foreign::CInt::From_Integer(0);
 end

@@ -6,7 +6,7 @@ begin
     return Std::Integer::Align_Down(x, y);
 end
 
-function main() -> Integer
+function main() -> Builtin::Foreign::CInt
 begin
     Std::Print::Integer::Dec(Test(12, 4)); Print("\n");
     // CHECK: 12
@@ -18,5 +18,5 @@ begin
     // CHECK: 12
     Std::Print::Integer::Dec(Test(16, 4)); Print("\n");
     // CHECK: 16
-    return 0;
+    return Builtin::Foreign::CInt::From_Integer(0);
 end

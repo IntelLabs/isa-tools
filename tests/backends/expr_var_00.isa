@@ -13,7 +13,7 @@ begin
     return G;
 end
 
-function main() -> Integer
+function main() -> Builtin::Foreign::CInt
 begin
     Std::Print::Bits::Hex(Test_arg(0b0001)); Print("\n");
     // CHECK: 4'x1
@@ -27,6 +27,6 @@ begin
     Std::Print::Bits::Hex(Test_global()); Print("\n");
     // CHECK: 4'x5
 
-    return 0;
+    return Builtin::Foreign::CInt::From_Integer(0);
 end
 

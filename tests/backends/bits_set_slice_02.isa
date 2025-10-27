@@ -8,9 +8,9 @@ begin
     return r;
 end
 
-function main() -> Integer
+function main() -> Builtin::Foreign::CInt
 begin
     Std::Print::Bits::Hex(FUT_8_4(0b0000_0000, 5, 0b1111)); Print("\n");
     // CHECK: Evaluation error: assertion failure
-    return 0;
+    return Builtin::Foreign::CInt::From_Integer(0);
 end

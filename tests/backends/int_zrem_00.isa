@@ -6,7 +6,7 @@ begin
     return Std::Integer::Truncated_Remainder(x, y);
 end
 
-function main() -> Integer
+function main() -> Builtin::Foreign::CInt
 begin
     Std::Print::Integer::Dec(Test(6, 3)); Print("\n");
     // CHECK: 0
@@ -18,5 +18,5 @@ begin
     // CHECK: -2
     Std::Print::Integer::Dec(Test(6, -3)); Print("\n");
     // CHECK: 0
-    return 0;
+    return Builtin::Foreign::CInt::From_Integer(0);
 end

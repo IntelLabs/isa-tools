@@ -1,7 +1,7 @@
 // RUN: %aslrun %s | filecheck %s
 // Copyright (C) 2023-2025 Intel Corporation
 
-function main() -> Integer
+function main() -> Builtin::Foreign::CInt
 begin
     Std::Print::Char(65);
     // CHECK: A
@@ -10,5 +10,5 @@ begin
     Std::Print::Char(67);
     // CHECK: C
 
-    return 0;
+    return Builtin::Foreign::CInt::From_Integer(0);
 end

@@ -8,7 +8,7 @@ begin
     return R[i][j];
 end
 
-function main() -> Integer
+function main() -> Builtin::Foreign::CInt
 begin
     R[0][0] := 10[0 +: 32];
     R[0][1] := 11[0 +: 32];
@@ -24,5 +24,5 @@ begin
     Std::Print::Bits::Hex(Test(1,1)); Print("\n");
     // CHECK: 32'xd
 
-    return 0;
+    return Builtin::Foreign::CInt::From_Integer(0);
 end

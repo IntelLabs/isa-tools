@@ -6,11 +6,11 @@ begin
     return Std::SInt::Exp2(x);
 end
 
-function main() -> Integer
+function main() -> Builtin::Foreign::CInt
 begin
     Std::Print::SInt::Dec(FUT(i8'd3)); Print("\n");
     // CHECK: i8'd8
     Std::Print::SInt::Dec(FUT(i8'd6)); Print("\n");
     // CHECK: i8'd64
-    return 0;
+    return Builtin::Foreign::CInt::From_Integer(0);
 end

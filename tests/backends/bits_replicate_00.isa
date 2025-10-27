@@ -16,7 +16,7 @@ begin
     return Std::Bits::Repeat(x, 5);
 end
 
-function main() -> Integer
+function main() -> Builtin::Foreign::CInt
 begin
     Std::Print::Bits::Hex(Test0(0b0001)); Print("\n");
     // CHECK: 0'x0
@@ -31,5 +31,5 @@ begin
     // CHECK: 4'x5
     Std::Print::Bits::Hex(Test5(0b0101)); Print("\n");
     // CHECK: 20'x55555
-    return 0;
+    return Builtin::Foreign::CInt::From_Integer(0);
 end

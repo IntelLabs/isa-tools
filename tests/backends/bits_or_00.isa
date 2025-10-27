@@ -6,9 +6,9 @@ begin
     return x or y;
 end
 
-function main() -> Integer
+function main() -> Builtin::Foreign::CInt
 begin
     Std::Print::Bits::Hex(Test(0b1100, 0b1010)); Print("\n");
     // CHECK: 4'xe
-    return 0;
+    return Builtin::Foreign::CInt::From_Integer(0);
 end

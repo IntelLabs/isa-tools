@@ -25,7 +25,7 @@ begin
     Std::Print::String("}");
 end
 
-function main() -> Integer
+function main() -> Builtin::Foreign::CInt
 begin
     let r := R{f0 => 0b0000, f1 => False};
     printR(FUT1(r, 0b1001)); Print("\n");
@@ -37,5 +37,5 @@ begin
     printR(FUT2(r, True)); Print("\n");
     // CHECK: R{f0=>4'x0, f1=>True}
 
-    return 0;
+    return Builtin::Foreign::CInt::From_Integer(0);
 end

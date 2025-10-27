@@ -2,7 +2,7 @@
 // REQUIRES: !c23 || wide_bitint
 // Copyright (C) 2023-2025 Intel Corporation
 
-function main() -> Integer
+function main() -> Builtin::Foreign::CInt
 begin
     Std::Print::Bits::Hex(256'xff01020304050607_1011121314151617_2021222324252627_3031323334353637); Print("\n");
     // CHECK: 256'xff01020304050607101112131415161720212223242526273031323334353637
@@ -14,5 +14,5 @@ begin
     Std::Print::Bits::Hex(32'xffff_ffff); Print("\n");
     // CHECK: 32'xffffffff
 
-    return 0;
+    return Builtin::Foreign::CInt::From_Integer(0);
 end

@@ -13,7 +13,7 @@ end
 // XFORM-NEXT:      return Std::SInt::Ne.0{5}(x, y);
 // XFORM-NEXT:  end
 
-function main() -> Integer
+function main() -> Builtin::Foreign::CInt
 begin
     Std::Print::Boolean(FUT(13, 14));
     // CHECK: True
@@ -21,5 +21,5 @@ begin
     // CHECK: False
     Std::Print::Boolean(FUT(15, 14));
     // CHECK: True
-    return 0;
+    return Builtin::Foreign::CInt::From_Integer(0);
 end

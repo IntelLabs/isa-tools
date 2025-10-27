@@ -6,7 +6,7 @@ begin
     return Std::Bits::Ne(x, y);
 end
 
-function main() -> Integer
+function main() -> Builtin::Foreign::CInt
 begin
     Std::Print::Boolean(FUT(8'x1, 8'x1)); Std::Print::String("\n");
     // CHECK: False
@@ -17,5 +17,5 @@ begin
     Std::Print::Boolean(FUT(8'x2, 8'x2)); Std::Print::String("\n");
     // CHECK: False
 
-    return 0;
+    return Builtin::Foreign::CInt::From_Integer(0);
 end

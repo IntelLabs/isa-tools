@@ -12,10 +12,10 @@ begin
     return x[i +: 32];
 end
 
-function main() -> Integer
+function main() -> Builtin::Foreign::CInt
 begin
     Std::Print::Bits::Hex(FFI_Call128(128'xfedcba98765432100123456789abcdef)); Print("\n");
     // CHECK: 32'x56789abc
 
-    return 0;
+    return Builtin::Foreign::CInt::From_Integer(0);
 end

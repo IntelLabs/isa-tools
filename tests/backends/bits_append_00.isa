@@ -6,9 +6,9 @@ begin
     return Std::Bits::Append(x, y);
 end
 
-function main() -> Integer
+function main() -> Builtin::Foreign::CInt
 begin
     Std::Print::Bits::Hex(Test(0b1101, 0b0010)); Print("\n");
     // CHECK: 8'xd2
-    return 0;
+    return Builtin::Foreign::CInt::From_Integer(0);
 end

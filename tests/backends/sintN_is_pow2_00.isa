@@ -6,7 +6,7 @@ begin
     return Std::SInt::Is_Power_Of_Two(x);
 end
 
-function main() -> Integer
+function main() -> Builtin::Foreign::CInt
 begin
     Std::Print::Boolean(FUT(i8'd0)); Std::Print::String("\n");
     // CHECK: False
@@ -18,5 +18,5 @@ begin
     // CHECK: False
     Std::Print::Boolean(FUT(i8'd4)); Std::Print::String("\n");
     // CHECK: True
-    return 0;
+    return Builtin::Foreign::CInt::From_Integer(0);
 end

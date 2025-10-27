@@ -13,9 +13,9 @@ end
 // XFORM-NEXT:      return x;
 // XFORM-NEXT:  end
 
-function main() -> Integer
+function main() -> Builtin::Foreign::CInt
 begin
     Std::Print::Integer::Dec(FUT(5));
     // CHECK: 5
-    return 0;
+    return Builtin::Foreign::CInt::From_Integer(0);
 end

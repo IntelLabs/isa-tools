@@ -42,7 +42,7 @@ record __Return_FFI_int_bool = {
 
 function FFI_int_bool(x : Integer) -> __Return_FFI_int_bool;
 
-function main() -> Integer
+function main() -> Builtin::Foreign::CInt
 begin
     Std::Print::Bits::Hex(FFI_null_bits8(8'd8)); Print("\n");
     // CHECK: 8'x8
@@ -80,5 +80,5 @@ begin
     Std::Print::Integer::Dec(ret2.r0); Print(" "); Std::Print::Boolean(ret2.r1); Print("\n");
     // CHECK: 4 True
 
-    return 0;
+    return Builtin::Foreign::CInt::From_Integer(0);
 end

@@ -6,7 +6,7 @@ begin
     return x[Std::SInt::To_Integer(i) +: 4];
 end
 
-function main() -> Integer
+function main() -> Builtin::Foreign::CInt
 begin
     Std::Print::Bits::Hex(Test_8_4(0b1010_0101, i4'd0)); Print("\n");
     // CHECK: 4'x5
@@ -19,5 +19,5 @@ begin
     Std::Print::Bits::Hex(Test_8_4(0b1010_0101, i4'd4)); Print("\n");
     // CHECK: 4'xa
 
-    return 0;
+    return Builtin::Foreign::CInt::From_Integer(0);
 end

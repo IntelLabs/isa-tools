@@ -1,7 +1,7 @@
 // RUN: %aslrun %s | filecheck %s
 // Copyright (C) 2023-2025 Intel Corporation
 
-function main() -> Integer
+function main() -> Builtin::Foreign::CInt
 begin
     Std::Print::SInt::Dec(i8'd42); Print("\n");
     // CHECK: i8'd42
@@ -14,5 +14,5 @@ begin
     // CHECK: -i8'd127
     Std::Print::SInt::Dec(-i8'd128); Print("\n");
     // CHECK: -i8'd128
-    return 0;
+    return Builtin::Foreign::CInt::From_Integer(0);
 end

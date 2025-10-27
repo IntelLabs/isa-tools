@@ -18,7 +18,7 @@ begin
     return x;
 end
 
-function main() -> Integer
+function main() -> Builtin::Foreign::CInt
 begin
     Std::Print::Integer::Dec(Test?(1)); Print("\n");
     // CHECK: 1
@@ -29,6 +29,6 @@ begin
     Std::Print::Integer::Dec(Test?(3)); Print("\n");
     // CHECK: 3
 
-    return 0;
+    return Builtin::Foreign::CInt::From_Integer(0);
 end
 

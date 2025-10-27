@@ -6,11 +6,11 @@ begin
     return Std::Bits::Zero_Extend(x, 8);
 end
 
-function main() -> Integer
+function main() -> Builtin::Foreign::CInt
 begin
     Std::Print::Bits::Hex(Test(0b110)); Print("\n");
     // CHECK: 8'x6
     Std::Print::Bits::Hex(Test(0b011)); Print("\n");
     // CHECK: 8'x3
-    return 0;
+    return Builtin::Foreign::CInt::From_Integer(0);
 end

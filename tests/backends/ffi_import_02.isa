@@ -15,7 +15,7 @@ var v2 : array [1] of Integer;
 foreign import var "v1" = v1;
 foreign import var "v2" = v2;
 
-function main() -> Integer
+function main() -> Builtin::Foreign::CInt
 begin
     v1 := 1;
     Std::Print::Integer::Dec(v1); Print("\n");
@@ -25,5 +25,5 @@ begin
     Std::Print::Integer::Dec(v2[0]); Print("\n");
     // CHECK: 3
 
-    return 0;
+    return Builtin::Foreign::CInt::From_Integer(0);
 end

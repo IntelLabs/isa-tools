@@ -6,7 +6,7 @@ begin
     return (__assert 0 <= i and then i < 8 __in x[i +: 1]);
 end
 
-function main() -> Integer
+function main() -> Builtin::Foreign::CInt
 begin
     // assertion that do not fail
     Std::Print::Bits::Hex(FUT(0b1100_1111, 0)); Print("\n");
@@ -16,5 +16,5 @@ begin
     Std::Print::Bits::Hex(FUT(0b1100_1111, 7)); Print("\n");
     // CHECK: 1'x1
 
-    return 0;
+    return Builtin::Foreign::CInt::From_Integer(0);
 end

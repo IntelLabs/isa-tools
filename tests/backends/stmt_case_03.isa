@@ -12,7 +12,7 @@ begin
     return 20; // unreachable
 end
 
-function main() -> Integer
+function main() -> Builtin::Foreign::CInt
 begin
     Std::Print::Integer::Dec(Test(0b0000)); Print("\n");
     // CHECK: 10
@@ -25,5 +25,5 @@ begin
     Std::Print::Integer::Dec(Test(0b1111)); Print("\n");
     // CHECK: 5
 
-    return 0;
+    return Builtin::Foreign::CInt::From_Integer(0);
 end

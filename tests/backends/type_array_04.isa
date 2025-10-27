@@ -8,7 +8,7 @@ begin
     return R[i];
 end
 
-function main() -> Integer
+function main() -> Builtin::Foreign::CInt
 begin
     R[0] := 10[0 +: 32];
     R[1] := 11[0 +: 32];
@@ -18,5 +18,5 @@ begin
     Std::Print::Bits::Hex(FUT(-1)); Print("\n");
     // CHECK: Evaluation error: assertion failure
 
-    return 0;
+    return Builtin::Foreign::CInt::From_Integer(0);
 end

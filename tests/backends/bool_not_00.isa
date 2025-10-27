@@ -11,12 +11,12 @@ begin
         );
 end
 
-function main() -> Integer
+function main() -> Builtin::Foreign::CInt
 begin
     Std::Print::Bits::Hex(Test(True)); Print("\n");
     // CHECK: 4'xb
     Std::Print::Bits::Hex(Test(False)); Print("\n");
     // CHECK: 4'x9
 
-    return 0;
+    return Builtin::Foreign::CInt::From_Integer(0);
 end

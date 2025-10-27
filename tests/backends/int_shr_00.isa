@@ -6,7 +6,7 @@ begin
     return x >> y;
 end
 
-function main() -> Integer
+function main() -> Builtin::Foreign::CInt
 begin
     Std::Print::Integer::Dec(Test(27, 0)); Print("\n");
     // CHECK: 27
@@ -14,5 +14,5 @@ begin
     // CHECK: 13
     Std::Print::Integer::Dec(Test(27, 2)); Print("\n");
     // CHECK: 6
-    return 0;
+    return Builtin::Foreign::CInt::From_Integer(0);
 end

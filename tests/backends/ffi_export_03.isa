@@ -11,12 +11,12 @@ var v : array [1] of Integer;
 
 foreign export var "v" = v;
 
-function main() -> Integer
+function main() -> Builtin::Foreign::CInt
 begin
     v[0] := 1;
     Helper();
     Std::Print::Integer::Dec(v[0]); Print("\n");
     // CHECK: 2
 
-    return 0;
+    return Builtin::Foreign::CInt::From_Integer(0);
 end

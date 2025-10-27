@@ -6,7 +6,7 @@ begin
     return x with { [i +: 4] => y, [j +: 1] => z };
 end
 
-function main() -> Integer
+function main() -> Builtin::Foreign::CInt
 begin
     Std::Print::Bits::Hex(Test_8_4(0b0000_0000, 0, 0b1111, 7, 0b1)); Print("\n");
     // CHECK: 8'x8f
@@ -17,5 +17,5 @@ begin
     Std::Print::Bits::Hex(Test_8_4(0b0000_0000, 0, 0b1111, 5, 0b1)); Print("\n");
     // CHECK: 8'x2f
 
-    return 0;
+    return Builtin::Foreign::CInt::From_Integer(0);
 end

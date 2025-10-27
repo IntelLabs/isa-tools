@@ -6,7 +6,7 @@ begin
     return Std::SInt::Truncated_Divide(x, y);
 end
 
-function main() -> Integer
+function main() -> Builtin::Foreign::CInt
 begin
     Std::Print::SInt::Dec(FUT(i8'd6, i8'd3)); Print("\n");
     // CHECK: i8'd2
@@ -18,5 +18,5 @@ begin
     // CHECK: -i8'd1
     Std::Print::SInt::Dec(FUT(i8'd6, -i8'd3)); Print("\n");
     // CHECK: -i8'd2
-    return 0;
+    return Builtin::Foreign::CInt::From_Integer(0);
 end

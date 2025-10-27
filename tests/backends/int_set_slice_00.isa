@@ -8,7 +8,7 @@ begin
     return r;
 end
 
-function main() -> Integer
+function main() -> Builtin::Foreign::CInt
 begin
     Std::Print::Integer::Hex(Test_4(0, 0, 0b1111)); Print("\n");
     // CHECK: 0xf
@@ -43,5 +43,5 @@ begin
     Std::Print::Integer::Dec(Test_4(-1, 4, 0b0000)); Print("\n");
     // CHECK: -241
 
-    return 0;
+    return Builtin::Foreign::CInt::From_Integer(0);
 end

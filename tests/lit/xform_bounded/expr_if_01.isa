@@ -22,7 +22,7 @@ end
 // XFORM-NEXT:      return Std::SInt::From_Integer.0{9}(r, 9);
 // XFORM-NEXT:  end
 
-function main() -> Integer
+function main() -> Builtin::Foreign::CInt
 begin
     Std::Print::Integer::Dec(FUT(-1));
     // CHECK: 0
@@ -34,5 +34,5 @@ begin
     // CHECK: 255
     Std::Print::Integer::Dec(FUT(256));
     // CHECK: 255
-    return 0;
+    return Builtin::Foreign::CInt::From_Integer(0);
 end

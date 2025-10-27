@@ -6,11 +6,11 @@ begin
     return Std::SInt::Ne(x, y);
 end
 
-function main() -> Integer
+function main() -> Builtin::Foreign::CInt
 begin
     Std::Print::Boolean(FUT(i8'd1, i8'd2)); Std::Print::String("\n");
     // CHECK: True
     Std::Print::Boolean(FUT(i8'd1, i8'd1)); Std::Print::String("\n");
     // CHECK: False
-    return 0;
+    return Builtin::Foreign::CInt::From_Integer(0);
 end

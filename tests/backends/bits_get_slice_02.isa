@@ -6,9 +6,9 @@ begin
     return x[i +: 4];
 end
 
-function main() -> Integer
+function main() -> Builtin::Foreign::CInt
 begin
     Std::Print::Bits::Hex(FUT_8_4(0b1010_0101, -1)); Print("\n");
     // CHECK: Evaluation error: assertion failure
-    return 0;
+    return Builtin::Foreign::CInt::From_Integer(0);
 end

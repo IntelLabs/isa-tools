@@ -7,11 +7,11 @@ begin
     return x;
 end
 
-function main() -> Integer
+function main() -> Builtin::Foreign::CInt
 begin
     // assertion that does not fail
     Std::Print::Bits::Hex(FUT(0b0001)); Print("\n");
     // CHECK: 4'x1
 
-    return 0;
+    return Builtin::Foreign::CInt::From_Integer(0);
 end

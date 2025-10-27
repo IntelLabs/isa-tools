@@ -6,7 +6,7 @@ begin
     return Std::SInt::From_Integer(x, 8);
 end
 
-function main() -> Integer
+function main() -> Builtin::Foreign::CInt
 begin
     Std::Print::SInt::Hex(FUT_8(0x0)); Print("\n");
     // CHECK: i8'x0
@@ -17,5 +17,5 @@ begin
     Std::Print::SInt::Hex(FUT_8(-0x80)); Print("\n");
     // CHECK: -i8'x80
 
-    return 0;
+    return Builtin::Foreign::CInt::From_Integer(0);
 end

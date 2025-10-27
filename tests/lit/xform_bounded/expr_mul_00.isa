@@ -43,7 +43,7 @@ end
 // XFORM-NEXT:      return Std::SInt::Resize.0{5, 3}(Std::SInt::Multiply.0{5}(Std::SInt::Resize.0{2, 5}(x, 5), Std::SInt::Resize.0{3, 5}(y, 5)), 3);
 // XFORM-NEXT:  end
 
-function main() -> Integer
+function main() -> Builtin::Foreign::CInt
 begin
     Std::Print::Integer::Dec(FUT1(-1, -2)); Std::Print("\n");
     // CHECK: 2
@@ -53,5 +53,5 @@ begin
     // CHECK: 8
     Std::Print::Integer::Dec(FUT4(-8, 1)); Std::Print("\n");
     // CHECK: -8
-    return 0;
+    return Builtin::Foreign::CInt::From_Integer(0);
 end

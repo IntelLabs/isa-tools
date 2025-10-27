@@ -13,7 +13,7 @@ begin
     return x != R;
 end
 
-function main() -> Integer
+function main() -> Builtin::Foreign::CInt
 begin
     Std::Print::Boolean(Test_eq(R)); Std::Print::String("\n");
     // CHECK: True
@@ -29,5 +29,5 @@ begin
     Std::Print::Boolean(Test_ne(B)); Std::Print::String("\n");
     // CHECK: True
 
-    return 0;
+    return Builtin::Foreign::CInt::From_Integer(0);
 end

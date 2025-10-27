@@ -6,10 +6,10 @@ begin
     Std::End_Execution(x == 0b0000);
 end
 
-function main() -> Integer
+function main() -> Builtin::Foreign::CInt
 begin
     // this will exit with failure
     FUT(0b0001);
 
-    return 1;
+    return Builtin::Foreign::Cint::From_Integer(1);
 end

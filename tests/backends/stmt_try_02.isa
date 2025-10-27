@@ -40,7 +40,7 @@ begin
     Std::Print::String("Exited try block\n");
 end
 
-function main() -> Integer
+function main() -> Builtin::Foreign::CInt
 begin
     FUT2(0);
     // CHECK: Caught exception E0
@@ -63,6 +63,6 @@ begin
     // CHECK: Did not throw
     // CHECK: Exited try block
 
-    return 0;
+    return Builtin::Foreign::CInt::From_Integer(0);
 end
 

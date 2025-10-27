@@ -8,10 +8,10 @@ begin
     R[i] := x;
 end
 
-function main() -> Integer
+function main() -> Builtin::Foreign::CInt
 begin
     FUT(4, Std::Bits::Zero(32));
     // CHECK: Evaluation error: assertion failure
 
-    return 0;
+    return Builtin::Foreign::CInt::From_Integer(0);
 end

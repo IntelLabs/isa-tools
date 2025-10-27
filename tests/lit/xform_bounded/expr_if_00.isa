@@ -17,9 +17,9 @@ end
 // XFORM-NEXT:      return Std::SInt::From_Integer.0{9}((if Std::SInt::Lt.0{5}(x, i5'x15) then Std::SInt::To_Integer.0{6}(Std::SInt::Add.0{6}(Std::SInt::Resize.0{5, 6}(x, 6), Std::SInt::Resize.0{2, 6}(i2'x1, 6))) else Std::SInt::To_Integer.0{9}(i9'x255)), 9);
 // XFORM-NEXT:  end
 
-function main() -> Integer
+function main() -> Builtin::Foreign::CInt
 begin
     Std::Print::Integer::Dec(FUT(8));
     // CHECK: 9
-    return 0;
+    return Builtin::Foreign::CInt::From_Integer(0);
 end

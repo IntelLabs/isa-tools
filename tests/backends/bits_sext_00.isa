@@ -24,7 +24,7 @@ begin
     return Std::Bits::Sign_Extend(x, 65);
 end
 
-function main() -> Integer
+function main() -> Builtin::Foreign::CInt
 begin
     // Basic check
     Std::Print::Bits::Hex(Test1(0b001)); Print("\n");
@@ -66,5 +66,5 @@ begin
     Std::Print::Bits::Hex(Test4(64'xc123_4567_89ab_cdef)); Print("\n");
     // CHECK: 65'x1c123456789abcdef
 
-    return 0;
+    return Builtin::Foreign::CInt::From_Integer(0);
 end

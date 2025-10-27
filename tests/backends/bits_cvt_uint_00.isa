@@ -6,11 +6,11 @@ begin
     return Std::Bits::Unsigned(x);
 end
 
-function main() -> Integer
+function main() -> Builtin::Foreign::CInt
 begin
     Std::Print::Integer::Dec(Test(0b0010)); Print("\n");
     // CHECK: 2
     Std::Print::Integer::Dec(Test(0b1010)); Print("\n");
     // CHECK: 10
-    return 0;
+    return Builtin::Foreign::CInt::From_Integer(0);
 end

@@ -6,11 +6,11 @@ begin
     return Std::SInt::Signed(x);
 end
 
-function main() -> Integer
+function main() -> Builtin::Foreign::CInt
 begin
     Std::Print::SInt::Dec(FUT4(0b0010)); Print("\n");
     // CHECK: i4'd2
     Std::Print::SInt::Dec(FUT4(0b1010)); Print("\n");
     // CHECK: -i4'd6
-    return 0;
+    return Builtin::Foreign::CInt::From_Integer(0);
 end

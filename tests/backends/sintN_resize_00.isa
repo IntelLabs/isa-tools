@@ -11,7 +11,7 @@ begin
     return Std::SInt::Resize(x, 8);
 end
 
-function main() -> Integer
+function main() -> Builtin::Foreign::CInt
 begin
     Std::Print::SInt::Hex(FUT_8_16(i8'd0)); Print("\n");
     // CHECK: i16'x0
@@ -31,6 +31,6 @@ begin
     Std::Print::SInt::Hex(FUT_16_8(-i16'x80)); Print("\n");
     // CHECK: -i8'x80
 
-    return 0;
+    return Builtin::Foreign::CInt::From_Integer(0);
 end
 

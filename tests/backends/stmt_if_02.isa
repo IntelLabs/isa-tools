@@ -14,7 +14,7 @@ begin
     return r;
 end
 
-function main() -> Integer
+function main() -> Builtin::Foreign::CInt
 begin
     Std::Print::Bits::Hex(Test(False, False)); Print("\n");
     // CHECK: 4'x3
@@ -25,5 +25,5 @@ begin
     Std::Print::Bits::Hex(Test(True, True)); Print("\n");
     // CHECK: 4'x1
 
-    return 0;
+    return Builtin::Foreign::CInt::From_Integer(0);
 end

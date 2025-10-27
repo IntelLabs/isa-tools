@@ -1,7 +1,7 @@
 // RUN: %aslrun %s | filecheck %s
 // Copyright (C) 2023-2025 Intel Corporation
 
-function main() -> Integer
+function main() -> Builtin::Foreign::CInt
 begin
     Std::Print::Bits::Hex(42[0 +: 8]); Print("\n");
     // CHECK: 8'x2a
@@ -16,5 +16,5 @@ begin
     Std::Print::Bits::Hex((-16384)[0 +: 70]); Print("\n");
     // CHECK: 70'x3fffffffffffffc000
 
-    return 0;
+    return Builtin::Foreign::CInt::From_Integer(0);
 end

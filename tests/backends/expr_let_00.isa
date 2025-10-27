@@ -6,12 +6,12 @@ begin
     return (__let r : Integer := x*x __in r+r);
 end
 
-function main() -> Integer
+function main() -> Builtin::Foreign::CInt
 begin
     Std::Print::Integer::Dec(Test(5)); Print("\n");
     // CHECK: 50
 
-    return 0;
+    return Builtin::Foreign::CInt::From_Integer(0);
 end
 
 

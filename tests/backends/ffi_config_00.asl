@@ -6,7 +6,7 @@
 config ConfigBool : Boolean := False;
 config ConfigInt : {1, 2, 3, 4} := 1;
 
-function main() -> Integer
+function main() -> Builtin::Foreign::CInt
 begin
     // Any changes to configuration variables should be performed
     // before any ASL code is executed so this test depends on
@@ -23,5 +23,5 @@ begin
     Std::Print::Integer::Dec(ConfigInt); Print("\n");
     // CHECK: 4
 
-    return 0;
+    return Builtin::Foreign::CInt::From_Integer(0);
 end

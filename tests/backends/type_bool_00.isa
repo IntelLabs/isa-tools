@@ -41,7 +41,7 @@ begin
     return x != y;
 end
 
-function main() -> Integer
+function main() -> Builtin::Foreign::CInt
 begin
     Std::Print::Boolean(True); Std::Print::String("\n");
     // CHECK: True
@@ -112,5 +112,5 @@ begin
     Std::Print::Boolean(Test_ne(True, True)); Std::Print::String("\n");
     // CHECK: False
 
-    return 0;
+    return Builtin::Foreign::CInt::From_Integer(0);
 end

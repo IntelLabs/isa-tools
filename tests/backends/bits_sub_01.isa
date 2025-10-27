@@ -8,9 +8,9 @@ begin
     return Std::Bits::Zero_Extend(Std::Bits::Subtract(x, 16'x1), 64);
 end
 
-function main() -> Integer
+function main() -> Builtin::Foreign::CInt
 begin
     Std::Print::Bits::Hex(FUT(16'x0)); Print("\n");
     // CHECK: 64'xf
-    return 0;
+    return Builtin::Foreign::CInt::From_Integer(0);
 end

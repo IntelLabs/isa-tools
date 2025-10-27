@@ -14,9 +14,9 @@ begin
     return result;
 end
 
-function main() -> Integer
+function main() -> Builtin::Foreign::CInt
 begin
     Std::Print::Bits::Hex(Test(0b1100, 0b1111)); Print("\n");
     // CHECK: 16'xff00
-    return 0;
+    return Builtin::Foreign::CInt::From_Integer(0);
 end

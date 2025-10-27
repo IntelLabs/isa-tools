@@ -8,7 +8,7 @@ begin
     return R[Std::SInt::To_Integer(i)];
 end
 
-function main() -> Integer
+function main() -> Builtin::Foreign::CInt
 begin
     Std::Print::Bits::Hex(Test(i3'd0)); Print("\n");
     // CHECK: 32'x3
@@ -17,6 +17,6 @@ begin
     Std::Print::Bits::Hex(Test(i3'd2)); Print("\n");
     // CHECK: 32'x5
 
-    return 0;
+    return Builtin::Foreign::CInt::From_Integer(0);
 end
 

@@ -6,7 +6,7 @@ begin
     return Std::SInt::Shift_Left(x, y);
 end
 
-function main() -> Integer
+function main() -> Builtin::Foreign::CInt
 begin
     Std::Print::SInt::Dec(FUT(i8'd3, i8'd0)); Print("\n");
     // CHECK: i8'd3
@@ -14,5 +14,5 @@ begin
     // CHECK: i8'd6
     Std::Print::SInt::Dec(FUT(i8'd3, i8'd2)); Print("\n");
     // CHECK: i8'd12
-    return 0;
+    return Builtin::Foreign::CInt::From_Integer(0);
 end

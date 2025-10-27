@@ -19,7 +19,7 @@ begin
     return x;
 end
 
-function main() -> Integer
+function main() -> Builtin::Foreign::CInt
 begin
     Std::Print::Bits::Hex(FFI_Invert32(32'x3)); Print("\n");
     // CHECK: 32'xfffffffc
@@ -27,5 +27,5 @@ begin
     Std::Print::Bits::Hex(FFI_Invert128(128'x3)); Print("\n");
     // CHECK: 128'xfffffffffffffffffffffffffffffffc
 
-    return 0;
+    return Builtin::Foreign::CInt::From_Integer(0);
 end

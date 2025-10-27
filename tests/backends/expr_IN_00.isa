@@ -6,7 +6,7 @@ begin
     return x in 0b10x;
 end
 
-function main() -> Integer
+function main() -> Builtin::Foreign::CInt
 begin
     Std::Print::Boolean(Test(0b000)); Std::Print::String("\n");
     // CHECK: False
@@ -25,6 +25,6 @@ begin
     Std::Print::Boolean(Test(0b111)); Std::Print::String("\n");
     // CHECK: False
 
-    return 0;
+    return Builtin::Foreign::CInt::From_Integer(0);
 end
 

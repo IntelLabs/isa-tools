@@ -11,11 +11,11 @@ begin
     return Std::Bits::Mk_Mask(w, 8);
 end
 
-function main() -> Integer
+function main() -> Builtin::Foreign::CInt
 begin
     Std::Print::Bits::Hex(Test0(0)); Print("\n");
     // CHECK: 0'x0
     Std::Print::Bits::Hex(Test8(3)); Print("\n");
     // CHECK: 8'x7
-    return 0;
+    return Builtin::Foreign::CInt::From_Integer(0);
 end
