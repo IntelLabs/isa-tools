@@ -11,5 +11,5 @@ begin
     // this will exit with failure
     FUT(0b0001);
 
-    return Builtin::Foreign::Cint::From_Integer(1);
+    return Builtin::Foreign::CInt::From_Integer(1);
 end

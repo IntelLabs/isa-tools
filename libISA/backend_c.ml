@@ -34,6 +34,9 @@ let set_runtime (rt : string) : unit =
 
 let include_line_info : bool ref = ref false
 let new_ffi : bool ref = ref false
+let ffi_integer : string ref = ref "int64_t"
+let ffi_integers = [ "int"; "int64_t" ]
+let set_ffi_integer (s : string) : unit = ffi_integer := s
 
 let wrap_extern (add_wrapper : bool) (fmt : PP.formatter) (f : PP.formatter -> 'a) : 'a =
   if add_wrapper then (
@@ -1448,8 +1451,8 @@ let mk_ffi_conversion (loc : Loc.t) (indirect : bool) (c_name : Ident.t) (asl_na
       { asl_name = asl_name;
         asl_type = asl_type;
         c_name = c_name;
-        pp_c_type = Some (fun fmt -> PP.fprintf fmt "int64_t%a" ptr ());
-        pp_c_decl = (fun fmt -> PP.fprintf fmt "int64_t %a%a" ptr () ident c_name);
+        pp_c_type = Some (fun fmt -> PP.fprintf fmt "%s%a" !ffi_integer ptr ());
+        pp_c_decl = (fun fmt -> PP.fprintf fmt "%s %a%a" !ffi_integer ptr () ident c_name);
         pp_asl_to_c = (fun fmt ->
           PP.fprintf fmt "%a%a = %a;"
             ptr ()
@@ -2229,17 +2232,18 @@ let _ =
   in
 
   let flags = Arg.align [
-        ("--output-dir",   Arg.Set_string opt_dirname,         "<dirname>    Directory for output files");
-        ("--basename",     Arg.Set_string opt_basename,        "<basename>   Basename of output files");
-        ("--num-c-files",  Arg.Set_int opt_num_c_files,        "<num>        Number of .c files created (default: 1)");
-        ("--runtime",      Arg.Symbol (runtimes, set_runtime), "fallback|c23 Select runtime system");
-        ("--const-ref",    Arg.Set_int const_ref_limit,        " Use 'const &' for arguments bigger than this");
-        ("--generate-cxx", Arg.Set is_cxx,                     " Generate C++ code");
-        ("--new-ffi",      Arg.Set   new_ffi,                  " Use new FFI");
-        ("--no-new-ffi",   Arg.Clear new_ffi,                  " Do not use new FFI");
-        ("--line-info",    Arg.Set include_line_info,          " Insert line number information");
-        ("--no-line-info", Arg.Clear include_line_info,        " Do not insert line number information");
-        ("--split-state",  Arg.Set opt_split_state,            " Split global variables into structs");
+        ("--output-dir",   Arg.Set_string opt_dirname,                 "<dirname>    Directory for output files");
+        ("--basename",     Arg.Set_string opt_basename,                "<basename>   Basename of output files");
+        ("--num-c-files",  Arg.Set_int opt_num_c_files,                "<num>        Number of .c files created (default: 1)");
+        ("--runtime",      Arg.Symbol (runtimes, set_runtime),         " Select runtime system");
+        ("--const-ref",    Arg.Set_int const_ref_limit,                " Use 'const &' for arguments bigger than this");
+        ("--generate-cxx", Arg.Set is_cxx,                             " Generate C++ code");
+        ("--new-ffi",      Arg.Set   new_ffi,                          " Use new FFI");
+        ("--no-new-ffi",   Arg.Clear new_ffi,                          " Do not use new FFI");
+        ("--line-info",    Arg.Set include_line_info,                  " Insert line number information");
+        ("--no-line-info", Arg.Clear include_line_info,                " Do not insert line number information");
+        ("--split-state",  Arg.Set opt_split_state,                    " Split global variables into structs");
+        ("--ffi-integer",  Arg.Symbol (ffi_integers, set_ffi_integer), " Select type for Integer in new FFI");
       ]
   in
   Commands.registerCommand "generate_c" flags [] [] "Generate C" cmd

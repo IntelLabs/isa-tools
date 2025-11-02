@@ -324,6 +324,7 @@ def mk_script(args, output_directory):
             generate_c += " --line-info"
         else:
             generate_c += " --no-line-info"
+        generate_c += f" --ffi-integer={args.ffi_integer}"
     else:
         generate_c += f" --output-file={output_directory}/isa.mlir"
 
@@ -521,6 +522,7 @@ def main() -> int:
     parser.add_argument("--import", dest="imports", help="import this symbol (C generation only)", action='append', default=[])
     parser.add_argument("--line-info", help="insert line directives into C code", action=argparse.BooleanOptionalAction)
     parser.add_argument("--new-ffi", help="use the new FFI", action="store_true", default=False)
+    parser.add_argument("--ffi-integer", help="select type for Integer in new FFI (default: int64_t)", choices=['int', 'int64_t'], default='int')
     parser.add_argument("--runtime-checks", help="perform runtime checks (array bounds, etc.)", action=argparse.BooleanOptionalAction)
     parser.add_argument("--split-state", help="split state into multiple structs", action=argparse.BooleanOptionalAction)
     parser.add_argument("--transform-foreign", help="process foreign import/export variable declarations", action=argparse.BooleanOptionalAction)
