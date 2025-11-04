@@ -522,17 +522,17 @@ module Runtime : RT.RuntimeLib = struct
     print_sintN_hexadecimal fmt int_width ~add_size:false x
 
   let get_slice (fmt : PP.formatter) (n : int) (w : int) (l : RT.rt_expr) (i : RT.rt_expr) : unit =
-    PP.fprintf fmt "sc_biguint<%d>(%a.range(%d+%a-1,%a))"
+    PP.fprintf fmt "sc_biguint<%d>(%a.range(%d+%a,%a))"
       w
       RT.pp_expr l
-      w
+      (w - 1)
       RT.pp_expr i
       RT.pp_expr i
 
   let set_slice (fmt : PP.formatter) (n : int) (w : int) (l : RT.rt_expr) (i : RT.rt_expr) (r : RT.rt_expr) : unit =
-    PP.fprintf fmt "%a.range(%d+%a-1,%a) = %a;"
+    PP.fprintf fmt "%a.range(%d+%a,%a) = %a;"
       RT.pp_expr l
-      w
+      (w - 1)
       RT.pp_expr i
       RT.pp_expr i
       RT.pp_expr r
