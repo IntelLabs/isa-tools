@@ -856,7 +856,7 @@ let lexpr_assign (loc : Loc.t) (fmt : PP.formatter) (x : AST.lexpr) (r : AST.exp
       PP.fprintf fmt "(void)%a;"
         (expr loc) r
   | _ ->
-      PP.fprintf fmt "%a = %a;@,"
+      PP.fprintf fmt "%a = %a;"
         (lexpr loc) x
         (expr loc) r
   )
@@ -937,7 +937,7 @@ let rec stmt (fmt : PP.formatter) (x : AST.stmt) : unit =
           | _
           -> expr loc fmt e
           );
-          PP.fprintf fmt ") {@,";
+          PP.fprintf fmt ") {";
           indented fmt (fun _ ->
               map fmt
                 (fun (AST.Alt_Alt (ps, oc, ss, loc)) ->
