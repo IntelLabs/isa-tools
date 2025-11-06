@@ -400,6 +400,15 @@ let mk_binop (op : range -> range -> range) (f : Ident.t) (e1 : AST.expr) (e2 : 
     mk_cvt_sintN_int n (AST.Expr_TApply (f, [expr_of_int n], [mk_cvt_int_sintN n e1; mk_cvt_int_sintN n e2], NoThrow))
   ) r
 
+(* for functions of type (Integer) -> Boolean *)
+let mk_pred (f : Ident.t) (e : AST.expr) : AST.expr option =
+  let r = range_of_expr e in
+  Option.map (fun b ->
+    let n = int_of_bounds b in
+    AST.Expr_TApply (f, [expr_of_int n], [mk_cvt_int_sintN n e], NoThrow)
+  ) r
+
+(* for functions of type (Integer, Integer) -> Boolean *)
 let mk_cmp (f : Ident.t) (e1 : AST.expr) (e2 : AST.expr) : AST.expr option =
   let r1 = range_of_expr e1 in
   let r2 = range_of_expr e2 in
@@ -422,6 +431,7 @@ let primop (f : Ident.t) (ftype : AST.function_type) (ps : AST.expr list) (args 
   | ([],  [x1; x2]) when Ident.equal f le_int  -> mk_cmp le_sintN x1 x2
   | ([],  [x1; x2]) when Ident.equal f ge_int  -> mk_cmp ge_sintN x1 x2
   | ([],  [x1; x2]) when Ident.equal f gt_int  -> mk_cmp gt_sintN x1 x2
+  | ([],  [x1])     when Ident.equal f is_pow2_int -> mk_pred is_pow2_sintN x1
   | ([Expr_Lit (VInt n') as n], [x])      when Ident.equal f cvt_bits_uint -> Some (mk_cvt_sintN_int (Z.to_int n') (AST.Expr_TApply (cvt_bits_usintN, [n], [x], NoThrow)))
   | ([Expr_Lit (VInt n') as n], [x])      when Ident.equal f cvt_bits_sint -> Some (mk_cvt_sintN_int (Z.to_int n') (AST.Expr_TApply (cvt_bits_ssintN, [n], [x], NoThrow)))
   | _ -> None
