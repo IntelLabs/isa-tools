@@ -51,14 +51,14 @@ void FFI_test_exports() {
         bool bret = FFI_Boolean(true);
         printf("%s\n", bret ? "True" : "False");
 
-        printf("%d\n", FFI_integer(42));
+        printf("%ld\n", FFI_integer(42));
         printf("i17'd%d\n", FFI_sint17(42));
 
-        int intret2;
+        int64_t intret2;
         bool boolret2;
         FFI_int_bool(1, &intret2, &boolret2);
-        printf("(%d, %s)\n", intret2, boolret2 ? "True" : "False");
+        printf("(%ld, %s)\n", intret2, boolret2 ? "True" : "False");
         FFI_int_bool(4, &intret2, &boolret2);
-        printf("(%d, %s)\n", intret2, boolret2 ? "True" : "False");
+        printf("(%ld, %s)\n", intret2, boolret2 ? "True" : "False");
 
 }
