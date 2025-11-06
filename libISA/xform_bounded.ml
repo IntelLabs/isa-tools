@@ -363,6 +363,23 @@ let range_of_mul (r1 : range) (r2 : range) : range =
       r1
       r2
 
+let range_of_shl (r1 : range) (r2 : range) : range =
+  (* Since x << y == x * (1 << y),
+     range_of_shl x y == range_of_mul x (1 << y).
+     In addition, we can assume that y >= 0 so clamp the range of y.
+   *)
+  let r2' = Option.map
+    (fun b2 ->
+      let (lo2, hi2) = b2 in
+      let lo2' = Z.shift_left Z.one (Z.to_int (Z.max lo2 Z.zero)) in
+      let hi2' = Z.shift_left Z.one (Z.to_int (Z.max hi2 Z.zero)) in
+      (lo2', hi2')
+    )
+    r2
+  in
+  range_of_mul r1 r2'
+
+
 let mk_unop (op : range -> range) (f : Ident.t) (e1 : AST.expr) : AST.expr option =
   let r1 = range_of_expr e1 in
   let rr = op r1 in
@@ -398,6 +415,7 @@ let primop (f : Ident.t) (ftype : AST.function_type) (ps : AST.expr list) (args 
   | ([],  [x1])     when Ident.equal f neg_int -> mk_unop (range_of_cofun1 prim_neg_int) neg_sintN x1
   | ([],  [x1; x2]) when Ident.equal f sub_int -> mk_binop (range_of_cofun2 prim_sub_int) sub_sintN x1 x2
   | ([],  [x1; x2]) when Ident.equal f mul_int -> mk_binop range_of_mul mul_sintN x1 x2
+  | ([],  [x1; x2]) when Ident.equal f shl_int -> mk_binop range_of_shl shl_sintN x1 x2
   | ([],  [x1; x2]) when Ident.equal f eq_int  -> mk_cmp eq_sintN x1 x2
   | ([],  [x1; x2]) when Ident.equal f ne_int  -> mk_cmp ne_sintN x1 x2
   | ([],  [x1; x2]) when Ident.equal f lt_int  -> mk_cmp lt_sintN x1 x2
