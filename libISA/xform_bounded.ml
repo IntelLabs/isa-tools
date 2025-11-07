@@ -150,6 +150,11 @@ let union_bounds (b1 : bounds) (b2 : bounds) : bounds =
   let (lo2, hi2) = b2 in
   (Z.min lo1 lo2, Z.max hi1 hi2)
 
+let intersect_bounds (b1 : bounds) (b2 : bounds) : bounds =
+  let (lo1, hi1) = b1 in
+  let (lo2, hi2) = b2 in
+  (Z.max lo1 lo2, Z.min hi1 hi2)
+
 (* In a for loop "for i = 0 to 10 do ... end", the iterator
  * can have values in the range 0..11 so we need to extend
  * the bounds slightly. This is different for up and down loops
@@ -180,6 +185,11 @@ let union_ranges (rs : range list) : range =
   | [] -> None
   | (r :: rs) -> List.fold_left union_range r rs
   )
+
+let intersect_range (r1 : range) (r2 : range) : range =
+  Option.bind r1 (fun b1 ->
+  Option.bind r2 (fun b2 ->
+  Some (intersect_bounds b1 b2)))
 
 let range_of_sintN (x : int) : range =
   let t = Z.shift_left Z.one (x-1) in
@@ -216,6 +226,27 @@ let range_of_type (x : AST.ty) : range =
   | Type_Integer (Some crs) -> range_of_constraints crs
   | _ -> None
   )
+
+(* Restrict a range to only values greater than or equal to x *)
+let range_restrict_ge (x : Z.t) (r : range) : range =
+  Option.map
+    (fun b ->
+      let (lo, hi) = b in
+      let lo' = Z.max lo x in
+      let hi' = Z.max hi x in
+      (lo', hi')
+    )
+    r
+
+(* Range of an unsigned value of size r *)
+let range_of_unsigned (r : range) : range =
+  Option.map
+    (fun b ->
+      let (lo, hi) = b in
+      let t = Z.shift_left Z.one (Z.to_int hi) in
+      (Z.zero, Z.sub t Z.one)
+    )
+    r
 
 (****************************************************************
  * Machinery to convert ranges back into types.
@@ -363,22 +394,20 @@ let range_of_mul (r1 : range) (r2 : range) : range =
       r1
       r2
 
+let power2 (x : Z.t) : Z.t = Z.shift_left Z.one (Z.to_int x)
+
+let range_of_power2 (r : range) : range =
+  range_of_fun1 power2 (range_restrict_ge Z.zero r)
+
 let range_of_shl (r1 : range) (r2 : range) : range =
   (* Since x << y == x * (1 << y),
      range_of_shl x y == range_of_mul x (1 << y).
      In addition, we can assume that y >= 0 so clamp the range of y.
    *)
-  let r2' = Option.map
-    (fun b2 ->
-      let (lo2, hi2) = b2 in
-      let lo2' = Z.shift_left Z.one (Z.to_int (Z.max lo2 Z.zero)) in
-      let hi2' = Z.shift_left Z.one (Z.to_int (Z.max hi2 Z.zero)) in
-      (lo2', hi2')
-    )
-    r2
-  in
-  range_of_mul r1 r2'
+  range_of_mul r1 (range_of_power2 r2)
 
+let range_of_mod_pow2 (r1 : range) (r2 : range) : range =
+  intersect_range r1 (range_of_unsigned r2)
 
 let mk_unop (op : range -> range) (f : Ident.t) (e1 : AST.expr) : AST.expr option =
   let r1 = range_of_expr e1 in
@@ -425,6 +454,7 @@ let primop (f : Ident.t) (ftype : AST.function_type) (ps : AST.expr list) (args 
   | ([],  [x1; x2]) when Ident.equal f sub_int -> mk_binop (range_of_cofun2 prim_sub_int) sub_sintN x1 x2
   | ([],  [x1; x2]) when Ident.equal f mul_int -> mk_binop range_of_mul mul_sintN x1 x2
   | ([],  [x1; x2]) when Ident.equal f shl_int -> mk_binop range_of_shl shl_sintN x1 x2
+  | ([],  [x1; x2]) when Ident.equal f mod_pow2_int -> mk_binop range_of_mod_pow2 mod_pow2_sintN x1 x2
   | ([],  [x1; x2]) when Ident.equal f eq_int  -> mk_cmp eq_sintN x1 x2
   | ([],  [x1; x2]) when Ident.equal f ne_int  -> mk_cmp ne_sintN x1 x2
   | ([],  [x1; x2]) when Ident.equal f lt_int  -> mk_cmp lt_sintN x1 x2
