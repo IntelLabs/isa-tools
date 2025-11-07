@@ -670,7 +670,7 @@ class boundedClass = object (self)
             let n = int_of_bounds bnd' in
             let f'' = mk_cvt_int_sintN n f' in
             let t'' = mk_cvt_int_sintN n t' in
-            self#add_lrange v (Some bnd);
+            self#add_lrange v (Some bnd');
             let b' = Isa_visitor.visit_stmts (self :> Isa_visitor.isaVisitor) b in
             ChangeTo [Stmt_For (v, ty', f'', dir, t'', b', loc)]
         | None ->
