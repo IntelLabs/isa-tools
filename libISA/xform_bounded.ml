@@ -409,6 +409,21 @@ let range_of_shl (r1 : range) (r2 : range) : range =
 let range_of_mod_pow2 (r1 : range) (r2 : range) : range =
   intersect_range r1 (range_of_unsigned r2)
 
+let range_of_align_down (r1 : range) (r2 : range) : range =
+  map2_option
+    (fun b1 b2 ->
+      let (lo1, hi1) = b1 in
+      let (lo2, hi2) = b2 in
+      if Z.geq lo1 Z.zero then
+        (Z.zero, hi1) (* Simplification: this range is slightly larger than the true range *)
+      else
+        (* aligning a negative number downwards can expand the range *)
+        (Z.sub lo1 (Z.sub hi2 Z.one), hi1)
+
+    )
+    r1
+    r2
+
 let mk_unop (op : range -> range) (f : Ident.t) (e1 : AST.expr) : AST.expr option =
   let r1 = range_of_expr e1 in
   let rr = op r1 in
@@ -455,6 +470,7 @@ let primop (f : Ident.t) (ftype : AST.function_type) (ps : AST.expr list) (args 
   | ([],  [x1; x2]) when Ident.equal f mul_int -> mk_binop range_of_mul mul_sintN x1 x2
   | ([],  [x1; x2]) when Ident.equal f shl_int -> mk_binop range_of_shl shl_sintN x1 x2
   | ([],  [x1; x2]) when Ident.equal f mod_pow2_int -> mk_binop range_of_mod_pow2 mod_pow2_sintN x1 x2
+  | ([],  [x1; x2]) when Ident.equal f align_int -> mk_binop range_of_align_down align_sintN x1 x2
   | ([],  [x1; x2]) when Ident.equal f eq_int  -> mk_cmp eq_sintN x1 x2
   | ([],  [x1; x2]) when Ident.equal f ne_int  -> mk_cmp ne_sintN x1 x2
   | ([],  [x1; x2]) when Ident.equal f lt_int  -> mk_cmp lt_sintN x1 x2
