@@ -74,6 +74,8 @@ open Builtin_idents
 open Primops
 open Utils
 
+let verbose = ref false
+
 (****************************************************************
  * Generating conversion functions
  * todo: move to asl_utils
@@ -160,6 +162,12 @@ let extend_bounds (dir : AST.direction) (b : bounds) : bounds =
   )
 
 type range = bounds option
+
+let pp_range (fmt : Format.formatter) (r : range) : unit =
+  ( match r with
+  | None -> Format.fprintf fmt "Integer"
+  | Some (lo, hi) -> Format.fprintf fmt "{%s..%s}" (Z.to_string lo) (Z.to_string hi)
+  )
 
 let union_range (r1 : range) (r2 : range) : range =
   Option.bind r1 (fun b1 ->
@@ -369,6 +377,7 @@ let mk_binop (op : range -> range -> range) (f : Ident.t) (e1 : AST.expr) (e2 : 
   let r2 = range_of_expr e2 in
   let rr = op r1 r2 in
   let r = union_range (union_range r1 r2) rr in
+  if !verbose then Format.printf "op : %a %a -> %a\n" pp_range r1 pp_range r2 pp_range rr;
   Option.map (fun b ->
     let n = int_of_bounds b in
     mk_cvt_sintN_int n (AST.Expr_TApply (f, [expr_of_int n], [mk_cvt_int_sintN n e1; mk_cvt_int_sintN n e2], NoThrow))
@@ -668,8 +677,11 @@ let _ =
     Commands.declarations := xform_decls !Commands.declarations;
     true
   in
-  let options = [] in
-  Commands.registerCommand "xform_bounded" options [] [] "Transform bitslice operations" cmd
+  let options = Arg.align [
+      ("--verbose", Arg.Set verbose, " Show detailed dependency chains");
+    ]
+  in
+  Commands.registerCommand "xform_bounded" options [] [] "Convert unbounded integers to bounded integers" cmd
 
 (****************************************************************
  * End
