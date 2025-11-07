@@ -58,7 +58,7 @@ module Runtime : RT.RuntimeLib = struct
       else if width <= 16 then 16
       else if width <= 32 then 32
       else if width <= 64 then 64
-      else failwith "nearest_intsize: called with bad argument"
+      else width
 
   let ty_sintN (fmt : PP.formatter) (width : int) : unit =
       (* Optimization: use standard types when we can *)
@@ -335,8 +335,17 @@ module Runtime : RT.RuntimeLib = struct
         ty_sint int_width
         RT.pp_expr x
 
-  let resize_sintN (fmt : PP.formatter) (m : int) (n : int) (x : RT.rt_expr) : unit =
-    if m <= 64 then begin
+  let resize_sintN (fmt : PP.formatter) (raw_m : int) (raw_n : int) (x : RT.rt_expr) : unit =
+    (* To compensate for the optimization in ty_sintN of using the nearest_intsize for
+     * sizes less than 64, start by rounding off the source size (m) and the target size (n)
+     * in the same way and skip the resizing if it is already the right size.
+     * This results in cleaner code that does not gratuitiously cast int8_t to int8_t.
+     *)
+    let m = nearest_intsize raw_m in
+    let n = nearest_intsize raw_n in
+    if m == n then begin
+      RT.pp_expr fmt x
+    end else if m <= 64 then begin
       if n <= 64 then
         PP.fprintf fmt "((%a)%a)"
           ty_sintN n
