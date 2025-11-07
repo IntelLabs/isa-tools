@@ -632,7 +632,7 @@ and expr (loc : Loc.t) (fmt : PP.formatter) (x : AST.expr) : unit =
       Runtime.get_slice fmt (const_int_expr loc n) (const_int_expr loc wd) (mk_expr loc e) (fun fmt -> index_expr loc fmt lo)
   | Expr_Slices (Type_Integer _, e, [Slice_LoWd (lo, wd)]) ->
       let module Runtime = (val (!runtime) : RuntimeLib) in
-      Runtime.get_slice_int fmt (const_int_expr loc wd) (mk_expr loc e) (mk_expr loc lo)
+      Runtime.get_slice_int fmt (const_int_expr loc wd) (mk_expr loc e) (fun fmt -> index_expr loc fmt lo)
   | Expr_WithChanges (t, e, cs) ->
       let tmp1 = Ident.mk_ident "__tmp1" in
       let rt_tmp1 fmt = Ident.pp fmt tmp1 in
