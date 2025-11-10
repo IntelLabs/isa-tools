@@ -7,6 +7,9 @@
  * - Slice_Single to Slice_LoWd
  * - Slice_Element to Slice_LoWd
  *
+ * Optimizes
+ * - Slice of slice (e.g., x[63:32][8 +: 4] ---> x[40 +: 4])
+ *
  * Copyright (C) 2023-2025 Intel Corporation
  * SPDX-License-Identifier: BSD-3-Clause
  ****************************************************************)
@@ -73,6 +76,18 @@ class lower_class = object (self)
 
     method! vexpr (x : AST.expr) : AST.expr Visitor.visitAction =
       ( match x with
+      | Expr_Slices (ty1, Expr_Slices (ty2, e2, [slice2]), [slice1]) ->
+          (* Slice of slice optimization *)
+          let slice1' = Isa_visitor.visit_slice (self :> Isa_visitor.isaVisitor) slice1 in
+          let slice2' = Isa_visitor.visit_slice (self :> Isa_visitor.isaVisitor) slice2 in
+          let slice = ( match (slice1', slice2') with
+                      | (Slice_LoWd (lo1, wd1), Slice_LoWd (lo2, wd2)) ->
+                        let lo = Xform_simplify_expr.simplify (mk_add_int lo1 lo2) in
+                        AST.Slice_LoWd (lo, wd1)
+                      | _ -> raise (Utils.InternalError (Loc.Unknown, "xform_lower: slice of slice", (fun fmt -> Isa_fmt.expr fmt x), __LOC__))
+                      )
+          in
+          ChangeTo (Expr_Slices (ty2, e2, [slice]))
       | Expr_Slices (ty, e, slices) ->
           let e' = Isa_visitor.visit_expr (self :> Isa_visitor.isaVisitor) e in
           let old_pre = pre in (* save previous value of pre *)
