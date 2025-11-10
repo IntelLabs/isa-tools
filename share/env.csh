@@ -1,11 +1,15 @@
 #!/bin/tcsh
 
+if ($?isl_source_script_path) then
+    set script_path = $isl_source_script_path
+else
 set called=($_)
 if ("$called" != "") then
     set script_path = $called[2] # the script was sourced
 endif
 if ("$0" != "tcsh") then
     set script_path = $0         # the script was run
+endif
 endif
 
 # Resolve the directory path
@@ -27,4 +31,4 @@ rehash
 unset script_path
 unset SCRIPT_DIR
 
-echo "Environment configured for ASLi installation at: ASLI_INSTALL_DIR = ${ASLI_INSTALL_DIR}"
+# echo "Environment configured for ASLi installation at: ASLI_INSTALL_DIR = ${ASLI_INSTALL_DIR}"

@@ -13,4 +13,4 @@ export ASLI_BIN_DIR="${SCRIPT_DIR}/bin"
 export LD_LIBRARY_PATH="${SCRIPT_DIR}/lib:${LD_LIBRARY_PATH}"
 export PATH="${SCRIPT_DIR}/bin:$PATH"
 
-echo "Environment configured for ASLi installation at: ASLI_INSTALL_DIR = ${ASLI_INSTALL_DIR}"
+# echo "Environment configured for ASLi installation at: ASLI_INSTALL_DIR = ${ASLI_INSTALL_DIR}"
