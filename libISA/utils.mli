@@ -78,6 +78,8 @@ val from_option : 'a option -> (unit -> 'a) -> 'a
 
 val orelse_option : 'a option -> (unit -> 'a option) -> 'a option
 
+val or_option : 'a option -> 'a option -> 'a option
+
 val map2_option : ('a -> 'b -> 'c) -> 'a option -> 'b option -> 'c option
 
 (* Examples:

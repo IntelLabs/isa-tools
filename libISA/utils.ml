@@ -152,6 +152,9 @@ let cartesian_product (xss : 'a list list) : 'a list list =
 let from_option (ox : 'a option) (d : unit -> 'a) : 'a =
   match ox with None -> d () | Some x -> x
 
+let or_option (ox : 'a option) (oy : 'a option) : 'a option =
+  match ox with None -> oy | Some _ -> ox
+
 let orelse_option (ox : 'a option) (f : unit -> 'a option) : 'a option =
   match ox with None -> f () | Some _ -> ox
 
