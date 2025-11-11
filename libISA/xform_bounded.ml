@@ -661,10 +661,12 @@ class boundedClass = object (self)
         )
 
     | Stmt_For (v, ty, f, dir, t, b, loc) ->
-        ( match range_of_type ty with
+        let f' = Isa_visitor.visit_expr (self :> Isa_visitor.isaVisitor) f in
+        let t' = Isa_visitor.visit_expr (self :> Isa_visitor.isaVisitor) t in
+        let r_ft = union_range (range_of_expr f') (range_of_expr t') in
+        let r = Utils.or_option (range_of_type ty) r_ft in
+        ( match r with
         | Some bnd ->
-            let f' = Isa_visitor.visit_expr (self :> Isa_visitor.isaVisitor) f in
-            let t' = Isa_visitor.visit_expr (self :> Isa_visitor.isaVisitor) t in
             let bnd' = extend_bounds dir bnd in
             let ty' = type_of_bounds bnd' in
             let n = int_of_bounds bnd' in
