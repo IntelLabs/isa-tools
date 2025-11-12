@@ -1225,10 +1225,12 @@ let exceptions (fmt : PP.formatter) (xs : AST.declaration list) : unit =
     PP.fprintf fmt "typedef enum ASL_exception_tag { ASL_no_exception, %a } ASL_exception_tag_t;@,@,"
       (commasep (fun fmt' (tc, _, _) -> PP.fprintf fmt' "tag_%a" ident tc)) excs;
     List.iter (fun (tc, fs, loc) ->
-        PP.fprintf fmt "typedef struct {@,";
-        PP.fprintf fmt "    ASL_exception_tag_t ASL_tag;@,";
-        indented fmt (fun _ -> cutsep (pp_field loc) fmt fs);
-        PP.fprintf fmt "} %a;@,@," ident tc
+        PP.fprintf fmt "typedef struct {";
+        indented fmt (fun _ ->
+          PP.fprintf fmt "ASL_exception_tag_t ASL_tag;@,";
+          cutsep (pp_field loc) fmt fs
+        );
+        PP.fprintf fmt "@,} %a;@,@," ident tc
       )
       excs;
     PP.fprintf fmt "typedef union {\n    %s\n%a\n} ASL_exception_t;@,"
