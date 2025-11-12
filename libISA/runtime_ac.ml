@@ -94,9 +94,12 @@ module Runtime : RT.RuntimeLib = struct
     PP.fprintf fmt "}, false)"
 
   let intN_literal (n : int) (fmt : PP.formatter) (x : Z.t) : unit =
-    if n <= 64 then
-      PP.fprintf fmt "(%s)" (Z.format "%d" x)
-    else if Z.gt x min_64bit_signed && Z.leq x max_64bit_signed then begin
+    if n <= 64 then begin
+      if Z.geq x Z.zero then
+        PP.fprintf fmt "%s" (Z.format "%d" x)
+      else
+        PP.fprintf fmt "(%s)" (Z.format "%d" x)
+    end else if Z.gt x min_64bit_signed && Z.leq x max_64bit_signed then begin
       (* Minor optimization to improve readability and efficiency *)
       PP.fprintf fmt "ac_int<%d>(%s)" n (Z.format "%d" x)
     end else if Z.geq x Z.zero then begin
