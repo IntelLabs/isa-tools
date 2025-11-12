@@ -629,7 +629,25 @@ class boundedClass = object (self)
 
   method! vstmt x =
     ( match x with
-    | Stmt_VarDecl (is_constant, DeclItem_Var (v, Some ty), e, loc) ->
+    | Stmt_VarDecl (true, DeclItem_Var (v, Some ty), e, loc) ->
+        let e' = Isa_visitor.visit_expr (self :> Isa_visitor.isaVisitor) e in
+        (* Calculate a refined range to handle cases where the expression 'e'
+         * has been optimized in a way that lets us calculate the range more
+         * accurately than was possible when the type 'ty' was inferred.
+         *)
+        let r = Utils.or_option (range_of_type ty) (range_of_expr e') in
+        ( match r with
+        | Some b ->
+            let n = int_of_bounds b in
+            let ty' = type_sintN (expr_of_int n) in
+            let e'' = mk_cvt_int_sintN n e' in
+            self#add_lrange v (Some b);
+            ChangeTo [Stmt_VarDecl (true, DeclItem_Var (v, Some ty'), e'', loc)]
+        | None ->
+            DoChildren
+        )
+
+    | Stmt_VarDecl (false, DeclItem_Var (v, Some ty), e, loc) ->
         ( match range_of_type ty with
         | Some b ->
             let n = int_of_bounds b in
@@ -637,7 +655,7 @@ class boundedClass = object (self)
             let e' = Isa_visitor.visit_expr (self :> Isa_visitor.isaVisitor) e in
             let e'' = mk_cvt_int_sintN n e' in
             self#add_lrange v (Some b);
-            ChangeTo [Stmt_VarDecl (is_constant, DeclItem_Var (v, Some ty'), e'', loc)]
+            ChangeTo [Stmt_VarDecl (false, DeclItem_Var (v, Some ty'), e'', loc)]
         | None ->
             DoChildren
         )
