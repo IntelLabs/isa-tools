@@ -10,7 +10,7 @@ end
 
 // XFORM-LABEL: function FUT.0{}(x : __sint(5)) -> __sint(6){{$}}
 // XFORM-NEXT:  begin
-// XFORM-NEXT:      return Std::SInt::Shift_Left.0{6}(Std::SInt::Resize.0{5, 6}(x, 6), Std::SInt::Resize.0{2, 6}(i2'x1, 6));
+// XFORM-NEXT:      return Std::SInt::Shift_Left.0{6}(Std::SInt::Resize.0{5, 6}(x, 6), i6'x1);
 // XFORM-NEXT:  end
 
 function main() -> Builtin::Foreign::CInt

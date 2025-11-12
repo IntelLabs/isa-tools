@@ -83,12 +83,13 @@ let verbose = ref false
  * Note that these perform some minor local optimizations to
  * combine adjacent conversions together:
  *
+ * - resize(5'd8, 16) = resize(16'd8)
  * - resize(cvt_int_sintN(x,M),N) = cvt_int_sintN(x,N)
  * - resize(resize(x,M),N) = resize(x,N)
+ * - cvt_int_sintN(8, 16) = 16'd8
  * - cvt_int_sintN(cvt_sintN_int(x), M) = resize(x, M)
  * - cvt_sintN_int(cvt_int_sintN(x, M)) = x
  * - cvt_sintN_int(resize(x, M)) = cvt_sintN_int(x)
- * - todo: optimize resize(5'd8, 16) = resize(16'd8)
  *
  * These are important because the bounded integer transformation
  * generates a lot of these combinations.
@@ -106,6 +107,7 @@ let mk_resize_sintN (m : int) (n : int) (x : AST.expr) : AST.expr =
     let m' = expr_of_int m in
     let n' = expr_of_int n in
     ( match x with
+    | Expr_Lit (VIntN x') -> Expr_Lit (VIntN (Primops.prim_resize_sintN x' (Z.of_int n)))
     | Expr_TApply (f, _, [y; _], _) when Ident.equal f cvt_int_sintN ->
       Expr_TApply (cvt_int_sintN, [n'], [y; n'], NoThrow)
     | Expr_TApply (f, [from;_], [y; _], _) when Ident.equal f resize_sintN ->
@@ -118,8 +120,9 @@ let mk_resize_sintN (m : int) (n : int) (x : AST.expr) : AST.expr =
 let mk_cvt_int_sintN (n : int) (x : AST.expr) : AST.expr =
   let n' = expr_of_int n in
   ( match x with
-  | Expr_TApply (f, [from], [y], _) when Ident.equal f cvt_sintN_int ->
-    if from = n' then y else Expr_TApply (resize_sintN, [from; n'], [y; n'], NoThrow)
+  | Expr_Lit (VInt x') -> Expr_Lit (VIntN (Primops.prim_cvt_int_sintN x' (Z.of_int n)))
+  | Expr_TApply (f, [Expr_Lit (VInt from)], [y], _) when Ident.equal f cvt_sintN_int ->
+    mk_resize_sintN (Z.to_int from) n y
   | _ ->
     Expr_TApply (cvt_int_sintN, [n'], [x; n'], NoThrow)
   )

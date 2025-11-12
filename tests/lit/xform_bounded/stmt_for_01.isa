@@ -19,8 +19,8 @@ end
 
 // XFORM:       function FUT.0{}(x : __sint(5)) -> __sint(12){{$}}
 // XFORM-NEXT:  begin
-// XFORM-NEXT:      var s : __sint(12) := Std::SInt::Resize.0{1, 12}(i1'x0, 12);
-// XFORM-NEXT:      for i : __sint(9) := Std::SInt::Resize.0{1, 9}(i1'x0, 9) to Std::SInt::Resize.0{8, 9}(Std::SInt::Subtract.0{8}(Std::SInt::Resize.0{7, 8}(F.0{}(x), 8), Std::SInt::Resize.0{2, 8}(i2'x1, 8)), 9) do
+// XFORM-NEXT:      var s : __sint(12) := i12'x0;
+// XFORM-NEXT:      for i : __sint(9) := i9'x0 to Std::SInt::Resize.0{8, 9}(Std::SInt::Subtract.0{8}(Std::SInt::Resize.0{7, 8}(F.0{}(x), 8), i8'x1), 9) do
 // XFORM-NEXT:          s := Std::SInt::Resize.0{13, 12}(Std::SInt::Add.0{13}(Std::SInt::Resize.0{12, 13}(s, 13), Std::SInt::Resize.0{9, 13}(i, 13)), 12);
 // XFORM-NEXT:      endfor;
 // XFORM-NEXT:      return s;
