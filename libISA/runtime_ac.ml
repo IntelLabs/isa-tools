@@ -116,9 +116,9 @@ module Runtime : RT.RuntimeLib = struct
 
   let bits_literal (fmt : PP.formatter) (x : Primops.bitvector) : unit =
     if x.n <= 32 then begin
-      Format.fprintf fmt "ac_int<%d,false>(%a)"
+      Format.fprintf fmt "ac_int<%d,false>(%sUL)"
         x.n
-        constant_u32 x.v
+        (Z.format "%#x" x.v)
     end else begin
       let num_limbs = (x.n + 31) / 32 in
       let limbs = split_int x.v num_limbs 32 in
