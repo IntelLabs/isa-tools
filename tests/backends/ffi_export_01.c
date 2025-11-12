@@ -18,30 +18,26 @@ void FFI_test_exports() {
         printf("32'x%x\n", FFI_bits32(32));
         printf("64'x%lx\n", FFI_bits64(64));
 
-        uint64_t inbuf1[1];
-        uint64_t inbuf2[2];
+        printf("2'x%x\n", FFI_bits2(2));
+        printf("17'x%x\n", FFI_bits17(17));
 
-        uint64_t outbuf1[1];
-        uint64_t outbuf2[2];
+        uint64_t inbuf[2];
+        uint64_t outbuf[2];
 
-        outbuf1[0] = 17;
-        FFI_bits17(outbuf1, inbuf1);
-        printf("17'x%lx\n", inbuf1[0]);
+        outbuf[0] = 65;
+        outbuf[1] = 0;
+        FFI_bits65(outbuf, inbuf);
+        printf("65'x%lx%08lx\n", inbuf[1], inbuf[0]);
 
-        outbuf2[0] = 65;
-        outbuf2[1] = 0;
-        FFI_bits65(outbuf2, inbuf2);
-        printf("65'x%lx%08lx\n", inbuf2[1], inbuf2[0]);
+        outbuf[0] = 127;
+        outbuf[1] = 0;
+        FFI_bits65(outbuf, inbuf);
+        printf("127'x%lx%08lx\n", inbuf[1], inbuf[0]);
 
-        outbuf2[0] = 127;
-        outbuf2[1] = 0;
-        FFI_bits65(outbuf2, inbuf2);
-        printf("127'x%lx%08lx\n", inbuf2[1], inbuf2[0]);
-
-        outbuf2[0] = 128;
-        outbuf2[1] = 0;
-        FFI_bits65(outbuf2, inbuf2);
-        printf("128'x%lx%08lx\n", inbuf2[1], inbuf2[0]);
+        outbuf[0] = 128;
+        outbuf[1] = 0;
+        FFI_bits65(outbuf, inbuf);
+        printf("128'x%lx%08lx\n", inbuf[1], inbuf[0]);
 
         printf("%s\n", FFI_string("abcd"));
 

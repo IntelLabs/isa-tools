@@ -52,6 +52,9 @@ let wrap_extern (add_wrapper : bool) (fmt : PP.formatter) (f : PP.formatter -> '
     f fmt
   )
 
+let fixed_int_width (n : int) : int =
+  if n <= 8 then 8 else Utils.round_up_to_pow2 n
+
 (* Pass arguments bigger than this using const & (C++ syntax)
  * Also, structs and arrays are also passed by reference no matter
  * how large they are.
@@ -1372,21 +1375,22 @@ let mk_ffi_conversion (loc : Loc.t) (indirect : bool) (c_name : Ident.t) (asl_na
   let pp_asl_name (fmt : PP.formatter) : unit = ident fmt asl_name in
   let pp_c_name (fmt : PP.formatter) : unit = ptr fmt (); ident fmt c_name in
   let mk_ffi_convert_small_bits (n : int) =
+    let n_fixed = fixed_int_width n in (* 8, 16, 32, or 64 *)
     { asl_name = asl_name;
       asl_type = asl_type;
       c_name = c_name;
-      pp_c_type = Some (fun fmt -> PP.fprintf fmt "uint%d_t" n);
+      pp_c_type = Some (fun fmt -> PP.fprintf fmt "uint%d_t" n_fixed);
       pp_c_decl = (fun fmt ->
-        PP.fprintf fmt "uint%d_t %a%a" n ptr () ident c_name);
+        PP.fprintf fmt "uint%d_t %a%a" n_fixed ptr () ident c_name);
       pp_asl_to_c = (fun fmt ->
         PP.fprintf fmt "%a%a = %a;"
           ptr ()
           ident c_name
-          (Runtime.ffi_asl2c_bits_small n) pp_asl_name);
+          (Runtime.ffi_asl2c_bits_small n_fixed) pp_asl_name);
       pp_c_to_asl = (fun fmt ->
         varty loc fmt asl_name asl_type;
         PP.fprintf fmt " = %a;"
-          (Runtime.ffi_c2asl_bits_small n) pp_c_name);
+          (Runtime.ffi_c2asl_bits_small n_fixed) pp_c_name);
     }
   in
   let mk_ffi_convert_large_bits (n : int) =
@@ -1485,10 +1489,10 @@ let mk_ffi_conversion (loc : Loc.t) (indirect : bool) (c_name : Ident.t) (asl_na
             (Runtime.ffi_c2asl_sintN_small (Z.to_int n)) pp_c_name);
       }
   | Type_Bits(Expr_Lit (VInt n), _)
-    when List.mem (Z.to_int n) [8; 16; 32; 64]
+    when (Z.to_int n) <= 64
     -> mk_ffi_convert_small_bits (Z.to_int n)
   | Type_Bits(Expr_TApply (f, _, [Expr_Lit (VIntN n)], _), _)
-    when Ident.equal f cvt_sintN_int && List.mem (Z.to_int n.v) [8; 16; 32; 64]
+    when Ident.equal f cvt_sintN_int && (Z.to_int n.v) <= 64
     -> mk_ffi_convert_small_bits (Z.to_int n.v)
   | Type_Bits(Expr_Lit (VInt n), _)
     -> mk_ffi_convert_large_bits (Z.to_int n)

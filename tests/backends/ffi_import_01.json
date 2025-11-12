@@ -10,6 +10,7 @@
         "FFI_null_bits16",
         "FFI_null_bits32",
         "FFI_null_bits64",
+        "FFI_null_bits2",
         "FFI_null_bits17",
         "FFI_null_bits65",
         "FFI_null_bits127",

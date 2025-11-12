@@ -12,7 +12,9 @@ function FFI_null_bits16(x : Bits(16)) -> Bits(16);
 function FFI_null_bits32(x : Bits(32)) -> Bits(32);
 function FFI_null_bits64(x : Bits(64)) -> Bits(64);
 
+function FFI_null_bits2(x : Bits(2)) -> Bits(2);
 function FFI_null_bits17(x : Bits(17)) -> Bits(17);
+
 function FFI_null_bits65(x : Bits(65)) -> Bits(65);
 function FFI_null_bits127(x : Bits(127)) -> Bits(127);
 function FFI_null_bits128(x : Bits(128)) -> Bits(128);
@@ -53,8 +55,11 @@ begin
     Std::Print::Bits::Hex(FFI_null_bits64(64'd64)); Print("\n");
     // CHECK: 64'x40
 
+    Std::Print::Bits::Hex(FFI_null_bits2(2'd2)); Print("\n");
+    // CHECK: 2'x2
     Std::Print::Bits::Hex(FFI_null_bits17(17'd17)); Print("\n");
     // CHECK: 17'x11
+
     Std::Print::Bits::Hex(FFI_null_bits65(65'd65)); Print("\n");
     // CHECK: 65'x41
     Std::Print::Bits::Hex(FFI_null_bits127(127'd127)); Print("\n");

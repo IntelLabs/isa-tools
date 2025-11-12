@@ -29,10 +29,16 @@ begin
 end
 
 
+function FFI_bits2(x : Bits(2)) -> Bits(2)
+begin
+    return x;
+end
+
 function FFI_bits17(x : Bits(17)) -> Bits(17)
 begin
     return x;
 end
+
 
 function FFI_bits65(x : Bits(65)) -> Bits(65)
 begin
@@ -108,7 +114,9 @@ begin
     // CHECK: 32'x20
     // CHECK: 64'x40
 
+    // CHECK: 2'x2
     // CHECK: 17'x11
+
     // CHECK: 65'x000000041
     // CHECK: 127'x00000007f
     // CHECK: 128'x000000080

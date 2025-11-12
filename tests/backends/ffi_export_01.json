@@ -8,6 +8,7 @@
         "FFI_bits16",
         "FFI_bits32",
         "FFI_bits64",
+        "FFI_bits2",
         "FFI_bits17",
         "FFI_bits65",
         "FFI_bits127",

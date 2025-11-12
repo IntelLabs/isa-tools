@@ -12,7 +12,9 @@ uint16_t FFI_null_bits16(uint16_t x) { return x; }
 uint32_t FFI_null_bits32(uint32_t x) { return x; }
 uint64_t FFI_null_bits64(uint64_t x) { return x; }
 
-void FFI_null_bits17(uint64_t x[1], uint64_t r[1]) { memcpy(r, x, 1*sizeof(uint64_t)); }
+uint8_t FFI_null_bits2(uint8_t x) { return x; }
+uint32_t FFI_null_bits17(uint32_t x) { return x; }
+
 void FFI_null_bits65(uint64_t x[2], uint64_t r[2]) { memcpy(r, x, 2*sizeof(uint64_t)); }
 void FFI_null_bits127(uint64_t x[2], uint64_t r[2]) { memcpy(r, x, 2*sizeof(uint64_t)); }
 void FFI_null_bits128(uint64_t x[2], uint64_t r[2]) { memcpy(r, x, 2*sizeof(uint64_t)); }
