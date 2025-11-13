@@ -191,23 +191,27 @@ let intersect_range (r1 : range) (r2 : range) : range =
   Option.bind r2 (fun b2 ->
   Some (intersect_bounds b1 b2)))
 
-let range_of_sintN (x : int) : range =
-  let t = Z.shift_left Z.one (x-1) in
+let power2 (x : Z.t) : Z.t = Z.shift_left Z.one (Z.to_int x)
+
+let range_of_sintN (x : Z.t) : range =
+  let t = power2 (Z.sub x Z.one) in
   Some (Z.neg t, Z.sub t Z.one)
 
 let range_of_value (v : Value.value) : range =
   ( match v with
   | VInt i -> Some (i, i)
-  | VIntN i -> range_of_sintN i.n
+  | VIntN i ->
+      let i' = Primops.prim_cvt_sintN_int i in
+      Some (i', i')
   | _ -> None
   )
 
 let range_of_expr (x : AST.expr) : range =
   ( match x with
   | Expr_Lit v -> range_of_value v
-  | Expr_TApply (f, [Expr_Lit (VInt n)], _, _) when Ident.equal f cvt_int_sintN -> range_of_sintN (Z.to_int n)
-  | Expr_TApply (f, [Expr_Lit (VInt n)], _, _) when Ident.equal f cvt_sintN_int -> range_of_sintN (Z.to_int n)
-  | Expr_TApply (f, [_; Expr_Lit (VInt n)], _, _) when Ident.equal f resize_sintN -> range_of_sintN (Z.to_int n)
+  | Expr_TApply (f, [Expr_Lit (VInt n)], _, _) when Ident.equal f cvt_int_sintN -> range_of_sintN n
+  | Expr_TApply (f, [Expr_Lit (VInt n)], _, _) when Ident.equal f cvt_sintN_int -> range_of_sintN n
+  | Expr_TApply (f, [_; Expr_Lit (VInt n)], _, _) when Ident.equal f resize_sintN -> range_of_sintN n
   | _ -> None
   )
 
@@ -243,7 +247,7 @@ let range_of_unsigned (r : range) : range =
   Option.map
     (fun b ->
       let (lo, hi) = b in
-      let t = Z.shift_left Z.one (Z.to_int hi) in
+      let t = power2 hi in
       (Z.zero, Z.sub t Z.one)
     )
     r
@@ -393,8 +397,6 @@ let range_of_mul (r1 : range) (r2 : range) : range =
         (lo, hi))
       r1
       r2
-
-let power2 (x : Z.t) : Z.t = Z.shift_left Z.one (Z.to_int x)
 
 let range_of_power2 (r : range) : range =
   range_of_fun1 power2 (range_restrict_ge Z.zero r)
