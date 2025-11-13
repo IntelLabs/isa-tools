@@ -729,9 +729,6 @@ class boundedClass = object (self)
 
 
   method vdecls (ds : AST.declaration list) : AST.declaration list =
-    let decls : AST.declaration list ref = ref [] in
-    let add (x : AST.declaration) : unit = decls := x :: !decls in
-
     (* first add transformed types of globals to environment *)
     List.iter (fun d ->
       ( match d with
