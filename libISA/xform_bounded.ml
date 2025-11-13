@@ -560,6 +560,31 @@ class boundedClass = object (self)
             DoChildren
         )
 
+    | Expr_If (els, e) ->
+        (* First transform all the subexpressions *)
+        let els' = List.map (fun (c, t) ->
+            let c' = Isa_visitor.visit_expr (self :> Isa_visitor.isaVisitor) c in
+            let t' = Isa_visitor.visit_expr (self :> Isa_visitor.isaVisitor) t in
+            (c', t')
+            ) els
+        in
+        let e' = Isa_visitor.visit_expr (self :> Isa_visitor.isaVisitor) e in
+
+        (* Calculate the range of possible results *)
+        let rs = List.map (fun (_, t) -> range_of_expr t) els' in
+        let r = union_ranges (range_of_expr e' :: rs) in
+
+        (* Lift the cvt_sintN_int to the outside of the expression *)
+        ( match r with
+        | Some bnd ->
+            let n = int_of_bounds bnd in
+            let els'' = List.map (fun (c, t) -> (c, mk_cvt_int_sintN n t)) els' in
+            let e'' = mk_cvt_int_sintN n e' in
+            ChangeTo (mk_cvt_sintN_int n (Expr_If (els'', e'')))
+        | None ->
+            ChangeTo (Expr_If (els', e'))
+        )
+
     | Expr_TApply (f, ps, args, can_throw) ->
         ( match self#get_funtype f with
         | Some fty ->

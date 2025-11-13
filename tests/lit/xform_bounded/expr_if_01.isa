@@ -12,8 +12,12 @@ begin
     return r;
 end
 
-// Note: the code below could be improved further by not applying
-// Std::SInt::To_Integer to both branches of the if-expr.
+// Note: the code below could be marginally improved by
+// 1) not applying Std::SInt::To_Integer to the first two branches (i.e., 255 and 0)
+// 2) and applying Std::SInt::From_Integer to the third branch (i.e., x).
+//
+// This would require reasoning about the if-conditions to recognize that the
+// range of x in the third branch is {0..255}.
 // We are leaving that improvement for the future.
 //
 // XFORM-LABEL: function FUT.0{}(x : Integer) -> __sint(9){{$}}
