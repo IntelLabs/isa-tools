@@ -358,7 +358,7 @@ let bounds_of_cofun2 (f : Z.t -> Z.t -> Z.t) (r1 : bounds) (r2 : bounds) : bound
   let (lo2, hi2) = r2 in
   (f lo1 hi2, f hi1 lo2)
 
-(* Bounds of a 2-input covariant function *)
+(* Bounds of a 1-input covariant function *)
 let bounds_of_fun1 (f : Z.t -> Z.t) (r1 : bounds) : bounds =
   let (lo1, hi1) = r1 in
   (f lo1, f hi1)
