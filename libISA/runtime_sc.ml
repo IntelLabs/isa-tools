@@ -2,7 +2,7 @@
  * System C runtime library support
  * This uses the C++ "System C" library "systemc.h"
  *
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  * SPDX-License-Identifier: BSD-3-Clause
  ****************************************************************)
 

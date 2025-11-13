@@ -1,7 +1,7 @@
 // RUN: %aslopt -O0 -Obounded %s | filecheck --check-prefix=XFORM %s
 // RUN: %aslrun -O0 -Obounded %s | filecheck %s
 
-// Copyright (C) 2024-2024 Intel Corporation
+// Copyright (C) 2024-2025 Intel Corporation
 
 // Based on UnsignedSat
 function FUT(x : Integer) -> {0..255}
