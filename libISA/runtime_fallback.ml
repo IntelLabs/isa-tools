@@ -29,11 +29,6 @@ module Runtime : RT.RuntimeLib = struct
   let min_int (num_bits : int) : Z.t = Z.shift_left Z.minus_one (num_bits - 1)
   let max_int (num_bits : int) : Z.t = Z.lognot (min_int num_bits)
 
-  (* Round up to the next power of 2 *)
-  let round_up_to_pow2 (x : int) : int =
-    let x = Z.log2up (Z.of_int x) in
-    Z.to_int (Z.shift_left Z.one x)
-
   (* Return the number of bits necessary to represent an integer in binary,
      including the sign bit *)
   let bit_length (x : Z.t) : int =
@@ -58,7 +53,7 @@ module Runtime : RT.RuntimeLib = struct
   let ty_ram (fmt : PP.formatter) : unit = asl_keyword fmt "ram_t"
 
   let c_int_width_64up (width : int) : int =
-    if width > 64 then round_up_to_pow2 width else 64
+    if width > 64 then Utils.round_up_to_pow2 width else 64
 
   let ty_bits (fmt : PP.formatter) (width : int) : unit =
     asl_keyword fmt ("bits" ^ string_of_int (c_int_width_64up width) ^ "_t")
@@ -93,7 +88,7 @@ module Runtime : RT.RuntimeLib = struct
      * width rounded to the power of 2. e.g. 128, 256, ...
      *)
     let int_literal_not_fit_int64 (fmt : PP.formatter) (x : Z.t) : unit =
-      let num_bits = round_up_to_pow2 (bit_length x) in
+      let num_bits = Utils.round_up_to_pow2 (bit_length x) in
       int_constant fmt num_bits x (fun fmt x ->
           let hex_string =
             Z.format
@@ -123,7 +118,7 @@ module Runtime : RT.RuntimeLib = struct
     if x.n <= 64 then begin
         PP.pp_print_string fmt (bit_to_hex x.v)
     end else begin
-      let num_bits = round_up_to_pow2 x.n in
+      let num_bits = Utils.round_up_to_pow2 x.n in
       let num_limbs = (num_bits / 64) in
       let limbs = List.init
           num_limbs
