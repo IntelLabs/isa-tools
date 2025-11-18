@@ -22,20 +22,20 @@ let rec to_string (l : t) : string =
     | Range(p1, p2) ->
         if String.equal p1.Lexing.pos_fname p2.Lexing.pos_fname then begin
             if p1.Lexing.pos_lnum = p2.Lexing.pos_lnum then
-                Printf.sprintf "file \"%s\" line %d char %d - %d"
+                Printf.sprintf "file %s line %d char %d - %d"
                     p1.Lexing.pos_fname
                     p1.Lexing.pos_lnum
                     (p1.Lexing.pos_cnum - p1.Lexing.pos_bol)
                     (p2.Lexing.pos_cnum - p2.Lexing.pos_bol)
             else
-                Printf.sprintf "file \"%s\" line %d char %d - line %d char %d"
+                Printf.sprintf "file %s line %d char %d - line %d char %d"
                     p1.Lexing.pos_fname
                     p1.Lexing.pos_lnum
                     (p1.Lexing.pos_cnum - p1.Lexing.pos_bol)
                     p2.Lexing.pos_lnum
                     (p2.Lexing.pos_cnum - p2.Lexing.pos_bol)
         end else begin
-            Printf.sprintf "file \"%s\" line %d char %d - file \"%s\" line %d char %d"
+            Printf.sprintf "file %s line %d char %d - file %s line %d char %d"
                 p1.Lexing.pos_fname
                 p1.Lexing.pos_lnum
                 (p1.Lexing.pos_cnum - p1.Lexing.pos_bol)

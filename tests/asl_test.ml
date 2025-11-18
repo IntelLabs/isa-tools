@@ -152,7 +152,7 @@ let tests : unit Alcotest.test_case list =
           F1(Std::Bits::Zero(16));
       end
      "
-     (Some "TypeError(file \"\" line 4 char 10 - 34,unable to synthesize type parameter N)")
+     (Some "TypeError(file  line 4 char 10 - 34,unable to synthesize type parameter N)")
      None;
     test_static globals false "parameter synthesis 1"
       (* parameters can be synthesized from explicit argument values *)
