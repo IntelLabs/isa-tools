@@ -1960,7 +1960,7 @@ let declaration (fmt : PP.formatter) ?(is_extern : bool option) (x : AST.declara
             (pp_type loc) ty
       | _ ->
           ( match Isa_utils.decl_name x with
-          | Some nm -> PP.fprintf fmt "// skipping %a\n" ident nm
+          | Some nm -> PP.fprintf fmt "// skipping %a@," ident nm
           | None -> ()
           )
       ))

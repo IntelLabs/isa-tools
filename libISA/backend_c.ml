@@ -1240,7 +1240,7 @@ let exceptions (fmt : PP.formatter) (xs : AST.declaration list) : unit =
         PP.fprintf fmt "@,} %a;@,@," ident tc
       )
       excs;
-    PP.fprintf fmt "typedef union {\n    %s\n%a\n} ASL_exception_t;@,"
+    PP.fprintf fmt "typedef union {@,    %s@,%a@,} ASL_exception_t;@,"
       "struct { ASL_exception_tag_t ASL_tag; } _exc;"
       (PP.pp_print_list (fun fmt (tc, _, _) ->
           PP.fprintf fmt "    %a _%a;"
@@ -2001,7 +2001,7 @@ let get_rt_header (_ : unit) : string list =
   Runtime.file_header
 
 let runtime_header (fmt : PP.formatter) : unit =
-  List.iter (PP.fprintf fmt "%s\n") (get_rt_header ())
+  List.iter (PP.fprintf fmt "%s@,") (get_rt_header ())
 
 (* the name of the pointer to a given struct *)
 let struct_ptr (s : string) : string = s ^ "_ptr"
@@ -2133,7 +2133,7 @@ let generate_files (num_c_files : int) (dirname : string) (basename : string)
         (fun (s, _) ->
             Format.fprintf fmt "void ASL_initialize_%s(struct %s *p) {@," s s;
             List.iter
-              (fun (s', i) -> if s = s' then Format.fprintf fmt "  %s\n" i;)
+              (fun (s', i) -> if s = s' then Format.fprintf fmt "  %s@," i;)
               !initializers;
             Format.fprintf fmt "}@,"
         )
