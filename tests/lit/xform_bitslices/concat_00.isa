@@ -14,4 +14,11 @@ begin
 
     var r2 := Std::Bits::Zero_Extend(Std::Bits::All_Ones(i), 8);
     // CHECK: var r2 : Bits(8) := Std::Bits::Mk_Mask.0{8}(i, 8);
+
+
+    var r3 := Std::Bits::Zero_Extend(Std::Bits::Sign_Extend(x, i), 8);
+    // CHECK: var r3 : Bits(8) := Std::Bits::And.0{8}(Std::Bits::Sign_Extend.0{2, 8}(x, 8), Std::Bits::Mk_Mask.0{8}(i, 8));
+
+    var r4 : Bits(8) := Std::Bits::Sign_Extend(x, 8 - i) ++ Std::Bits::Sign_Extend(y, i);
+    // CHECK: var r4 : Bits(8) := Std::Bits::Or.0{8}(Std::Bits::Shift_Left_Logical_Restricted.0{8}(Std::Bits::And.0{8}(Std::Bits::Sign_Extend.0{2, 8}(x, 8), Std::Bits::Mk_Mask.0{8}(Std::Integer::Subtract.0{}(8, i), 8)), i), Std::Bits::And.0{8}(Std::Bits::Sign_Extend.0{2, 8}(y, 8), Std::Bits::Mk_Mask.0{8}(i, 8)));
 end
