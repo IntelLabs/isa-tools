@@ -721,7 +721,7 @@ and index_expr (loc : Loc.t) (fmt : PP.formatter) (x : AST.expr) : unit =
   ( match x with
   | Expr_Lit (VIntN x') when x'.n <= 32 ->
       Runtime.ffi_asl2c_sintN_small x'.n fmt (mk_expr loc x)
-  | Expr_Lit (VInt x') when Z.geq x' (Z.neg (Z.shift_left Z.one 31)) && Z.lt x' (Z.shift_left Z.one 31) ->
+  | Expr_Lit (VInt x') when Z.fits_int32 x' ->
       Format.fprintf fmt "%s" (Z.format "%d" x')
   | Expr_TApply (f, [n], [x'], _) when Ident.equal f cvt_sintN_int ->
       Runtime.ffi_asl2c_sintN_small (const_int_expr loc n) fmt (mk_expr loc x')
