@@ -23,4 +23,10 @@ begin
 
     var r5 := i - 0;
     // CHECK: var r5 : Integer := i;
+
+    var r6 := i * 1;
+    // CHECK: var r6 : Integer := i;
+
+    var r7 := 1 * i;
+    // CHECK: var r7 : Integer := i;
 end

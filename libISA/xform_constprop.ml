@@ -186,6 +186,9 @@ let algebraic_simplifications (x : expr) : expr =
   | Expr_TApply (i, [], [ Expr_Lit (VInt v); x ], _) when v = Z.zero && Ident.equal i add_int -> x
   (* x - 0 == x *)
   | Expr_TApply (i, [], [ x; Expr_Lit (VInt v) ], _) when v = Z.zero && Ident.equal i sub_int -> x
+  (* x * 1 == x == 1 * x *)
+  | Expr_TApply (i, [], [ x; Expr_Lit (VInt v) ], _) when v = Z.one && Ident.equal i mul_int -> x
+  | Expr_TApply (i, [], [ Expr_Lit (VInt v); x ], _) when v = Z.one && Ident.equal i mul_int -> x
 
   (* Note: the subexpressions could have side effects so we cannot apply all the boolean reductions that we might expect *)
   (* x and True == x == True and x *)
