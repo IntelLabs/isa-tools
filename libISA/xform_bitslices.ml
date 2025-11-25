@@ -27,11 +27,14 @@ let transform_slices : bool ref = ref true
 
 let rec transform_non_slices (loc : Loc.t) (n : AST.expr) (w : AST.expr) (i : AST.expr) (x : AST.expr) : AST.expr =
   ( match x with
-  | Expr_TApply (f, _, _, _) when Ident.equal f ones_bits  ->
+  | Expr_TApply (f, _, _, _) when Ident.equal f ones_bits ->
       mk_lsl_bits n (Isa_utils.mk_mask w n) i
-  | Expr_TApply (f, _, _, _) when Ident.equal f zeros_bits -> mk_zero_bits n
-  | Expr_Concat (ws, es) -> mk_lsl_bits n (transform_concat loc n ws es) i
-  | _ -> mk_lsl_bits n (mk_zero_extend_bits w n x) i
+  | Expr_TApply (f, _, _, _) when Ident.equal f zeros_bits ->
+      mk_zero_bits n
+  | Expr_Concat (ws, es) ->
+      mk_lsl_bits n (transform_concat loc n ws es) i
+  | _ ->
+      mk_lsl_bits n (mk_zero_extend_bits w n x) i
   )
 
 (** Transform expression 'x' of width 'w' to an expression of width 'n'
