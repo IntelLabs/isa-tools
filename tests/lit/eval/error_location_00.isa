@@ -23,6 +23,5 @@ end
 
 // CHECK:       line 12 char 4 - 19: runtime exception thrown in 2'x0[x]
 // CHECK-NEXT:  line 17 char 4 - 22: runtime exception thrown in ReadBit.0(i)
-// CHECK-NEXT:  file "<argv>" line 1 char 0 - 7: runtime exception thrown in FUT1.0(2)
+// CHECK-NEXT:  file <argv> line 1 char 0 - 7: runtime exception thrown in FUT1.0(2)
 // CHECK-NEXT:  Assertion failed
-
