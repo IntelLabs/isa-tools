@@ -17,7 +17,7 @@ end
 
 // XFORM:       function FUT.0{}(x : __sint(5)) -> __sint(5){{$}}
 // XFORM-NEXT:  begin
-// XFORM-NEXT:      let y : __sint(6) := Std::SInt::Add.0{6}(Std::SInt::Resize.0{5, 6}(x, 6), Std::SInt::Resize.0{2, 6}(i2'x1, 6));
+// XFORM-NEXT:      let y : __sint(6) := Std::SInt::Add.0{6}(Std::SInt::Resize.0{5, 6}(x, 6), i6'x1);
 // XFORM-NEXT:      return Std::SInt::Resize.0{6, 5}(y, 5);
 // XFORM-NEXT:  end
 
