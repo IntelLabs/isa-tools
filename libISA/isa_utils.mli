@@ -363,6 +363,9 @@ val mk_zero_extend_bits : AST.expr -> AST.expr -> AST.expr -> AST.expr
 (** Construct "sign_extend_bits\{w, n\}(x, w)" *)
 val mk_sign_extend_bits : AST.expr -> AST.expr -> AST.expr -> AST.expr
 
+(** Construct "replicate_bits\{w, y\}(x, y)" *)
+val mk_replicate_bits : AST.expr -> AST.expr -> AST.expr -> AST.expr
+
 (** Construct "not_bits\{m\}(n)" *)
 val mk_not_bits : AST.expr -> AST.expr -> AST.expr
 

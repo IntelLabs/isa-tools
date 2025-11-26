@@ -1139,6 +1139,13 @@ let mk_sign_extend_bits (w : AST.expr) (n : AST.expr) (x : AST.expr) : AST.expr 
   else
     Expr_TApply (sign_extend_bits, [ w; n ], [ x; n ], NoThrow)
 
+(** Construct "replicate_bits{w, y}(x, y)" *)
+let mk_replicate_bits (w : AST.expr) (x : AST.expr) (y : AST.expr) : AST.expr =
+  if y = one then
+    x
+  else
+    Expr_TApply (replicate_bits, [ w; y ], [ x; y ], NoThrow)
+
 (** Construct "mk_mask{n}(w, n)" which is equivalent to
  *  'Zero_Extend{n}(Ones(w), n)'
  *)

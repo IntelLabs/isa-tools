@@ -36,6 +36,11 @@ let rec transform_non_slices (loc : Loc.t) (n : AST.expr) (w : AST.expr) (i : AS
       let e1 = mk_sign_extend_bits we n e in
       let e2 = mk_and_bits n e1 (Isa_utils.mk_mask w n) in
       mk_lsl_bits n e2 i
+  | Expr_TApply (f, [ Expr_Lit (VInt we); _ ], [ e; cnt ], _)
+    when Ident.equal f replicate_bits && we = Z.one && not (is_literal_constant cnt) ->
+      let e1 = mk_replicate_bits one e n in
+      let e2 = mk_and_bits n e1 (Isa_utils.mk_mask w n) in
+      mk_lsl_bits n e2 i
   | Expr_Concat (ws, es) ->
       mk_lsl_bits n (transform_concat loc n ws es) i
   | _ ->
