@@ -49,10 +49,6 @@ let constprop_tests : unit Alcotest.test_case list =
     ("in", `Quick, test_cp_expr globals prelude "" "8 in {8, 16}" "True");
     ("enum", `Quick, test_cp_expr globals prelude
        "enumeration T { E1, E2 };" "if True then E1 else E2" "E1");
-    ("Repeat(_, 0)", `Quick, test_cp_expr globals prelude
-       "var x : Bits(8);" "Repeat(x, 0)" "0'x0");
-    ("Repeat(x, 1)", `Quick, test_cp_expr globals prelude
-       "var x : Bits(8);" "Repeat(x, 1)" "x");
     ("assert expr dead code", `Quick, test_cp_expr globals prelude
        "var x : Bits(8);" "__assert True __in x" "x");
     ("assert expr live code 1", `Quick, test_cp_expr globals prelude

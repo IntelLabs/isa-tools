@@ -175,10 +175,10 @@ let algebraic_simplifications (x : expr) : expr =
   | Expr_TApply (i, [ _; Expr_Lit (VInt v) ], [ x; _ ], _) when
     v = Z.zero && Ident.equal i append_bits ->
       x
-  (* Replicate(x, 0) = '' *)
+  (* Repeat(x, 0) = '' *)
   | Expr_TApply (i, [ _; Expr_Lit (VInt v) ], _, _) when v = Z.zero && Ident.equal i replicate_bits->
       Isa_utils.empty_bits
-  (* Replicate(x, 1) = x *)
+  (* Repeat(x, 1) = x *)
   | Expr_TApply (i, [ _; Expr_Lit (VInt v) ], [x; _], _) when v = Z.one && Ident.equal i replicate_bits ->
       x
   (* x + 0 == x == 0 + x *)
