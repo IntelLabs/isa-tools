@@ -11,4 +11,16 @@ begin
 
     var r2 := Repeat(b, 1);
     // CHECK: var r2 : Bits(8) := b;
+
+
+    var i : Integer;
+
+    var r3 := i + 0;
+    // CHECK: var r3 : Integer := i;
+
+    var r4 := 0 + i;
+    // CHECK: var r4 : Integer := i;
+
+    var r5 := i - 0;
+    // CHECK: var r5 : Integer := i;
 end
