@@ -116,7 +116,7 @@ module Runtime : RT.RuntimeLib = struct
 
   let bits_literal (fmt : PP.formatter) (x : Primops.bitvector) : unit =
     if x.n <= 32 then begin
-      Format.fprintf fmt "ac_int<%d,false>(%sUL)"
+      PP.fprintf fmt "ac_int<%d,false>(%sUL)"
         x.n
         (Z.format "%#x" x.v)
     end else begin

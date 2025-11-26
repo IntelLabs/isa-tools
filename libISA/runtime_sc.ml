@@ -141,7 +141,7 @@ module Runtime : RT.RuntimeLib = struct
     end else if x.n <= 64 && Z.leq x.v (Z.of_int64_unsigned Int64.minus_one) then begin
       PP.fprintf fmt "%a(%sULL)" ty_bits x.n (Z.format "%#x" x.v)
     end else if x.n <= 32 then begin
-      Format.fprintf fmt "%a(%a)"
+      PP.fprintf fmt "%a(%a)"
         ty_bits x.n
         constant_u32 x.v
     end else begin

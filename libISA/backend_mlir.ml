@@ -971,40 +971,40 @@ let rec cg_HLIR_Type' (loc : Loc.t) (fmt : PP.formatter) (x : AST.ty) : unit =
 let cg_HLIR_Type (loc : Loc.t) (fmt : PP.formatter) (x : HLIR.ty) : unit =
   ( match x with
   | Type t -> cg_HLIR_Type' loc fmt t
-  | Ref t -> Format.fprintf fmt "!asl.ref<%a>" (cg_HLIR_Type' loc) t
+  | Ref t -> PP.fprintf fmt "!asl.ref<%a>" (cg_HLIR_Type' loc) t
   )
 
 let cg_HLIR_Ident (loc : Loc.t) (fmt : PP.formatter) (x : HLIR.ident) : unit =
   let Ident(v, t) = x in
-  Format.fprintf fmt "%a : %a"
+  PP.fprintf fmt "%a : %a"
     Ident.pp v
     (cg_HLIR_Type loc) t
 
 let cg_HLIR_IdentName (loc : Loc.t) (fmt : PP.formatter) (x : HLIR.ident) : unit =
   let Ident(v, t) = x in
-  Format.fprintf fmt "%a"
+  PP.fprintf fmt "%a"
     Ident.pp v
 
 let cg_HLIR_IdentType (loc : Loc.t) (fmt : PP.formatter) (x : HLIR.ident) : unit =
   let Ident(v, t) = x in
-  Format.fprintf fmt "%a"
+  PP.fprintf fmt "%a"
     (cg_HLIR_Type loc) t
 
 let rec cg_HLIR_Operation (fmt : PP.formatter) (x : HLIR.operation) : unit =
   if Utils.is_empty x.regions then begin
     ( match x.results with
     | [] -> ()
-    | [r] -> Format.fprintf fmt "%a = " HLIR.ppIdentName r
-    | rs -> Format.fprintf fmt "(%a) = " (commasep HLIR.ppIdentName) rs
+    | [r] -> PP.fprintf fmt "%a = " HLIR.ppIdentName r
+    | rs -> PP.fprintf fmt "(%a) = " (commasep HLIR.ppIdentName) rs
     );
     let cg_operands fmt operands = commasep (cg_HLIR_IdentName x.loc) fmt operands in
     ( match x.op with
     | Builtin f ->
         let cg_types fmt vars =
             ( match vars with
-            | [] -> Format.fprintf fmt "()"
+            | [] -> PP.fprintf fmt "()"
             | [op] -> cg_HLIR_IdentType x.loc fmt op
-            | ops -> Format.fprintf fmt "(%a)" (commasep (cg_HLIR_IdentType x.loc)) ops
+            | ops -> PP.fprintf fmt "(%a)" (commasep (cg_HLIR_IdentType x.loc)) ops
             )
         in
         let cg_funtype fmt _ =
@@ -1034,26 +1034,26 @@ let rec cg_HLIR_Operation (fmt : PP.formatter) (x : HLIR.operation) : unit =
             (* MLIR syntax turns out to have a lot of irregularities *)
             cg_HLIR_IdentType x.loc fmt (List.hd x.operands)
           ) else (
-            Format.fprintf fmt "%a -> %a"
+            PP.fprintf fmt "%a -> %a"
               cg_types x.operands
               cg_types x.results
           )
         in
         ( match Identset.Bindings.find_opt f mlir_function_mapping with
         | Some f' ->
-          Format.fprintf fmt "%s %a : %a"
+          PP.fprintf fmt "%s %a : %a"
             f'
             cg_operands x.operands
             cg_funtype ()
             (*
         | _ when Ident.equal f Builtin_idents.asl_assert ->
           let msg = String.escaped (Loc.to_string x.loc) in
-          Format.fprintf fmt "cf.assert %a, \"%s\"" cg_operands x.operands msg
+          PP.fprintf fmt "cf.assert %a, \"%s\"" cg_operands x.operands msg
           *)
         | _ -> raise (InternalError (x.loc, "HLIR.Builtin", (fun fmt -> HLIR.ppOperation fmt x), __LOC__))
         )
     | Call f ->
-        Format.fprintf fmt "func.call @%a(%a) : (%a) -> (%a)"
+        PP.fprintf fmt "func.call @%a(%a) : (%a) -> (%a)"
           Ident.pp f
           (commasep (cg_HLIR_IdentName x.loc)) x.operands
           (commasep (cg_HLIR_IdentType x.loc)) x.operands
@@ -1073,11 +1073,11 @@ let rec cg_HLIR_Operation (fmt : PP.formatter) (x : HLIR.operation) : unit =
         PP.fprintf fmt "arith.constant %d : i %d@"
           value
           enum_size
-    | MkRef v -> Format.fprintf fmt "asl.address_of @%a" Ident.pp v
-    | AddIndex -> Format.fprintf fmt "asl.add_index"
-    | Load -> Format.fprintf fmt "asl.load"
-    | Store -> Format.fprintf fmt "asl.store"
-    | Assert msg -> Format.fprintf fmt "cf.assert %a, \"%s\"" cg_operands x.operands msg
+    | MkRef v -> PP.fprintf fmt "asl.address_of @%a" Ident.pp v
+    | AddIndex -> PP.fprintf fmt "asl.add_index"
+    | Load -> PP.fprintf fmt "asl.load"
+    | Store -> PP.fprintf fmt "asl.store"
+    | Assert msg -> PP.fprintf fmt "cf.assert %a, \"%s\"" cg_operands x.operands msg
     | _ -> raise (InternalError (x.loc, "HLIR unexpected control flow", (fun fmt -> HLIR.ppOperation fmt x), __LOC__))
     )
   end else begin
@@ -1087,48 +1087,48 @@ let rec cg_HLIR_Operation (fmt : PP.formatter) (x : HLIR.operation) : unit =
 let cg_HLIR_Global (fmt : PP.formatter) (x : HLIR.global) : unit =
   ( match x with
   | Variable (v, ty, loc) ->
-      Format.fprintf fmt "asl.global \"%a\" : %a"
+      PP.fprintf fmt "asl.global \"%a\" : %a"
         Ident.pp v
         (cg_HLIR_Type loc) ty;
-      Format.fprintf fmt " // %a" Loc.pp loc;
-      Format.fprintf fmt "@,@,"
+      PP.fprintf fmt " // %a" Loc.pp loc;
+      PP.fprintf fmt "@,@,"
   | Function (f, r, loc) ->
       let cg_args_call fmt args =
         if not (Utils.is_empty args) then
           (* Note that branches use this syntax "(%x, %y : !Tx, !Ty)" *)
-          Format.fprintf fmt "(%a : %a)"
+          PP.fprintf fmt "(%a : %a)"
             (commasep (cg_HLIR_IdentName loc)) args
             (commasep (cg_HLIR_IdentType loc)) args
       in
-      let cg_target_call fmt (label, args) = Format.fprintf fmt "%a%a" Ident.pp label cg_args_call args in
+      let cg_target_call fmt (label, args) = PP.fprintf fmt "%a%a" Ident.pp label cg_args_call args in
 
       let cg_args_decl fmt args =
         if not (Utils.is_empty args) then
           (* Note that basic blocks use this syntax "(%x : !Tx, %y : !Ty)" *)
-          Format.fprintf fmt "(%a)" (commasep (cg_HLIR_Ident loc)) args
+          PP.fprintf fmt "(%a)" (commasep (cg_HLIR_Ident loc)) args
       in
       let cg_target_decl fmt (label, args) =
-        Format.fprintf fmt "@,%a%a:@," Ident.pp label cg_args_decl args in
+        PP.fprintf fmt "@,%a%a:@," Ident.pp label cg_args_decl args in
 
       let cg_terminator fmt (t_op, t_operands, t_targets) =
-        Format.fprintf fmt "@,%s " t_op;
+        PP.fprintf fmt "@,%s " t_op;
         if not (Utils.is_empty t_operands) then begin
-          Format.fprintf fmt "%a"
+          PP.fprintf fmt "%a"
             (commasep HLIR.ppIdentName) t_operands
         end;
         if not (Utils.is_empty t_targets) then begin
-          if not (Utils.is_empty t_operands) then Format.fprintf fmt ", ";
-          Format.fprintf fmt "%a" (commasep cg_target_call) t_targets
+          if not (Utils.is_empty t_operands) then PP.fprintf fmt ", ";
+          PP.fprintf fmt "%a" (commasep cg_target_call) t_targets
         end;
-        Format.fprintf fmt "@,"
+        PP.fprintf fmt "@,"
       in
 
       (* todo: return type seems to be broken *)
-      Format.fprintf fmt "func.func @%a (%a) -> (%a)@,"
+      PP.fprintf fmt "func.func @%a (%a) -> (%a)@,"
         Ident.pp f
         (commasep (cg_HLIR_Ident loc)) r.inputs
         (commasep (cg_HLIR_IdentType loc)) r.outputs;
-      Format.fprintf fmt "{@,";
+      PP.fprintf fmt "{@,";
 
       let (return_target, cf_blocks) = hlir_to_cf r in
       let is_first = ref true in (* The first block doesn't get a label *)
@@ -1143,14 +1143,14 @@ let cg_HLIR_Global (fmt : PP.formatter) (x : HLIR.global) : unit =
       cg_target_decl fmt return_target;
       indented fmt (fun _ ->
         ( match return_target with
-        | (_, []) -> Format.fprintf fmt "func.return@,"
-        | (_, rs) -> Format.fprintf fmt "func.return %a : %a@,"
+        | (_, []) -> PP.fprintf fmt "func.return@,"
+        | (_, rs) -> PP.fprintf fmt "func.return %a : %a@,"
                        (commasep (cg_HLIR_IdentName loc)) rs
                        (commasep (cg_HLIR_IdentType loc)) rs
         )
       );
 
-      Format.fprintf fmt "}@,"
+      PP.fprintf fmt "}@,"
   )
 
 (****************************************************************
@@ -1170,7 +1170,7 @@ let ppEnv (fmt : PP.formatter) (env : environment) : unit =
   let pp_entry (fmt : PP.formatter) (x : env_entry) : unit =
       let (v, mut, ty) = x in
       PP.fprintf fmt "%a :: %a "
-        (Format.pp_print_option varident) v
+        (PP.pp_print_option varident) v
         FMT.ty ty;
       if mut then PP.fprintf fmt " mutable"
   in
@@ -1218,7 +1218,7 @@ let simple_expr (loc : Loc.t) (fmt : PP.formatter) (x : AST.expr) : unit =
     PP.pp_print_string fmt (Z.to_string (Z.mul x y))
   | Expr_Var v -> varident fmt v
   | _ ->
-      let msg = Format.asprintf "simple_expr: overly complex expression" in
+      let msg = PP.asprintf "simple_expr: overly complex expression" in
       let pp fmt = FMT.expr fmt x in
       raise (Error.Unimplemented (loc, msg, pp))
   )
@@ -2016,7 +2016,7 @@ let _ =
 
       List.iter (fun d ->
           let ir = declaration_to_ir d in
-          Option.iter (HLIR.ppGlobal Format.std_formatter) ir;
+          Option.iter (HLIR.ppGlobal PP.std_formatter) ir;
           PP.fprintf fmt "@,";
           Option.iter (cg_HLIR_Global fmt) ir
         )

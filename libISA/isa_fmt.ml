@@ -286,7 +286,7 @@ and slices (fmt : PP.formatter) (ss : AST.slice list) : unit =
   commasep fmt (slice fmt) ss
 
 and changes (fmt : PP.formatter) (cs : (AST.change * AST.expr) list) : unit =
-  commasep fmt (fun (c, e) -> Format.fprintf fmt "%a = %a" change c expr e) cs
+  commasep fmt (fun (c, e) -> PP.fprintf fmt "%a = %a" change c expr e) cs
 
 and change (fmt : PP.formatter) (x : AST.change) : unit =
   ( match x with
@@ -324,17 +324,17 @@ and expr (fmt : PP.formatter) (x : AST.expr) : unit =
       expr fmt e
     )
   | Expr_Let (v, t, e, b) ->
-      Format.fprintf fmt "(__let %a : %a := %a __in %a)"
+      PP.fprintf fmt "(__let %a : %a := %a __in %a)"
         varname v
         ty t
         expr e
         expr b
   | Expr_Assert (e1, e2, loc) ->
-      Format.fprintf fmt "(__assert %a __in %a)"
+      PP.fprintf fmt "(__assert %a __in %a)"
         expr e1
         expr e2
   | Expr_Binop (a, op, b) ->
-      Format.fprintf fmt "(%a %a %a)"
+      PP.fprintf fmt "(%a %a %a)"
         expr a
         binop op
         expr b
@@ -352,7 +352,7 @@ and expr (fmt : PP.formatter) (x : AST.expr) : unit =
       brackets fmt (fun _ -> slices fmt ss)
   | Expr_WithChanges (t, e, cs) ->
       if !show_type_params then braces fmt (fun _ -> ty fmt t);
-      Format.fprintf fmt "(%a %t { %a })"
+      PP.fprintf fmt "(%a %t { %a })"
         expr e
         kw_with
         changes cs
@@ -361,11 +361,11 @@ and expr (fmt : PP.formatter) (x : AST.expr) : unit =
       if not (Utils.is_empty tes) then parens fmt (fun _ -> pp_args fmt tes);
       braces fmt (fun _ -> commasep fmt (field_assignment fmt) fas)
   | Expr_ArrayInit es ->
-      Format.fprintf fmt "%t (%a)"
+      PP.fprintf fmt "%t (%a)"
         kw_array
         exprs es
   | Expr_In (e, p) ->
-      Format.fprintf fmt "(%a IN %a)"
+      PP.fprintf fmt "(%a IN %a)"
         expr e
         pattern p
   | Expr_Var v -> varname fmt v
@@ -409,7 +409,7 @@ and expr (fmt : PP.formatter) (x : AST.expr) : unit =
       if !show_type_params then braces fmt (fun _ -> exprs fmt ws);
       brackets fmt (fun _ -> exprs fmt es)
   | Expr_Unop (op, e) ->
-      Format.fprintf fmt "(%a %a)"
+      PP.fprintf fmt "(%a %a)"
         unop op
         expr e
   | Expr_Unknown t ->
@@ -439,7 +439,7 @@ and exprs (fmt : PP.formatter) (es : AST.expr list) : unit =
 and pp_arg (fmt : PP.formatter) (x : Ident.t option * AST.expr) : unit =
   ( match x with
   | (None, e) -> expr fmt e
-  | (Some v, e) -> Format.fprintf fmt "%a => %a"
+  | (Some v, e) -> PP.fprintf fmt "%a => %a"
                      varname v
                      expr e
   )
@@ -602,14 +602,14 @@ let rec stmt ?(short=false) (fmt : PP.formatter) (x : AST.stmt) : unit =
       expr fmt e;
       semicolon fmt
   | Stmt_Block (ss, loc) ->
-      Format.fprintf fmt "%t%a@,%t;"
+      PP.fprintf fmt "%t%a@,%t;"
         kw_begin
         (indented_block ~short) ss
         kw_end
   | Stmt_If (els, (e, el), loc) ->
       vbox fmt (fun _ ->
           if short then
-              Format.fprintf fmt "if ... then ..."
+              PP.fprintf fmt "if ... then ..."
           else begin
               let first = ref true in
               map fmt
@@ -629,7 +629,7 @@ let rec stmt ?(short=false) (fmt : PP.formatter) (x : AST.stmt) : unit =
                 kw_else fmt;
                 indented_block fmt e
               end;
-              Format.fprintf fmt "@,%t;" kw_endif
+              PP.fprintf fmt "@,%t;" kw_endif
           end
       )
   | Stmt_Case (e, oty, alts, ob, loc) ->
@@ -644,7 +644,7 @@ let rec stmt ?(short=false) (fmt : PP.formatter) (x : AST.stmt) : unit =
           nbsp fmt;
           kw_of fmt;
           if short then
-              Format.fprintf fmt "..."
+              PP.fprintf fmt "..."
           else begin
               indented fmt (fun _ ->
                   cutsep fmt
@@ -669,11 +669,11 @@ let rec stmt ?(short=false) (fmt : PP.formatter) (x : AST.stmt) : unit =
                       delimiter fmt "when _ =>";
                       indented_block fmt b)
                     fmt ob);
-              Format.fprintf fmt "@,%t;" kw_endcase
+              PP.fprintf fmt "@,%t;" kw_endcase
           end
       )
   | Stmt_For (v, typ, f, dir, t, b, loc) ->
-      Format.fprintf fmt "%t %a : %a := %a %a %a %t%a@,%t;"
+      PP.fprintf fmt "%t %a : %a := %a %a %a %t%a@,%t;"
         kw_for
         varname                 v
         ty                      typ
@@ -684,14 +684,14 @@ let rec stmt ?(short=false) (fmt : PP.formatter) (x : AST.stmt) : unit =
         (indented_block ~short) b
         kw_endfor
   | Stmt_While (c, b, loc) ->
-      Format.fprintf fmt "%t %a %t%a@,%t;"
+      PP.fprintf fmt "%t %a %t%a@,%t;"
         kw_while
         expr                    c
         kw_do
         (indented_block ~short) b
         kw_endwhile
   | Stmt_Repeat (b, c, pos, loc) ->
-      Format.fprintf fmt "%t%a@,%t %a;"
+      PP.fprintf fmt "%t%a@,%t %a;"
         kw_repeat
         (indented_block ~short) b
         kw_until
@@ -702,12 +702,12 @@ let rec stmt ?(short=false) (fmt : PP.formatter) (x : AST.stmt) : unit =
       cut fmt;
       kw_catch fmt;
       if short then
-          Format.fprintf fmt "..."
+          PP.fprintf fmt "..."
       else begin
           indented fmt (fun _ ->
               cutsep fmt
                 (fun (AST.Catcher_Guarded (v, tc, b, loc)) ->
-                  Format.fprintf fmt "%t %a : %a =>"
+                  PP.fprintf fmt "%t %a : %a =>"
                     kw_when
                     varname v
                     tycon tc;
@@ -720,12 +720,12 @@ let rec stmt ?(short=false) (fmt : PP.formatter) (x : AST.stmt) : unit =
                   indented_block fmt b)
                 fmt ob);
       end;
-      Format.fprintf fmt "@,%t;" kw_endtry
+      PP.fprintf fmt "@,%t;" kw_endtry
   )
 
 and indented_block ?(short=false) (fmt : PP.formatter) (xs : AST.stmt list) : unit =
   if short then
-      Format.fprintf fmt "..."
+      PP.fprintf fmt "..."
   else
       indented fmt (fun _ -> cutsep fmt (stmt fmt) xs)
 
@@ -740,7 +740,7 @@ let parameters (fmt : PP.formatter) (xs : (Ident.t * AST.ty option) list) :
 let formal (fmt : PP.formatter) (x : Ident.t * AST.ty * AST.expr option) : unit =
   let (v, t, od) = x in
   varty fmt v t;
-  Option.iter (Format.fprintf fmt " %t %a" colon_eq expr) od
+  Option.iter (PP.fprintf fmt " %t %a" colon_eq expr) od
 
 let formals (fmt : PP.formatter) (xs : (Ident.t * AST.ty * AST.expr option) list) : unit =
   commasep fmt (formal fmt) xs
@@ -760,10 +760,10 @@ let function_type (fmt : PP.formatter) (fty : AST.function_type) : unit =
       nbsp fmt;
       varty fmt v ty)
     fmt fty.setter_arg;
-  Format.fprintf fmt " -> %a" ty fty.rty
+  PP.fprintf fmt " -> %a" ty fty.rty
 
 let ffi_direction (fmt : PP.formatter) (is_export : bool): unit =
-  Format.fprintf fmt "%t" (if is_export then kw_export else kw_import)
+  PP.fprintf fmt "%t" (if is_export then kw_export else kw_import)
 
 let declaration ?(short=false) (fmt : PP.formatter) (x : AST.declaration) : unit =
   vbox fmt (fun _ ->
@@ -862,14 +862,14 @@ let declaration ?(short=false) (fmt : PP.formatter) (x : AST.declaration) : unit
           expr fmt e;
           semicolon fmt
       | Decl_FunType (f, fty, loc) ->
-          if fty.is_builtin then Format.fprintf fmt "__builtin ";
+          if fty.is_builtin then PP.fprintf fmt "__builtin ";
           kw_function fmt;
           nbsp fmt;
           funname fmt f;
           function_type fmt fty;
           semicolon fmt
       | Decl_FunDefn (f, fty, b, loc) ->
-          if fty.is_builtin then Format.fprintf fmt "__builtin ";
+          if fty.is_builtin then PP.fprintf fmt "__builtin ";
           kw_function fmt;
           nbsp fmt;
           funname fmt f;
@@ -882,18 +882,18 @@ let declaration ?(short=false) (fmt : PP.formatter) (x : AST.declaration) : unit
               kw_end fmt
           end
       | Decl_FunInstance (f, ps, loc) ->
-          Format.fprintf fmt "%t %t %a %t {%a};"
+          PP.fprintf fmt "%t %t %a %t {%a};"
             kw_optimize
             kw_function
             funname f
             kw_with
             (fun fmt -> commasep fmt (fun (p, sz) ->
               ( match sz with
-              | None -> Format.fprintf fmt "%a => _" varname p
-              | Some v -> Format.fprintf fmt "%a => %a" varname p Value.pp_value v
+              | None -> PP.fprintf fmt "%a => _" varname p
+              | Some v -> PP.fprintf fmt "%a => %a" varname p Value.pp_value v
               ))) ps
       | Decl_FunFFI (nm, is_export, f, ps, loc) ->
-          Format.fprintf fmt "%t %a %t \"%s\" = %a %t {%a};"
+          PP.fprintf fmt "%t %a %t \"%s\" = %a %t {%a};"
             kw_foreign
             ffi_direction is_export
             kw_function
@@ -901,17 +901,17 @@ let declaration ?(short=false) (fmt : PP.formatter) (x : AST.declaration) : unit
             funname f
             kw_with
             (fun fmt -> commasep fmt (fun (p, v) ->
-              Format.fprintf fmt "%a => %a" varname p Value.pp_value v
+              PP.fprintf fmt "%a => %a" varname p Value.pp_value v
               )) ps
       | Decl_VarFFI (nm, is_export, v, loc) ->
-          Format.fprintf fmt "%t %a %t \"%s\" = %a;"
+          PP.fprintf fmt "%t %a %t \"%s\" = %a;"
             kw_foreign
             ffi_direction is_export
             kw_var
             nm
             varname v
       | Decl_TypeFFI (nm, is_export, t, loc) ->
-          Format.fprintf fmt "%t %a %t \"%s\" = %a;"
+          PP.fprintf fmt "%t %a %t \"%s\" = %a;"
             kw_foreign
             ffi_direction is_export
             kw_type
@@ -945,7 +945,7 @@ let declaration ?(short=false) (fmt : PP.formatter) (x : AST.declaration) : unit
           expr fmt e;
           semicolon fmt
       | Decl_Use (p1, p2, loc) ->
-          Format.fprintf fmt "%t %a %t %a;"
+          PP.fprintf fmt "%t %a %t %a;"
             kw_use
             funname p1
             kw_as

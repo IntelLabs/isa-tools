@@ -98,7 +98,7 @@ let show_loc = ref false
 let ppType (fmt : PP.formatter) (x : ty) : unit =
   ( match x with
   | Type t -> FMT.ty fmt t
-  | Ref t -> Format.fprintf fmt "AIR.Ref<%a>" FMT.ty t
+  | Ref t -> PP.fprintf fmt "AIR.Ref<%a>" FMT.ty t
   )
 
 let ppIdent (fmt : PP.formatter) (x : ident) : unit =
@@ -118,25 +118,25 @@ let ppIdentType (fmt : PP.formatter) (x : ident) : unit =
 let ppOp (fmt : PP.formatter) (x : op) : unit =
   ( match x with
   | Builtin f -> Ident.pp fmt f
-  | Call f -> Format.fprintf fmt "HLIR.call @%a" Ident.pp f
-  | Constant c -> Format.fprintf fmt "HLIR.constant %a" Value.pp_value c
-  | Symbol v -> Format.fprintf fmt "HLIR.symbol @%a" Ident.pp v
-  | MkRef v -> Format.fprintf fmt "HLIR.ref @%a" Ident.pp v
-  | AddIndex -> Format.fprintf fmt "HLIR.add_index"
-  | Load -> Format.fprintf fmt "HLIR.load"
-  | Store -> Format.fprintf fmt "HLIR.store"
-  | For up -> Format.fprintf fmt "HLIR.for(%s)" (if up then "up" else "down")
-  | While -> Format.pp_print_string fmt "HLIR.while"
-  | Repeat -> Format.pp_print_string fmt "HLIR.repeat"
-  | If -> Format.pp_print_string fmt "HLIR.if"
-  | Case -> Format.pp_print_string fmt "HLIR.case"
-  | Fail -> Format.pp_print_string fmt "HLIR.fail"
-  | Return -> Format.pp_print_string fmt "HLIR.return"
-  | Assert msg -> Format.fprintf fmt "HLIR.assert(%s)" msg
+  | Call f -> PP.fprintf fmt "HLIR.call @%a" Ident.pp f
+  | Constant c -> PP.fprintf fmt "HLIR.constant %a" Value.pp_value c
+  | Symbol v -> PP.fprintf fmt "HLIR.symbol @%a" Ident.pp v
+  | MkRef v -> PP.fprintf fmt "HLIR.ref @%a" Ident.pp v
+  | AddIndex -> PP.fprintf fmt "HLIR.add_index"
+  | Load -> PP.fprintf fmt "HLIR.load"
+  | Store -> PP.fprintf fmt "HLIR.store"
+  | For up -> PP.fprintf fmt "HLIR.for(%s)" (if up then "up" else "down")
+  | While -> PP.pp_print_string fmt "HLIR.while"
+  | Repeat -> PP.pp_print_string fmt "HLIR.repeat"
+  | If -> PP.pp_print_string fmt "HLIR.if"
+  | Case -> PP.pp_print_string fmt "HLIR.case"
+  | Fail -> PP.pp_print_string fmt "HLIR.fail"
+  | Return -> PP.pp_print_string fmt "HLIR.return"
+  | Assert msg -> PP.fprintf fmt "HLIR.assert(%s)" msg
   )
 
 let rec ppOperation (fmt : PP.formatter) (x : operation) : unit =
-  Format.fprintf fmt "(%a) = %a(%a) ("
+  PP.fprintf fmt "(%a) = %a(%a) ("
     (commasep ppIdentName) x.results
     ppOp x.op
     (commasep ppIdentName) x.operands;
@@ -145,33 +145,33 @@ let rec ppOperation (fmt : PP.formatter) (x : operation) : unit =
       List.iter (ppRegion fmt) x.regions
     )
   end;
-  Format.fprintf fmt ") : (%a) -> (%a)"
+  PP.fprintf fmt ") : (%a) -> (%a)"
     (commasep ppIdentType) x.operands
     (commasep ppIdentType) x.results;
-  if !show_loc then Format.fprintf fmt " // %a" Loc.pp x.loc;
-  Format.fprintf fmt "@,"
+  if !show_loc then PP.fprintf fmt " // %a" Loc.pp x.loc;
+  PP.fprintf fmt "@,"
 
 and ppRegion (fmt : PP.formatter) (x : region) : unit =
-  Format.fprintf fmt "{ input (%a)" (commasep ppIdent) x.inputs;
+  PP.fprintf fmt "{ input (%a)" (commasep ppIdent) x.inputs;
   FMT_Utils.indented fmt (fun _ ->
     List.iter (ppOperation fmt) x.operations;
   );
-  Format.fprintf fmt "@,output (%a)@,}@," (commasep ppIdent) x.outputs
+  PP.fprintf fmt "@,output (%a)@,}@," (commasep ppIdent) x.outputs
 
 let ppGlobal (fmt : PP.formatter) (x : global) : unit =
   ( match x with
   | Variable (v, ty, loc) ->
-      Format.fprintf fmt "global @%a : %a"
+      PP.fprintf fmt "global @%a : %a"
         Ident.pp v
         ppType ty;
-      if !show_loc then Format.fprintf fmt " // %a" Loc.pp loc;
-      Format.fprintf fmt "@,\n"
+      if !show_loc then PP.fprintf fmt " // %a" Loc.pp loc;
+      PP.fprintf fmt "@,\n"
   | Function (f, r, loc) ->
-      Format.fprintf fmt "function @%a" Ident.pp f;
-      if !show_loc then Format.fprintf fmt " // %a" Loc.pp loc;
-      Format.fprintf fmt "@,";
+      PP.fprintf fmt "function @%a" Ident.pp f;
+      if !show_loc then PP.fprintf fmt " // %a" Loc.pp loc;
+      PP.fprintf fmt "@,";
       ppRegion fmt r;
-      Format.fprintf fmt "}@,\n"
+      PP.fprintf fmt "}@,\n"
   )
 
 (****************************************************************

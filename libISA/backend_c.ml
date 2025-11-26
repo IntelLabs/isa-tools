@@ -80,7 +80,7 @@ let use_const_ref (loc : Loc.t) (x : AST.ty) : bool =
     | Type_Array (ix_ty, ty) -> true
     | Type_Tuple tys -> true
     | _ ->
-        let msg = Format.asprintf "use_const_ref: unexpected type" in
+        let msg = PP.asprintf "use_const_ref: unexpected type" in
         let pp fmt = FMT.ty fmt x in
         raise (Error.Unimplemented (loc, msg, pp))
     )
@@ -352,7 +352,7 @@ let const_expr (loc : Loc.t) (x : AST.expr) : V.value =
   | Expr_Lit v -> v
   | Expr_TApply (f, _, [Expr_Lit (VIntN w)], _) when Ident.equal f cvt_sintN_int -> VInt w.v
   | _ ->
-      let msg = Format.asprintf "const_expr: not literal constant '%a'" FMT.expr x in
+      let msg = PP.asprintf "const_expr: not literal constant '%a'" FMT.expr x in
       let pp fmt = FMT.expr fmt x in
       raise (Error.Unimplemented (loc, msg, pp))
   )
@@ -362,7 +362,7 @@ let const_int_expr (loc : Loc.t) (x : AST.expr) : int =
   ( match v with
   | VInt i -> Z.to_int i
   | _ ->
-      let msg = Format.asprintf "const_int_expr: integer expected '%a'" V.pp_value v in
+      let msg = PP.asprintf "const_int_expr: integer expected '%a'" V.pp_value v in
       let pp fmt = FMT.expr fmt x in
       raise (Error.Unimplemented (loc, msg, pp))
   )
@@ -722,7 +722,7 @@ and index_expr (loc : Loc.t) (fmt : PP.formatter) (x : AST.expr) : unit =
   | Expr_Lit (VIntN x') when x'.n <= 32 ->
       Runtime.ffi_asl2c_sintN_small x'.n fmt (mk_expr loc x)
   | Expr_Lit (VInt x') when Z.fits_int32 x' ->
-      Format.fprintf fmt "%s" (Z.format "%d" x')
+      PP.fprintf fmt "%s" (Z.format "%d" x')
   | Expr_TApply (f, [n], [x'], _) when Ident.equal f cvt_sintN_int ->
       Runtime.ffi_asl2c_sintN_small (const_int_expr loc n) fmt (mk_expr loc x')
   | _ ->
@@ -755,13 +755,13 @@ and varty ?(const_ref = false) (loc : Loc.t) (fmt : PP.formatter) (v : Ident.t) 
   | Type_Constructor (i, [size]) when Ident.equal i Builtin_idents.uints_type ->
     let size' = const_int_expr loc size in
     let chunks = (size' + 63) / 64 in
-    Format.fprintf fmt "uint64_t[%d]" chunks
+    PP.fprintf fmt "uint64_t[%d]" chunks
   | Type_Constructor (i, [size]) when Ident.equal i Builtin_idents.uint_type ->
-    Format.fprintf fmt "uint%d_t" (const_int_expr loc size)
+    PP.fprintf fmt "uint%d_t" (const_int_expr loc size)
   | Type_Constructor (i, [size]) when Ident.equal i Builtin_idents.sint_type ->
-    Format.fprintf fmt "int%d_t" (const_int_expr loc size)
+    PP.fprintf fmt "int%d_t" (const_int_expr loc size)
   | Type_Constructor (i, []) when Ident.equal i Builtin_idents.int_type ->
-    Format.fprintf fmt "int"
+    PP.fprintf fmt "int"
   | Type_Integer _ ->
     Runtime.ty_int fmt;
     nbsp fmt;
@@ -951,7 +951,7 @@ let rec stmt (fmt : PP.formatter) (x : AST.stmt) : unit =
                   if Option.is_some oc then
                     raise (Error.Unimplemented (loc, "pattern_guard", fun fmt -> ()));
                   List.iter (PP.fprintf fmt "case %a:@," (pattern loc)) ps;
-                  Format.fprintf fmt "{%a@,    break;@,}@," indented_block ss)
+                  PP.fprintf fmt "{%a@,    break;@,}@," indented_block ss)
                 alts;
 
               PP.fprintf fmt "default: {";
@@ -960,7 +960,7 @@ let rec stmt (fmt : PP.formatter) (x : AST.stmt) : unit =
                   indented_block fmt b;
               | None ->
                   indented fmt (fun _ ->
-                    Format.fprintf fmt "ASL_error_unmatched_case(\"%s\");@,"
+                    PP.fprintf fmt "ASL_error_unmatched_case(\"%s\");@,"
                       (String.escaped (Loc.to_string loc))
                   )
               );
@@ -969,7 +969,7 @@ let rec stmt (fmt : PP.formatter) (x : AST.stmt) : unit =
           PP.fprintf fmt "@,}"
       )
   | Stmt_VarDecl (_, DeclItem_Var (v, _), i, loc) ->
-      Format.fprintf fmt "%a = %a;"
+      PP.fprintf fmt "%a = %a;"
         ident v
         (expr loc) i
   | Stmt_VarDecl (_, DeclItem_Wildcard _, i, loc) ->
@@ -2085,7 +2085,7 @@ let generate_files (num_c_files : int) (dirname : string) (basename : string)
       runtime_header fmt;
       wrap_extern (not !is_cxx) fmt (fun fmt ->
           type_decls ds |> Isa_utils.topological_sort |> List.rev |> declarations fmt;
-          Format.fprintf fmt "@,"
+          PP.fprintf fmt "@,"
       )
   );
 
@@ -2093,10 +2093,10 @@ let generate_files (num_c_files : int) (dirname : string) (basename : string)
       (* Emit *_ffi.h file even if generating C++ for other files *)
       let basename_ffi = basename ^ "_ffi" in
       emit_c_header false dirname basename_ffi (fun fmt ->
-          Format.fprintf fmt "#include <stdint.h>@,";
-          Format.fprintf fmt "#include <stdbool.h>@,";
+          PP.fprintf fmt "#include <stdint.h>@,";
+          PP.fprintf fmt "#include <stdbool.h>@,";
           wrap_extern !is_cxx fmt ffi_prototypes;
-          Format.fprintf fmt "@,"
+          PP.fprintf fmt "@,"
       )
   end;
 
@@ -2111,7 +2111,7 @@ let generate_files (num_c_files : int) (dirname : string) (basename : string)
       extern_declarations fmt !global_vars;
       List.iter (fun (s, ds) -> state_struct fmt s !ds) !struct_vars;
       List.iter
-        (fun (s, _) -> Format.fprintf fmt "extern struct %s *%s;@," s (struct_ptr s))
+        (fun (s, _) -> PP.fprintf fmt "extern struct %s *%s;@," s (struct_ptr s))
         !struct_vars
   );
 
@@ -2127,15 +2127,15 @@ let generate_files (num_c_files : int) (dirname : string) (basename : string)
   emit_c_source filename_v gen_h_filenames (fun fmt ->
       declarations fmt !global_vars;
       List.iter
-        (fun (s, _) -> Format.fprintf fmt "struct %s *%s;@," s (struct_ptr s))
+        (fun (s, _) -> PP.fprintf fmt "struct %s *%s;@," s (struct_ptr s))
         !struct_vars;
       List.iter
         (fun (s, _) ->
-            Format.fprintf fmt "void ASL_initialize_%s(struct %s *p) {@," s s;
+            PP.fprintf fmt "void ASL_initialize_%s(struct %s *p) {@," s s;
             List.iter
-              (fun (s', i) -> if s = s' then Format.fprintf fmt "  %s@," i;)
+              (fun (s', i) -> if s = s' then PP.fprintf fmt "  %s@," i;)
               !initializers;
-            Format.fprintf fmt "}@,"
+            PP.fprintf fmt "}@,"
         )
         !struct_vars;
   );
@@ -2148,7 +2148,7 @@ let generate_files (num_c_files : int) (dirname : string) (basename : string)
   if num_c_files = 1 then begin
     emit_c_source filename_f gen_h_filenames (fun fmt ->
       declarations fmt ds;
-      Format.fprintf fmt "@,";
+      PP.fprintf fmt "@,";
       ffi_definitions fmt
     )
   end else begin
@@ -2158,7 +2158,7 @@ let generate_files (num_c_files : int) (dirname : string) (basename : string)
       | l when i = num_c_files ->
           emit_c_source filename_f ~index:i gen_h_filenames (fun fmt ->
             declarations fmt (List.rev acc @ l);
-            Format.fprintf fmt "@,";
+            PP.fprintf fmt "@,";
             ffi_definitions fmt
           )
       | h :: t when List.length acc < threshold ->
