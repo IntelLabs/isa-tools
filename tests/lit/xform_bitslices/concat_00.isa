@@ -1,0 +1,17 @@
+// RUN: %iii --batchmode --exec=:xform_desugar --exec=:xform_bitslices --exec=":show --format=raw FUT" %s | filecheck %s
+
+// Copyright (C) 2025-2025 Intel Corporation
+
+function FUT()
+begin
+    var x : Bits(2);
+    var y : Bits(2);
+    var i : Integer;
+
+    var r1 := x ++ y;
+    // CHECK: var r1 : Bits(Std::Integer::Add.0{}(2, 2)) := Std::Bits::Or.0{4}(Std::Bits::Shift_Left_Logical_Restricted.0{4}(Std::Bits::Zero_Extend.0{2, 4}(x, 4), 2), Std::Bits::Zero_Extend.0{2, 4}(y, 4));
+
+
+    var r2 := Std::Bits::Zero_Extend(Std::Bits::All_Ones(i), 8);
+    // CHECK: var r2 : Bits(8) := Std::Bits::Mk_Mask.0{8}(i, 8);
+end

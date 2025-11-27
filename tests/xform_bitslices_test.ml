@@ -27,10 +27,6 @@ let bitslice_tests : unit Alcotest.test_case list =
        "x[i +: 64-i] ++ y[0 +: i]"
        "Std::Bits::Shift_Left_Logical_Restricted(Std::Bits::Shift_Right_Logical_Restricted(x, i) and Std::Bits::Mk_Mask(64-i, 64), i)
         or Std::Bits::And(y, Std::Bits::Mk_Mask(i, 64))");
-    ("bitvector concat", `Quick, expr
-       "var x : Bits(2); var y : Bits(2);"
-       "x ++ y"
-       "Std::Bits::Shift_Left_Logical_Restricted(Std::Bits::Zero_Extend(x, 4), 2) or Std::Bits::Zero_Extend(y, 4)");
     ("nested bitvector concat 1", `Quick, expr
        "var x : Bits(2); var y : Bits(2); var z : Bits(4);"
        "(x ++ y) ++ z"
@@ -95,12 +91,6 @@ let bitslice_tests : unit Alcotest.test_case list =
             or Std::Bits::Shift_Left_Logical_Restricted(Std::Bits::Shift_Left_Logical_Restricted(Std::Bits::Zero_Extend(y, 8), 4)
                                              or Std::Bits::Zero_Extend(z, 8)
                                             , 1);");
-    *)
-    ("Zero_Extend(All_Ones(i), n)", `Quick, expr
-       "var i : Integer;"
-       "Zero_Extend(Std::Bits::All_Ones(i), 64)"
-       "Std::Bits::Mk_Mask(i, 64)");
-    (*
     ("All_Ones(i) ++ Zero(n-i)", `Quick, expr
        "var i : Integer;"
        "Std::Bits::All_Ones(i) ++ Std::Bits::Zero(64-i)"
