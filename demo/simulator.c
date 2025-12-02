@@ -16,6 +16,8 @@
 #include "asl/runtime.h"
 
 #include "sim_ffi.h"
+#include "sim_vars.h"
+
 
 #define UNUSED __attribute__ ((unused))
 
@@ -124,18 +126,6 @@ ASL_runtime_error(const char *msg)
 
         exit(1);
 }
-
-/****************************************************************
- * Include the specification
- ****************************************************************/
-
-#include "sim_exceptions.h"
-#include "sim_vars.h"
-
-// These could be compiled separately and linked in - but this is easier
-#include "sim_exceptions.c"
-#include "sim_vars.c"
-#include "sim_funs.c"
 
 /****************************************************************
  * Register access by name

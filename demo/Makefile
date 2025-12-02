@@ -75,7 +75,7 @@ simulator_% : simulator.c config.json demo.isa
 	@ if ${HAVE_GNU_AS}; then \
 	$(IIC) --basename=sim --intermediates=log --split-state --new-ffi --backend=$* > sim.prj ; \
 	env ISA_PATH="${ISA_PATH}" $(III) --nobanner --batchmode --project=sim.prj --configuration=config.json demo.isa ; \
-	$(CC) ${shell ${IIC} --backend=$* --print-c-flags} ${CFLAGS} simulator.c -o $@ ${shell ${IIC} --backend=$* --print-ld-flags} ${LDFLAGS} ; \
+	$(CC) ${shell ${IIC} --backend=$* --print-c-flags} ${CFLAGS} simulator.c sim_exceptions.c sim_vars.c sim_funs.c -o $@ ${shell ${IIC} --backend=$* --print-ld-flags} ${LDFLAGS} ; \
 	else echo ${REPORT_NOT_GAS}; fi
 
 test_% : simulator_% test.elf test.prj
