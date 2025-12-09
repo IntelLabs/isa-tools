@@ -1875,7 +1875,7 @@ let mk_ffi_import_wrapper
     PP.fprintf fmt "// Import wrapper for '%a'@,@," ident c_name;
     wrap_extern true fmt pp_proto;
     function_header loc fmt asl_name fty;
-    PP.fprintf fmt "@,{@,";
+    PP.fprintf fmt "@,{";
     indented fmt (fun _ -> pp_import_body fmt);
     PP.fprintf fmt "@,}@,"
   in
