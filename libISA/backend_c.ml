@@ -40,11 +40,11 @@ let set_ffi_integer (s : string) : unit = ffi_integer := s
 
 let wrap_extern (add_wrapper : bool) (fmt : PP.formatter) (f : PP.formatter -> 'a) : 'a =
   if add_wrapper then (
-    PP.fprintf fmt "@,#ifdef __cplusplus@,";
+    PP.fprintf fmt "#ifdef __cplusplus@,";
     PP.fprintf fmt "extern \"C\" {@,";
     PP.fprintf fmt "#endif@,@,";
     let r = f fmt in
-    PP.fprintf fmt "@,#ifdef __cplusplus@,";
+    PP.fprintf fmt "#ifdef __cplusplus@,";
     PP.fprintf fmt "}@,";
     PP.fprintf fmt "#endif@,@,";
     r
@@ -1726,9 +1726,10 @@ let mk_ffi_export_wrapper
     PP.fprintf fmt "// Export wrapper for '%a'@,@," ident c_name;
     wrap_extern true fmt (fun fmt ->
       pp_proto fmt;
+      PP.fprintf fmt "@,";
       PP.fprintf fmt "%a {" pp_c_function_header ();
       indented fmt (fun _ -> pp_export_body fmt);
-      PP.fprintf fmt "@,}@,"
+      PP.fprintf fmt "@,}@,@,"
     )
   in
 
@@ -1873,11 +1874,14 @@ let mk_ffi_import_wrapper
 
   let pp_wrapper fmt =
     PP.fprintf fmt "// Import wrapper for '%a'@,@," ident c_name;
-    wrap_extern true fmt pp_proto;
+    wrap_extern true fmt (fun fmt ->
+      pp_proto fmt;
+      PP.fprintf fmt "@,"
+    );
     function_header loc fmt asl_name fty;
     PP.fprintf fmt "@,{";
     indented fmt (fun _ -> pp_import_body fmt);
-    PP.fprintf fmt "@,}@,"
+    PP.fprintf fmt "@,}@,@,"
   in
 
   (pp_proto, pp_wrapper)
@@ -1950,7 +1954,12 @@ let mk_ffi_wrappers (is_import : bool)
        )
     |> List.split
   in
-  let pp_protos fmt : unit = List.iter (fun f -> f fmt) mk_protos in
+  let pp_protos fmt : unit =
+    if not (Utils.is_empty mk_protos) then begin
+      List.iter (fun f -> f fmt) mk_protos;
+      PP.fprintf fmt "@,"
+    end;
+  in
   let pp_defns fmt : unit = List.iter (fun f -> f fmt) mk_defns in
   (pp_protos, pp_defns)
 
@@ -1978,7 +1987,7 @@ let ffi_track_return_types (decls : AST.declaration list) : unit =
 (* Generate C enumeration declarations for FFI file *)
 let mk_ffi_enums (fmt : PP.formatter) : unit =
   Bindings.bindings !enumerated_types
-  |> List.iter (fun (tc, es) -> PP.fprintf fmt "enum %a { %a };@," ident tc (commasep ident) es)
+  |> List.iter (fun (tc, es) -> PP.fprintf fmt "enum %a { %a };@,@," ident tc (commasep ident) es)
 
 let config_setter_prefix = "ASL_set_config_"
 let config_getter_prefix = "ASL_get_config_"
@@ -2046,7 +2055,8 @@ let get_rt_header (_ : unit) : string list =
   Runtime.file_header
 
 let runtime_header (fmt : PP.formatter) : unit =
-  List.iter (PP.fprintf fmt "%s@,") (get_rt_header ())
+  List.iter (PP.fprintf fmt "%s@,") (get_rt_header ());
+  PP.fprintf fmt "@,"
 
 (* the name of the pointer to a given struct *)
 let struct_ptr (s : string) : string = s ^ "_ptr"
@@ -2084,7 +2094,8 @@ let emit_c_source (filename : string) ?(index : int option) (includes : string l
   let filename = filename ^ suffix index ^ code_suffix in
   Utils.to_file filename (fun fmt ->
       runtime_header fmt;
-      List.iter (PP.fprintf fmt "#include \"%s\"\n") includes;
+      List.iter (PP.fprintf fmt "#include \"%s\"@,") includes;
+      PP.fprintf fmt "@,";
       f fmt
   )
 
@@ -2131,10 +2142,10 @@ let generate_files (num_c_files : int) (dirname : string) (basename : string)
       runtime_header fmt;
       wrap_extern (not !is_cxx) fmt (fun fmt ->
           List.iter
-            (fun (s, _) -> if List.mem s !extra_fun_args then PP.fprintf fmt "struct %s;@," s)
+            (fun (s, _) ->
+              if List.mem s !extra_fun_args then PP.fprintf fmt "struct %s;@,@," s)
             !struct_vars;
-          type_decls ds |> Isa_utils.topological_sort |> List.rev |> declarations fmt;
-          PP.fprintf fmt "@,"
+          type_decls ds |> Isa_utils.topological_sort |> List.rev |> declarations fmt
       )
   );
 
@@ -2144,14 +2155,14 @@ let generate_files (num_c_files : int) (dirname : string) (basename : string)
       if !new_ffi then begin
           PP.fprintf fmt "#include <stdint.h>@,";
           PP.fprintf fmt "#include <stdbool.h>@,";
+          PP.fprintf fmt "@,";
           List.iter (fun (s, _) ->
               if List.mem s !extra_fun_args then
                   PP.fprintf fmt "struct %s;@,@," s
               else
                   PP.fprintf fmt "extern struct %s *%s;@,@," s (struct_ptr s)
           ) !struct_vars;
-          wrap_extern !is_cxx fmt ffi_prototypes;
-          PP.fprintf fmt "@,"
+          wrap_extern !is_cxx fmt ffi_prototypes
       end
   );
 
@@ -2204,7 +2215,6 @@ let generate_files (num_c_files : int) (dirname : string) (basename : string)
   if num_c_files = 1 then begin
     emit_c_source filename_f gen_h_filenames (fun fmt ->
       declarations fmt ds;
-      PP.fprintf fmt "@,";
       ffi_definitions fmt
     )
   end else begin
@@ -2214,7 +2224,6 @@ let generate_files (num_c_files : int) (dirname : string) (basename : string)
       | l when i = num_c_files ->
           emit_c_source filename_f ~index:i gen_h_filenames (fun fmt ->
             declarations fmt (List.rev acc @ l);
-            PP.fprintf fmt "@,";
             ffi_definitions fmt
           )
       | h :: t when List.length acc < threshold ->
