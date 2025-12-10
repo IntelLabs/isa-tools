@@ -2130,10 +2130,11 @@ let generate_files (num_c_files : int) (dirname : string) (basename : string)
       if !new_ffi then begin
           PP.fprintf fmt "#include <stdint.h>@,";
           PP.fprintf fmt "#include <stdbool.h>@,";
-          List.iter (fun (s, (ds, cfs)) ->
-              if List.mem s !extra_fun_args then begin
+          List.iter (fun (s, _) ->
+              if List.mem s !extra_fun_args then
+                  PP.fprintf fmt "struct %s;@,@," s
+              else
                   PP.fprintf fmt "extern struct %s *%s;@,@," s (struct_ptr s)
-              end
           ) !struct_vars;
           wrap_extern !is_cxx fmt ffi_prototypes;
           PP.fprintf fmt "@,"
