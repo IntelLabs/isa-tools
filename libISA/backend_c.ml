@@ -1832,9 +1832,10 @@ let mk_ffi_import_wrapper
 
   let pp_c_function_header fmt _ =
     pp_c_ret_type fmt;
+    let pp_extra_args = List.map (fun s fmt -> extra_arg_decl fmt s) !extra_fun_args in
     PP.fprintf fmt " %a(%a)"
       ident c_name
-      (commasep (fun fmt pp -> pp fmt)) (pp_input_decls @ pp_output_arg_decls)
+      (commasep (fun fmt pp -> pp fmt)) (pp_extra_args @ pp_input_decls @ pp_output_arg_decls)
   in
 
   (* generate body of import wrapper *)
@@ -1847,9 +1848,12 @@ let mk_ffi_import_wrapper
         pp fmt;
         PP.fprintf fmt " = "
     );
-    PP.fprintf fmt "%a(%a);@,"
-      ident c_name
-      (commasep (fun fmt f -> f fmt)) (pp_input_args @ pp_output_args);
+    PP.fprintf fmt "%a("
+      ident c_name;
+    commasep extra_arg fmt !extra_fun_args;
+    if not (Utils.is_empty !extra_fun_args || (Utils.is_empty pp_input_args && Utils.is_empty pp_output_args)) then PP.fprintf fmt ", ";
+    (commasep (fun fmt f -> f fmt)) fmt (pp_input_args @ pp_output_args);
+    PP.fprintf fmt ");@,";
     pp_funlist pp_output_cvts fmt;
     PP.fprintf fmt "return %a;" (fun fmt _ -> pp_asl_ret_value fmt) ()
   in
