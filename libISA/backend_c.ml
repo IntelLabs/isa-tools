@@ -1953,6 +1953,8 @@ let mk_ffi_wrappers (is_import : bool)
   in
   let pp_protos fmt : unit =
     if not (Utils.is_empty mk_protos) then begin
+      let direction = if is_import then "Imported" else "Exported" in
+      PP.fprintf fmt "// %s functions@," direction;
       List.iter (fun f -> f fmt) mk_protos;
       PP.fprintf fmt "@,"
     end;
