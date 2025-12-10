@@ -2160,7 +2160,7 @@ let generate_files (num_c_files : int) (dirname : string) (basename : string)
 
   let header_suffix = if !is_cxx then ".hpp" else ".h" in
   let gen_h_filenames =
-    List.map (fun s -> s ^ header_suffix) [ basename_t; basename_e; basename_v; basename_ffi ]
+    List.map (fun s -> s ^ header_suffix) [ basename_t; basename_e; basename_v ]
   in
 
   let filename_e = Filename.concat dirname basename_e in
