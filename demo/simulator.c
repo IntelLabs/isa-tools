@@ -33,25 +33,35 @@ FILE* error_file = NULL;
  ****************************************************************/
 
 // Load data into simulator memory and pad with zeros as needed
-void load_block(struct threadlocal_state *thread, char* data, Elf64_Addr addr, Elf64_Xword file_size, Elf64_Xword mem_size) {
+void load_block(void *thread_arg,
+                struct threadlocal_state *thread,
+                char* data,
+                Elf64_Addr addr,
+                Elf64_Xword file_size,
+                Elf64_Xword mem_size) {
         for(uint64_t i = 0; i < file_size; ++i) {
                 uint8_t value = *((uint8_t*)(data + i));
                 // printf("Setting %lx = %x\n", addr + i, value);
-                ASL_WriteMemory8(thread, addr + i, value);
+                ASL_WriteMemory8(thread_arg, thread, addr + i, value);
         }
         for(uint64_t i = file_size; i < mem_size; ++i) {
-                ASL_WriteMemory8(thread, addr + i, 0);
+                ASL_WriteMemory8(thread_arg, thread, addr + i, 0);
         }
 }
 
-void load_Phdr(struct threadlocal_state *thread, char* elf, Elf64_Phdr* ph) {
+void load_Phdr(void *thread_arg,
+               struct threadlocal_state *thread,
+               char* elf,
+               Elf64_Phdr* ph) {
         if (ph->p_type == PT_LOAD) {
                 char* data = elf + ph->p_offset;
-                load_block(thread, data, ph->p_paddr, ph->p_filesz, ph->p_memsz);
+                load_block(thread_arg, thread, data, ph->p_paddr, ph->p_filesz, ph->p_memsz);
         }
 }
 
-uint64_t load_elf64(struct threadlocal_state *thread, const char* filename) {
+uint64_t load_elf64(void *thread_arg,
+                    struct threadlocal_state *thread,
+                    const char* filename) {
         FILE *f = fopen(filename, "rb");
         if (!f) {
                 perror("Error while reading ELF file: ");
@@ -86,7 +96,7 @@ uint64_t load_elf64(struct threadlocal_state *thread, const char* filename) {
         Elf64_Half ph_entsize = hdr->e_phentsize;
         for(int i = 0; i < ph_num; ++i) {
                 Elf64_Phdr* ph = (Elf64_Phdr*)(((char*) elf) + ph_off + i * ph_entsize);
-                load_Phdr(thread, elf, ph);
+                load_Phdr(thread_arg, thread, elf, ph);
         }
         return hdr->e_entry;
 }
@@ -172,18 +182,23 @@ static int lookup_regname(const char* name)
         return -1;
 }
 
-UNUSED static uint64_t get_register(struct threadlocal_state *thread, const char* name)
+UNUSED static uint64_t get_register(void *thread_arg,
+                                    struct threadlocal_state *thread,
+                                    const char* name)
 {
         int index = lookup_regname(name);
         if (index < 0) {
                 printf("Ignoring get of unknown register '%s'\n", name);
                 return 0;
         }
-        uint64_t r = ASL_ReadReg64(thread, index);
+        uint64_t r = ASL_ReadReg64(thread_arg, thread, index);
         return r;
 }
 
-UNUSED static void set_register(struct threadlocal_state *thread, const char* name, uint64_t val)
+UNUSED static void set_register(void *thread_arg,
+                                struct threadlocal_state *thread,
+                                const char* name,
+                                uint64_t val)
 {
         int index = lookup_regname(name);
         if (index < 0) {
@@ -191,7 +206,7 @@ UNUSED static void set_register(struct threadlocal_state *thread, const char* na
                 return;
         }
         printf("Setting %s to %lx\n", name, val);
-        ASL_WriteReg64(thread, index, val);
+        ASL_WriteReg64(thread_arg, thread, index, val);
 }
 
 /****************************************************************
@@ -237,16 +252,20 @@ int main(int argc, const char* argv[])
         global_state_ptr = &Global; // note that this is global
         struct threadlocal_state *thread = &Processor0; // note that this is local
 
-        ASL_Reset(thread);
+        // Initialize extra thread argument, passed through ISL from exported
+        // to imported functions
+        void *thread_arg = (void *)"T0";
+
+        ASL_Reset(thread_arg, thread);
 
         long steps = 10; // default number of steps to run
         for(int i = 1; i < argc; ++i) {
                 const char* suffix = strrchr(argv[i], '.');
                 if (suffix && 0 == strcmp(suffix, ".elf")) {
                         printf("Loading ELF file %s.\n", argv[i]);
-                        uint64_t entry = load_elf64(thread, argv[i]);
+                        uint64_t entry = load_elf64(thread_arg, thread, argv[i]);
                         printf("Entry point = 0x%lx\n", entry);
-                        set_register(thread, "PC", entry);
+                        set_register(thread_arg, thread, "PC", entry);
                 } else if (strncmp(argv[i], "--steps=", 8) == 0) {
                         steps = strtol(argv[i]+8, NULL, 10);
                 } else {
@@ -255,11 +274,12 @@ int main(int argc, const char* argv[])
                 }
         }
 
-        Print_State(thread);
-        for(int i = 0; i < steps && !ASL_IsHalted(thread); ++i) {
-                printf("Stepping processor %s\n", (char*)(thread)->client_ptr);
-                ASL_Step(thread);
-                Print_State(thread);
+        Print_State(thread_arg, thread);
+        for(int i = 0; i < steps && !ASL_IsHalted(thread_arg, thread); ++i) {
+                printf("%s: Stepping processor %s\n",
+                       (char *)thread_arg, (char *)thread->client_ptr);
+                ASL_Step(thread_arg, thread);
+                Print_State(thread_arg, thread);
         }
 
         exit(0);

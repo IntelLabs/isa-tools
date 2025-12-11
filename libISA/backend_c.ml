@@ -296,15 +296,31 @@ let pointer (fmt : PP.formatter) (x : Ident.t) : unit =
  * Note that it is the users responsibility to use a name that will not
  * clash with names (e.g., of types, variables, ...) used in the original spec.
  *)
-
 let extra_fun_args : string list ref = ref []
 
-let extra_arg_decl (fmt : PP.formatter) (s : string) : unit =
-  PP.fprintf fmt "struct %s *%s_ptr" s s
+let pp_extra_arg_decls (fmt : PP.formatter) : (PP.formatter -> unit) list =
+  List.map (fun a fmt -> PP.fprintf fmt "struct %s *%s_ptr" a a) !extra_fun_args
 
-let extra_arg (fmt : PP.formatter) (s : string) : unit =
-  PP.fprintf fmt "%s_ptr" s
+let pp_extra_args (fmt : PP.formatter) : (PP.formatter -> unit) list =
+  List.map (fun a fmt -> PP.fprintf fmt "%s_ptr" a) !extra_fun_args
 
+type client_arg = {
+  ty : string;
+  name : string;
+}
+
+(* The list of client arguments that are added as function arguments.
+ *
+ * Note that it is the users responsibility to use a name that will not
+ * clash with names (e.g., of types, variables, ...) used in the original spec.
+ *)
+let client_args : client_arg list ref = ref []
+
+let pp_client_arg_decls (fmt : PP.formatter) : (PP.formatter -> unit) list =
+  List.map (fun a fmt -> PP.fprintf fmt "%s %s" a.ty a.name) !client_args
+
+let pp_client_args (fmt : PP.formatter) : (PP.formatter -> unit) list =
+  List.map (fun a fmt -> PP.fprintf fmt "%s" a.name) !client_args
 
 (* Any global state can register an initializer to be run on a global variable.
  * This is currently only used for RAM blocks.
@@ -406,12 +422,12 @@ let helper_functions = Identset.mk_bindings [
     (asl_error_unmatched_case, "ASL_error_unmatched_case");
 ]
 
-let rec apply (loc : Loc.t) (fmt : PP.formatter) (f : unit -> unit) (args : AST.expr list) : unit =
+let rec apply (loc : Loc.t) (fmt : PP.formatter) (f : unit -> unit)
+    (args : AST.expr list) : unit =
   f ();
   parens fmt (fun _ ->
-    commasep extra_arg fmt !extra_fun_args;
-    if not (Utils.is_empty !extra_fun_args || Utils.is_empty args) then PP.fprintf fmt ", ";
-    exprs loc fmt args
+    let pp_args = List.map (fun a fmt -> expr loc fmt a) args in
+    commasep (fun fmt f -> f fmt) fmt (pp_client_args fmt @ pp_extra_args fmt @ pp_args)
   )
 
 and unop (loc : Loc.t) (fmt : PP.formatter) (op : string) (x : AST.expr) : unit =
@@ -1108,9 +1124,8 @@ let function_header (loc : Loc.t) (fmt : PP.formatter) (f : Ident.t) (fty : AST.
   | t -> varty loc fmt f t
   );
   parens fmt (fun _ ->
-    commasep extra_arg_decl fmt !extra_fun_args;
-    if not (Utils.is_empty !extra_fun_args || Utils.is_empty fty.args) then PP.fprintf fmt ", ";
-    commasep (formal loc) fmt fty.args
+    let pp_fty_args = List.map (fun a fmt -> formal loc fmt a) fty.args in
+    commasep (fun fmt f -> f fmt) fmt (pp_client_arg_decls fmt @ pp_extra_arg_decls fmt @ pp_fty_args)
   )
 
 let function_body (loc : Loc.t) (fmt : PP.formatter) (b : AST.stmt list) (rty : AST.ty) : unit =
@@ -1679,10 +1694,10 @@ let mk_ffi_export_wrapper
 
   let pp_c_function_header fmt _ =
     pp_c_ret_type fmt;
-    let pp_extra_args = List.map (fun s fmt -> extra_arg_decl fmt s) !extra_fun_args in
-    PP.fprintf fmt " %a(%a)"
-      ident c_name
-      (commasep (fun fmt pp -> pp fmt)) (pp_extra_args @ pp_input_decls @ pp_output_arg_decls)
+    let pp_args =
+      pp_client_arg_decls fmt @ pp_extra_arg_decls fmt @ pp_input_decls @ pp_output_arg_decls
+    in
+    PP.fprintf fmt " %a(%a)" ident c_name (commasep (fun fmt pp -> pp fmt)) pp_args
   in
 
   (* generate body of export wrapper *)
@@ -1695,12 +1710,9 @@ let mk_ffi_export_wrapper
         varty loc fmt asl_ret_name rty;
         PP.fprintf fmt " = "
     );
-    PP.fprintf fmt "%a("
-      ident asl_name;
-    commasep extra_arg fmt !extra_fun_args;
-    if not (Utils.is_empty !extra_fun_args || Utils.is_empty input_args) then PP.fprintf fmt ", ";
-    commasep Ident.pp fmt input_args;
-    PP.fprintf fmt ");@,";
+    let pp_input_args = List.map (fun a fmt -> Ident.pp fmt a) input_args in
+    let pp_args = pp_client_args fmt @ pp_extra_args fmt @ pp_input_args in
+    PP.fprintf fmt "%a(%a);@," ident asl_name (commasep (fun fmt pp -> pp fmt)) pp_args;
     PP.fprintf fmt "if (ASL_exception._exc.ASL_tag != ASL_no_exception) ASL_error(\"%a\", \"uncaught exception\");@,"
       ident asl_name;
     pp_funlist pp_output_cvts fmt;
@@ -1832,10 +1844,10 @@ let mk_ffi_import_wrapper
 
   let pp_c_function_header fmt _ =
     pp_c_ret_type fmt;
-    let pp_extra_args = List.map (fun s fmt -> extra_arg_decl fmt s) !extra_fun_args in
-    PP.fprintf fmt " %a(%a)"
-      ident c_name
-      (commasep (fun fmt pp -> pp fmt)) (pp_extra_args @ pp_input_decls @ pp_output_arg_decls)
+    let pp_args =
+      pp_client_arg_decls fmt @ pp_extra_arg_decls fmt @ pp_input_decls @ pp_output_arg_decls
+    in
+    PP.fprintf fmt " %a(%a)" ident c_name (commasep (fun fmt pp -> pp fmt)) pp_args
   in
 
   (* generate body of import wrapper *)
@@ -1848,12 +1860,10 @@ let mk_ffi_import_wrapper
         pp fmt;
         PP.fprintf fmt " = "
     );
-    PP.fprintf fmt "%a("
-      ident c_name;
-    commasep extra_arg fmt !extra_fun_args;
-    if not (Utils.is_empty !extra_fun_args || (Utils.is_empty pp_input_args && Utils.is_empty pp_output_args)) then PP.fprintf fmt ", ";
-    (commasep (fun fmt f -> f fmt)) fmt (pp_input_args @ pp_output_args);
-    PP.fprintf fmt ");@,";
+    let pp_args =
+      pp_client_args fmt @ pp_extra_args fmt @ pp_input_args @ pp_output_args
+    in
+    PP.fprintf fmt "%a(%a);@," ident c_name (commasep (fun fmt pp -> pp fmt)) pp_args;
     pp_funlist pp_output_cvts fmt;
     PP.fprintf fmt "return %a;" (fun fmt _ -> pp_asl_ret_value fmt) ()
   in
@@ -2289,6 +2299,12 @@ let _ =
             if use_as_ptr = ["yes"] then begin
                 extra_fun_args := s :: !extra_fun_args
             end;
+            let client_arg = Option.value (List.assoc_opt "client_arg" state) ~default:[] in
+            ( match client_arg with
+            | [ty; name] -> client_args := { ty; name } :: !client_args
+            | [] -> ()
+            | _ -> raise (InternalError (Loc.Unknown, PP.asprintf "Invalid client_arg for struct '%s'" s, FMT.none, __LOC__))
+            );
             let regexps = List.map Str.regexp res in
             (regexps, s, client_fields)
           )
