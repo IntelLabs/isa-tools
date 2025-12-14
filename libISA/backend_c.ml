@@ -340,7 +340,7 @@ let current_catch_label (_ : unit) : Ident.t =
       Catcher.get_label c
   | [] ->
       raise
-        (InternalError (Unknown, "No topmost catcher", (fun _ -> ()), __LOC__))
+        (InternalError (Unknown, "No topmost catcher", FMT.none, __LOC__))
 
 let with_catch_label (f : Catcher.t -> unit) : unit =
   let prev = !catcher_stack in
@@ -972,7 +972,7 @@ let rec stmt (fmt : PP.formatter) (x : AST.stmt) : unit =
               map fmt
                 (fun (AST.Alt_Alt (ps, oc, ss, loc)) ->
                   if Option.is_some oc then
-                    raise (Error.Unimplemented (loc, "pattern_guard", fun fmt -> ()));
+                    raise (Error.Unimplemented (loc, "pattern_guard", FMT.none));
                   List.iter (PP.fprintf fmt "case %a:@," (pattern loc)) ps;
                   PP.fprintf fmt "{%a@,    break;@,}@," indented_block ss)
                 alts;

@@ -21,6 +21,7 @@ val resugar_operators : bool ref
 val add_binop : AST.binop -> Ident.t -> unit
 val add_unop : AST.unop -> Ident.t -> unit
 
+val none : formatter -> unit
 val loc : formatter -> Loc.t -> unit
 val tycon : formatter -> Ident.t -> unit
 val varname : formatter -> Ident.t -> unit

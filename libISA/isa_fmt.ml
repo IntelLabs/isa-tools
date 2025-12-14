@@ -40,6 +40,9 @@ let unop_table : AST.unop Bindings.t ref = ref Bindings.empty
 let add_unop (op : AST.unop) (x : Ident.t) : unit =
   unop_table := Bindings.add x op !unop_table
 
+(** Helper function printing nothing *)
+let none (fmt : PP.formatter) : unit = ()
+
 let loc (fmt : PP.formatter) (x : Loc.t) : unit = Loc.pp fmt x
 
 let delimiter (fmt : PP.formatter) (s : string) : unit =
