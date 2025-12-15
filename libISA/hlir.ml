@@ -13,7 +13,7 @@
 module AST = Isa_ast
 module FMT = Isa_fmt
 module PP = Format
-module FMT_Utils = Format_utils
+module FMTUtils = Format_utils
 
 (****************************************************************
  * Pretty printing helpers
@@ -141,7 +141,7 @@ let rec ppOperation (fmt : PP.formatter) (x : operation) : unit =
     ppOp x.op
     (commasep ppIdentName) x.operands;
   if not (Utils.is_empty x.regions) then begin
-    FMT_Utils.indented fmt (fun _ ->
+    FMTUtils.indented fmt (fun _ ->
       List.iter (ppRegion fmt) x.regions
     )
   end;
@@ -153,7 +153,7 @@ let rec ppOperation (fmt : PP.formatter) (x : operation) : unit =
 
 and ppRegion (fmt : PP.formatter) (x : region) : unit =
   PP.fprintf fmt "{ input (%a)" (commasep ppIdent) x.inputs;
-  FMT_Utils.indented fmt (fun _ ->
+  FMTUtils.indented fmt (fun _ ->
     List.iter (ppOperation fmt) x.operations;
   );
   PP.fprintf fmt "@,output (%a)@,}@," (commasep ppIdent) x.outputs

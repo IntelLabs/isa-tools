@@ -6,7 +6,7 @@
  ****************************************************************)
 
 module Parser = Asl_parser
-module FMT_Utils = Format_utils
+module FMTUtils = Format_utils
 module ISA_FMT = Isa_fmt
 open Isa_utils
 
@@ -58,17 +58,17 @@ let print_exception (e : exn) : unit =
       ISA_FMT.show_type_params := true;
       let fmt = Format.std_formatter in
       Format.fprintf fmt "@.%a: internal compiler error: %s" ISA_FMT.loc loc s;
-      FMT_Utils.indented fmt (fun _ -> pp fmt);
-      FMT_Utils.cut fmt;
+      FMTUtils.indented fmt (fun _ -> pp fmt);
+      FMTUtils.cut fmt;
       Format.fprintf fmt "Please submit a bug report. %s@," ml_loc
   | Unimplemented (loc, what, pp) ->
       let fmt = Format.std_formatter in
       Format.pp_print_newline fmt ();
-      FMT_Utils.vbox fmt (fun _ ->
+      FMTUtils.vbox fmt (fun _ ->
           ISA_FMT.loc fmt loc;
           Format.fprintf fmt ": Unimplemented %s:" what;
-          FMT_Utils.indented fmt (fun _ -> pp fmt);
-          FMT_Utils.cut fmt)
+          FMTUtils.indented fmt (fun _ -> pp fmt);
+          FMTUtils.cut fmt)
   | _ ->
     Printf.printf "  Error %s\n" (Printexc.to_string e);
     Printexc.print_backtrace stdout;
