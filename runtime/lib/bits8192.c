@@ -5,16 +5,16 @@
 // SPDX-License-Identifier: BSD-3-Clause
 ////////////////////////////////////////////////////////////////
 
-#include "asl/bits4096.h"
+#include "asl/bits8192.h"
 
 #include <stdbool.h>
 
-#define N 4096
+#define N 8192
 #include "bits_template_c.h"
 #undef N
 
-ASL_bits4096_t
-ASL_lsl_bits_4096(int width, ASL_bits4096_t x, ASL_int_t d)
+ASL_bits8192_t
+ASL_lsl_bits_8192(int width, ASL_bits8192_t x, ASL_int_t d)
 {
         if (d == 0)
                 return x;
@@ -148,13 +148,13 @@ ASL_lsl_bits_4096(int width, ASL_bits4096_t x, ASL_int_t d)
                 x.u64[2]  = x.u64[1];
                 x.u64[1]  = x.u64[0];
                 x.u64[0]  = 0;
-                x = ASL_lsl_bits_4096(width, x, d - 64);
+                x = ASL_lsl_bits_8192(width, x, d - 64);
         }
-        return ASL_and_bits_4096(width, x, ASL_mk_mask_4096(width));
+        return ASL_and_bits_8192(width, x, ASL_mk_mask_8192(width));
 }
 
-ASL_bits4096_t
-ASL_lsr_bits_4096(int width, ASL_bits4096_t x, ASL_int_t d)
+ASL_bits8192_t
+ASL_lsr_bits_8192(int width, ASL_bits8192_t x, ASL_int_t d)
 {
         if (d == 0)
                 return x;
@@ -288,51 +288,59 @@ ASL_lsr_bits_4096(int width, ASL_bits4096_t x, ASL_int_t d)
                 x.u64[61] = x.u64[62];
                 x.u64[62] = x.u64[63];
                 x.u64[63] = 0;
-                x = ASL_lsr_bits_4096(width, x, d - 64);
+                x = ASL_lsr_bits_8192(width, x, d - 64);
         }
         return x;
 }
 
 ASL_bits2048_t
-ASL_slice_lowd_4096_2048(ASL_bits4096_t x, ASL_int_t lo, ASL_int_t width)
+ASL_slice_lowd_8192_2048(ASL_bits8192_t x, ASL_int_t lo, ASL_int_t width)
 {
-        return ASL_cast_bits_4096_2048(ASL_slice_lowd_4096_4096(x, lo, width));
+        return ASL_cast_bits_8192_2048(ASL_slice_lowd_8192_8192(x, lo, width));
 }
 
 ASL_bits1024_t
-ASL_slice_lowd_4096_1024(ASL_bits4096_t x, ASL_int_t lo, ASL_int_t width)
+ASL_slice_lowd_8192_1024(ASL_bits8192_t x, ASL_int_t lo, ASL_int_t width)
 {
-        return ASL_cast_bits_4096_1024(ASL_slice_lowd_4096_4096(x, lo, width));
+        return ASL_cast_bits_8192_1024(ASL_slice_lowd_8192_8192(x, lo, width));
 }
 
 ASL_bits512_t
-ASL_slice_lowd_4096_512(ASL_bits4096_t x, ASL_int_t lo, ASL_int_t width)
+ASL_slice_lowd_8192_512(ASL_bits8192_t x, ASL_int_t lo, ASL_int_t width)
 {
-        return ASL_cast_bits_4096_512(ASL_slice_lowd_4096_4096(x, lo, width));
+        return ASL_cast_bits_8192_512(ASL_slice_lowd_8192_8192(x, lo, width));
 }
 
 ASL_bits256_t
-ASL_slice_lowd_4096_256(ASL_bits4096_t x, ASL_int_t lo, ASL_int_t width)
+ASL_slice_lowd_8192_256(ASL_bits8192_t x, ASL_int_t lo, ASL_int_t width)
 {
-        return ASL_cast_bits_4096_256(ASL_slice_lowd_4096_4096(x, lo, width));
+        return ASL_cast_bits_8192_256(ASL_slice_lowd_8192_8192(x, lo, width));
 }
 
 ASL_bits128_t
-ASL_slice_lowd_4096_128(ASL_bits4096_t x, ASL_int_t lo, ASL_int_t width)
+ASL_slice_lowd_8192_128(ASL_bits8192_t x, ASL_int_t lo, ASL_int_t width)
 {
-        return ASL_cast_bits_4096_128(ASL_slice_lowd_4096_4096(x, lo, width));
+        return ASL_cast_bits_8192_128(ASL_slice_lowd_8192_8192(x, lo, width));
 }
 
 ASL_bits64_t
-ASL_slice_lowd_4096_64(ASL_bits4096_t x, ASL_int_t lo, ASL_int_t width)
+ASL_slice_lowd_8192_64(ASL_bits8192_t x, ASL_int_t lo, ASL_int_t width)
 {
-        return ASL_cast_bits_4096_64(ASL_slice_lowd_4096_4096(x, lo, width));
+        return ASL_cast_bits_8192_64(ASL_slice_lowd_8192_8192(x, lo, width));
 }
 
-ASL_bits4096_t
-ASL_zero_extend_bits_64_4096(int width, ASL_bits64_t x, ASL_int_t n)
+ASL_bits8192_t
+ASL_zero_extend_bits_64_8192(int width, ASL_bits64_t x, ASL_int_t n)
 {
-        return ASL_bits_4096(0, 0, 0, 0, 0, 0, 0, 0,
+        return ASL_bits_8192(0, 0, 0, 0, 0, 0, 0, 0,
+                             0, 0, 0, 0, 0, 0, 0, 0,
+                             0, 0, 0, 0, 0, 0, 0, 0,
+                             0, 0, 0, 0, 0, 0, 0, 0,
+                             0, 0, 0, 0, 0, 0, 0, 0,
+                             0, 0, 0, 0, 0, 0, 0, 0,
+                             0, 0, 0, 0, 0, 0, 0, 0,
+                             0, 0, 0, 0, 0, 0, 0, 0,
+                             0, 0, 0, 0, 0, 0, 0, 0,
                              0, 0, 0, 0, 0, 0, 0, 0,
                              0, 0, 0, 0, 0, 0, 0, 0,
                              0, 0, 0, 0, 0, 0, 0, 0,
@@ -342,10 +350,18 @@ ASL_zero_extend_bits_64_4096(int width, ASL_bits64_t x, ASL_int_t n)
                              0, 0, 0, 0, 0, 0, 0, x);
 }
 
-ASL_bits4096_t
-ASL_zero_extend_bits_128_4096(int width, ASL_bits128_t x, ASL_int_t n)
+ASL_bits8192_t
+ASL_zero_extend_bits_128_8192(int width, ASL_bits128_t x, ASL_int_t n)
 {
-        return ASL_bits_4096(0, 0, 0, 0, 0, 0, 0, 0,
+        return ASL_bits_8192(0, 0, 0, 0, 0, 0, 0, 0,
+                             0, 0, 0, 0, 0, 0, 0, 0,
+                             0, 0, 0, 0, 0, 0, 0, 0,
+                             0, 0, 0, 0, 0, 0, 0, 0,
+                             0, 0, 0, 0, 0, 0, 0, 0,
+                             0, 0, 0, 0, 0, 0, 0, 0,
+                             0, 0, 0, 0, 0, 0, 0, 0,
+                             0, 0, 0, 0, 0, 0, 0, 0,
+                             0, 0, 0, 0, 0, 0, 0, 0,
                              0, 0, 0, 0, 0, 0, 0, 0,
                              0, 0, 0, 0, 0, 0, 0, 0,
                              0, 0, 0, 0, 0, 0, 0, 0,
@@ -355,10 +371,18 @@ ASL_zero_extend_bits_128_4096(int width, ASL_bits128_t x, ASL_int_t n)
                              0, 0, 0, 0, 0, 0, x.u64[1], x.u64[0]);
 }
 
-ASL_bits4096_t
-ASL_zero_extend_bits_256_4096(int width, ASL_bits256_t x, ASL_int_t n)
+ASL_bits8192_t
+ASL_zero_extend_bits_256_8192(int width, ASL_bits256_t x, ASL_int_t n)
 {
-        return ASL_bits_4096(0, 0, 0, 0, 0, 0, 0, 0,
+        return ASL_bits_8192(0, 0, 0, 0, 0, 0, 0, 0,
+                             0, 0, 0, 0, 0, 0, 0, 0,
+                             0, 0, 0, 0, 0, 0, 0, 0,
+                             0, 0, 0, 0, 0, 0, 0, 0,
+                             0, 0, 0, 0, 0, 0, 0, 0,
+                             0, 0, 0, 0, 0, 0, 0, 0,
+                             0, 0, 0, 0, 0, 0, 0, 0,
+                             0, 0, 0, 0, 0, 0, 0, 0,
+                             0, 0, 0, 0, 0, 0, 0, 0,
                              0, 0, 0, 0, 0, 0, 0, 0,
                              0, 0, 0, 0, 0, 0, 0, 0,
                              0, 0, 0, 0, 0, 0, 0, 0,
@@ -368,10 +392,18 @@ ASL_zero_extend_bits_256_4096(int width, ASL_bits256_t x, ASL_int_t n)
                              0, 0, 0, 0, x.u64[3], x.u64[2], x.u64[1], x.u64[0]);
 }
 
-ASL_bits4096_t
-ASL_zero_extend_bits_512_4096(int width, ASL_bits512_t x, ASL_int_t n)
+ASL_bits8192_t
+ASL_zero_extend_bits_512_8192(int width, ASL_bits512_t x, ASL_int_t n)
 {
-        return ASL_bits_4096(0, 0, 0, 0, 0, 0, 0, 0,
+        return ASL_bits_8192(0, 0, 0, 0, 0, 0, 0, 0,
+                             0, 0, 0, 0, 0, 0, 0, 0,
+                             0, 0, 0, 0, 0, 0, 0, 0,
+                             0, 0, 0, 0, 0, 0, 0, 0,
+                             0, 0, 0, 0, 0, 0, 0, 0,
+                             0, 0, 0, 0, 0, 0, 0, 0,
+                             0, 0, 0, 0, 0, 0, 0, 0,
+                             0, 0, 0, 0, 0, 0, 0, 0,
+                             0, 0, 0, 0, 0, 0, 0, 0,
                              0, 0, 0, 0, 0, 0, 0, 0,
                              0, 0, 0, 0, 0, 0, 0, 0,
                              0, 0, 0, 0, 0, 0, 0, 0,
@@ -382,10 +414,18 @@ ASL_zero_extend_bits_512_4096(int width, ASL_bits512_t x, ASL_int_t n)
                              x.u64[3], x.u64[2], x.u64[1], x.u64[0]);
 }
 
-ASL_bits4096_t
-ASL_zero_extend_bits_1024_4096(int width, ASL_bits1024_t x, ASL_int_t n)
+ASL_bits8192_t
+ASL_zero_extend_bits_1024_8192(int width, ASL_bits1024_t x, ASL_int_t n)
 {
-        return ASL_bits_4096(0, 0, 0, 0, 0, 0, 0, 0,
+        return ASL_bits_8192(0, 0, 0, 0, 0, 0, 0, 0,
+                             0, 0, 0, 0, 0, 0, 0, 0,
+                             0, 0, 0, 0, 0, 0, 0, 0,
+                             0, 0, 0, 0, 0, 0, 0, 0,
+                             0, 0, 0, 0, 0, 0, 0, 0,
+                             0, 0, 0, 0, 0, 0, 0, 0,
+                             0, 0, 0, 0, 0, 0, 0, 0,
+                             0, 0, 0, 0, 0, 0, 0, 0,
+                             0, 0, 0, 0, 0, 0, 0, 0,
                              0, 0, 0, 0, 0, 0, 0, 0,
                              0, 0, 0, 0, 0, 0, 0, 0,
                              0, 0, 0, 0, 0, 0, 0, 0,
@@ -397,10 +437,18 @@ ASL_zero_extend_bits_1024_4096(int width, ASL_bits1024_t x, ASL_int_t n)
                              x.u64[3],  x.u64[2],  x.u64[1],  x.u64[0]);
 }
 
-ASL_bits4096_t
-ASL_zero_extend_bits_2048_4096(int width, ASL_bits2048_t x, ASL_int_t n)
+ASL_bits8192_t
+ASL_zero_extend_bits_2048_8192(int width, ASL_bits2048_t x, ASL_int_t n)
 {
-        return ASL_bits_4096(0, 0, 0, 0, 0, 0, 0, 0,
+        return ASL_bits_8192(0, 0, 0, 0, 0, 0, 0, 0,
+                             0, 0, 0, 0, 0, 0, 0, 0,
+                             0, 0, 0, 0, 0, 0, 0, 0,
+                             0, 0, 0, 0, 0, 0, 0, 0,
+                             0, 0, 0, 0, 0, 0, 0, 0,
+                             0, 0, 0, 0, 0, 0, 0, 0,
+                             0, 0, 0, 0, 0, 0, 0, 0,
+                             0, 0, 0, 0, 0, 0, 0, 0,
+                             0, 0, 0, 0, 0, 0, 0, 0,
                              0, 0, 0, 0, 0, 0, 0, 0,
                              0, 0, 0, 0, 0, 0, 0, 0,
                              0, 0, 0, 0, 0, 0, 0, 0,
@@ -414,10 +462,47 @@ ASL_zero_extend_bits_2048_4096(int width, ASL_bits2048_t x, ASL_int_t n)
                              x.u64[3],  x.u64[2],  x.u64[1],  x.u64[0]);
 }
 
-ASL_bits4096_t
-ASL_zeros_bits_4096(ASL_int_t width)
+ASL_bits8192_t
+ASL_zero_extend_bits_4096_8192(int width, ASL_bits4096_t x, ASL_int_t n)
 {
-        return ASL_bits_4096(0, 0, 0, 0, 0, 0, 0, 0,
+        return ASL_bits_8192(0, 0, 0, 0, 0, 0, 0, 0,
+                             0, 0, 0, 0, 0, 0, 0, 0,
+                             0, 0, 0, 0, 0, 0, 0, 0,
+                             0, 0, 0, 0, 0, 0, 0, 0,
+                             0, 0, 0, 0, 0, 0, 0, 0,
+                             0, 0, 0, 0, 0, 0, 0, 0,
+                             0, 0, 0, 0, 0, 0, 0, 0,
+                             0, 0, 0, 0, 0, 0, 0, 0,
+                             x.u64[63], x.u64[62], x.u64[61], x.u64[60],
+                             x.u64[59], x.u64[58], x.u64[57], x.u64[56],
+                             x.u64[55], x.u64[54], x.u64[53], x.u64[52],
+                             x.u64[51], x.u64[50], x.u64[49], x.u64[48],
+                             x.u64[47], x.u64[46], x.u64[45], x.u64[44],
+                             x.u64[43], x.u64[42], x.u64[41], x.u64[40],
+                             x.u64[39], x.u64[38], x.u64[37], x.u64[36],
+                             x.u64[35], x.u64[34], x.u64[33], x.u64[32],
+                             x.u64[31], x.u64[30], x.u64[29], x.u64[28],
+                             x.u64[27], x.u64[26], x.u64[25], x.u64[24],
+                             x.u64[23], x.u64[22], x.u64[21], x.u64[20],
+                             x.u64[19], x.u64[18], x.u64[17], x.u64[16],
+                             x.u64[15], x.u64[14], x.u64[13], x.u64[12],
+                             x.u64[11], x.u64[10], x.u64[9],  x.u64[8],
+                             x.u64[7],  x.u64[6],  x.u64[5],  x.u64[4],
+                             x.u64[3],  x.u64[2],  x.u64[1],  x.u64[0]);
+}
+
+ASL_bits8192_t
+ASL_zeros_bits_8192(ASL_int_t width)
+{
+        return ASL_bits_8192(0, 0, 0, 0, 0, 0, 0, 0,
+                             0, 0, 0, 0, 0, 0, 0, 0,
+                             0, 0, 0, 0, 0, 0, 0, 0,
+                             0, 0, 0, 0, 0, 0, 0, 0,
+                             0, 0, 0, 0, 0, 0, 0, 0,
+                             0, 0, 0, 0, 0, 0, 0, 0,
+                             0, 0, 0, 0, 0, 0, 0, 0,
+                             0, 0, 0, 0, 0, 0, 0, 0,
+                             0, 0, 0, 0, 0, 0, 0, 0,
                              0, 0, 0, 0, 0, 0, 0, 0,
                              0, 0, 0, 0, 0, 0, 0, 0,
                              0, 0, 0, 0, 0, 0, 0, 0,
