@@ -1,7 +1,7 @@
 (****************************************************************
  * ISA to C backend
  *
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  * SPDX-License-Identifier: BSD-3-Clause
  ****************************************************************)
 
@@ -1290,7 +1290,7 @@ let exceptions (fmt : PP.formatter) (xs : AST.declaration list) : unit =
             ident tc)
       )
       excs;
-    PP.fprintf fmt "@,extern ASL_exception_t ASL_exception;@,";
+    PP.fprintf fmt "@,extern ASL_exception_t ASL_exception;@,@,";
   )
 
 let exceptions_init (fmt : PP.formatter) : unit =
