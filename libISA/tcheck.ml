@@ -2,7 +2,7 @@
  * ISA typechecker
  *
  * Copyright Arm Limited (c) 2017-2019
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  * SPDX-License-Identifier: BSD-3-Clause
  ****************************************************************)
 
@@ -2627,7 +2627,7 @@ let tc_print (env : Env.t) (loc : Loc.t) (args : AST.expr list) : AST.stmt list 
       let flush_buffer _ = if Buffer.length pending_string > 0 then begin
             let s = Expr_Lit (VString (Buffer.contents pending_string)) in
             let p = Stmt_TCall (print_str, [], [s], NoThrow, loc) in
-            result := !result @ [p];
+            result := p :: !result;
             Buffer.clear pending_string
           end
       in
@@ -2715,7 +2715,7 @@ let tc_print (env : Env.t) (loc : Loc.t) (args : AST.expr list) : AST.stmt list 
                                raise (error msg)
                             )
                     in
-                    result := !result @ [p]
+                    result := p :: !result
                 )
             )
           end
@@ -2726,7 +2726,7 @@ let tc_print (env : Env.t) (loc : Loc.t) (args : AST.expr list) : AST.stmt list 
       done;
       flush_buffer ();
 
-      !result
+      List.rev !result
   | _ ->
       raise (error "Print must always be used with a literal format string like \"x = {x}\"")
   )
