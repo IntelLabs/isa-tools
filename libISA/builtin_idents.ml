@@ -1,7 +1,7 @@
 (****************************************************************
  * Identifiers of builtin function, types, etc.
  *
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  * SPDX-License-Identifier: BSD-3-Clause
  ****************************************************************)
 
@@ -117,6 +117,8 @@ let print_sintN_dec    = Ident.mk_fident "Std::Print::SInt::Dec"
 let print_sintN_hex    = Ident.mk_fident "Std::Print::SInt::Hex"
 let print_str          = Ident.mk_fident "Std::Print::String"
 let print              = Ident.mk_fident "Std::Print"
+
+let info               = Ident.mk_fident "Std::Info"
 
 let eq_enum           = Ident.mk_fident "builtin_eq_enum"
 let ne_enum           = Ident.mk_fident "builtin_ne_enum"

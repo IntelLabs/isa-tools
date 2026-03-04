@@ -2,7 +2,7 @@
  * Generic utility functions
  *
  * Copyright Arm Limited (c) 2017-2019
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  * SPDX-License-Identifier: BSD-3-Clause
  ****************************************************************)
 
@@ -280,6 +280,42 @@ let round_up_to_pow2 (i : int) : int =
   assert (i > 0);
   let base2log = Z.log2up (Z.of_int i) in
   Z.to_int (Z.shift_left Z.one base2log)
+
+(****************************************************************
+ * Format string parsing
+ ****************************************************************)
+
+(** Segments of parsed ASL format string *)
+type fmt_segment =
+  | Fmt_lit of string  (** Literal text *)
+  | Fmt_var of string  (** Variable from { } *)
+
+(** Parse an ASL format string into segments.
+    Raises Failure if { has no matching }. *)
+let parse_fmt_string (s : string) : fmt_segment list =
+  let len = String.length s in
+  let acc = ref [] in
+  let i = ref 0 in
+  while !i < len do
+    let char = s.[!i] in
+    if char = '\\' && !i + 1 < len then begin
+      acc := Fmt_lit (String.make 1 s.[!i + 1]) :: !acc;
+      i := !i + 2
+    end else if char = '{' then begin
+      match String.index_from_opt s (!i + 1) '}' with
+      | Some j ->
+        let name = String.sub s (!i + 1) (j - !i - 1) in
+        acc := Fmt_var name :: !acc;
+        i := j + 1
+      | None ->
+        let rest = String.sub s (!i + 1) (len - !i - 1) in
+        failwith rest
+    end else begin
+      acc := Fmt_lit (String.make 1 char) :: !acc;
+      i := !i + 1
+    end
+  done;
+  List.rev !acc
 
 (****************************************************************
  * End

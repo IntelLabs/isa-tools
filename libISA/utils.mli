@@ -2,7 +2,7 @@
  * Generic utility functions
  *
  * Copyright Arm Limited (c) 2017-2019
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  * SPDX-License-Identifier: BSD-3-Clause
  ****************************************************************)
 
@@ -146,6 +146,19 @@ val pow2 : int -> int
 
 (** Round up to the next power of 2 for positive numbers *)
 val round_up_to_pow2 : int -> int
+
+(****************************************************************
+ * Format string parsing
+ ****************************************************************)
+
+(** Segments of parsed ASL format string *)
+type fmt_segment =
+  | Fmt_lit of string  (** Literal text *)
+  | Fmt_var of string  (** Variable from { } *)
+
+(** Parse an ASL format string into segments.
+    Raises Failure if { has no matching }. *)
+val parse_fmt_string : string -> fmt_segment list
 
 (****************************************************************
  * End

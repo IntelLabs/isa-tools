@@ -1,7 +1,7 @@
 ################################################################
 # ASL runtime Makefile
 #
-# Copyright (C) 2023-2025 Intel Corporation
+# Copyright (C) 2023-2026 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 ################################################################
 
@@ -32,6 +32,7 @@ C_FILES = bits8192.c \
           bits64.c \
           error.c \
           end_of_execution.c \
+          info.c \
           ram.c
 
 OBJ_FILES = $(C_FILES:%.c=$(BUILD_DIR)/%.$(OBJEXT))

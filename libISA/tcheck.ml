@@ -2611,15 +2611,15 @@ let tc_decl_bit (env : Env.t) (loc : Loc.t) (x : (Ident.t option * AST.ty)) : (I
   | _ -> raise (TypeError (loc, "bits type expected"))
   )
 
+let fmt_str_error (loc : Loc.t) (msg : string) : exn =
+  let msg = Format.asprintf "Error in format string: %s" msg in
+  TypeError (loc, msg)
+
 (** Convert the format string in a print command into a sequence of
  *  calls to primitive print functions
  *)
 let tc_print (env : Env.t) (loc : Loc.t) (args : AST.expr list) : AST.stmt list =
-  let error (msg : string) : exn =
-      let msg = Format.asprintf "Error in Print format string: %s" msg in
-      TypeError (loc, msg)
-  in
-
+  let error = fmt_str_error loc in
   ( match args with
   | [(Expr_Lit (VString fmt))] ->
       let result = ref [] in
@@ -2708,7 +2708,7 @@ let tc_print (env : Env.t) (loc : Loc.t) (args : AST.expr list) : AST.stmt list 
                             | Type_Constructor (tc, []) when Ident.equal tc string_ident ->
                                 Stmt_TCall (print_str, [], [Expr_Var v], NoThrow, loc)
                             | _ ->
-                               let msg = Format.asprintf "no print function defined for variable %a : %a"
+                               let msg = Format.asprintf "no print function defined for variable '%a : %a'"
                                    Ident.pp v
                                    FMT.ty info.ty
                                in
@@ -2730,6 +2730,58 @@ let tc_print (env : Env.t) (loc : Loc.t) (args : AST.expr list) : AST.stmt list 
   | _ ->
       raise (error "Print must always be used with a literal format string like \"x = {x}\"")
   )
+
+(** Extract variable names from a format string like "x={x} y={y}".
+  * Backslash escapes are skipped.
+  *)
+let extract_fmt_vars (loc : Loc.t) (fmt : string) : string list =
+  let segments =
+    try parse_fmt_string fmt
+    with Failure rest ->
+      let msg =
+        Format.asprintf "expected '}' in format string, got \"%s\"" rest
+      in
+      raise (fmt_str_error loc msg)
+  in
+  List.filter_map (function Fmt_var name -> Some name | _ -> None) segments
+
+let tc_info (env : Env.t) (loc : Loc.t) (args : AST.expr list) : AST.stmt list =
+  let error = fmt_str_error loc in
+  match args with
+  | [ level; Expr_Lit (VString fmt) as efmt ] ->
+      let vars = extract_fmt_vars loc fmt in
+      let (rev_tps, rev_args) = List.fold_left (fun (tps, vas) nm ->
+        let v = Ident.mk_ident nm in
+        ( match Env.getVar env v with
+        | None ->
+            let msg = Format.asprintf "unknown variable '%s'" nm in
+            raise (error msg)
+        | Some info ->
+            let tp =
+              match info.ty with
+              | Type_Bits (n, _) ->
+                  n
+              | Type_Integer _ ->
+                  Expr_Lit (VInt (Z.of_int (-1)))
+              | Type_Constructor (tc, []) when Ident.equal tc boolean_ident ->
+                  Expr_Lit (VInt (Z.of_int (-2)))
+              | Type_Constructor (tc, []) when Ident.equal tc string_ident ->
+                  Expr_Lit (VInt (Z.of_int (-3)))
+              | _ ->
+                  let msg = Format.asprintf
+                      "unsupported variable '%a : %a'" Ident.pp v FMT.ty info.ty
+                  in
+                  raise (error msg)
+            in
+            (tp :: tps, Expr_Var v :: vas)
+        )
+      ) ([], []) vars in
+      [ Stmt_TCall (info, List.rev rev_tps,
+                    level :: efmt :: List.rev rev_args, NoThrow, loc) ]
+  | _ ->
+      raise
+        (error
+           "Info must be used with a literal format string like \"x = {x}\"")
 
 (* drop any integer constraints from a type *)
 let drop_constraints (ty : AST.ty) : AST.ty =
@@ -2854,6 +2906,8 @@ and tc_stmt (env : Env.t) (x : AST.stmt) : AST.stmt list =
       check_subtype_satisfies env loc type_unit fty.rty;
       if Ident.equal fty.name print then (
         tc_print env loc es
+      ) else if Ident.equal fty.name info then (
+        tc_info env loc es
       ) else (
         [Stmt_TCall (fty.name, fty.parameters, es, throws, loc)]
       )

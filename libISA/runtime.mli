@@ -1,7 +1,7 @@
 (****************************************************************
  * Fallback runtime library support
  *
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  * SPDX-License-Identifier: BSD-3-Clause
  ****************************************************************)
 
@@ -137,6 +137,8 @@ module type RuntimeLib = sig
   (* Print functions *)
   val print_char : PP.formatter -> rt_expr -> unit
   val print_str : PP.formatter -> rt_expr -> unit
+
+  val info : PP.formatter -> rt_expr -> string -> (int * rt_expr) list -> unit
 
   val end_execution : PP.formatter -> rt_expr -> unit
 

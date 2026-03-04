@@ -1,7 +1,7 @@
 (****************************************************************
  * Fallback runtime library support
  *
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  * SPDX-License-Identifier: BSD-3-Clause
  ****************************************************************)
 
@@ -400,6 +400,73 @@ module Runtime : RT.RuntimeLib = struct
 
   let print_char (fmt : PP.formatter) (x : RT.rt_expr) : unit = apply1 fmt "print_char" x
   let print_str (fmt : PP.formatter) (x : RT.rt_expr) : unit = apply1 fmt "print_str" x
+
+  let info_format_int (add : string -> (PP.formatter -> unit) -> unit)
+      (arg : RT.rt_expr) : unit =
+    if int_width <= 64 then
+      add "%lld"
+        (fun fmt -> PP.fprintf fmt "(long long)%a" RT.pp_expr arg)
+    else
+      add "%s" (fun fmt ->
+        (* Call helper function to format the value as hex only if it does
+           not fit in 64-bit integer. Cannot do this check at compile time. *)
+        PP.fprintf fmt "ASL_format_int_as_str((char[ASL_INT_BUFSZ]){0}, %a)"
+          RT.pp_expr arg)
+
+  let info_format_bits (add : string -> (PP.formatter -> unit) -> unit)
+      (w : int) (arg : RT.rt_expr) : unit =
+    let hex_chars = (w + 3) / 4 in
+    add "%d'x" (fun fmt -> PP.fprintf fmt "%d" w);
+    if w <= 64 then
+      add (Printf.sprintf "%%0%dllx" hex_chars)
+        (fun fmt -> PP.fprintf fmt "(long long)%a" RT.pp_expr arg)
+    else begin
+      (* Note: Leading zeros can be suppressed via a helper function, but this
+         may negatively impact readability. *)
+      let full_limbs = hex_chars / 16 in
+      let top_hex_chars = hex_chars - full_limbs * 16 in
+      if top_hex_chars > 0 then
+        add (Printf.sprintf "%%0%dllx" top_hex_chars)
+          (fun fmt -> PP.fprintf fmt "(long long)%a.u64[%d]" RT.pp_expr arg full_limbs);
+      for i = full_limbs - 1 downto 0 do
+        add "%016llx"
+          (fun fmt -> PP.fprintf fmt "(long long)%a.u64[%d]" RT.pp_expr arg i)
+      done
+    end
+
+  let info (fmt : PP.formatter) (level : RT.rt_expr) (asl_fmt : string)
+      (tagged_args : (int * RT.rt_expr) list) : unit =
+    (* Tags for args: >=0 = Bits(n), -1 = Integer, -2 = Boolean, -3 = String *)
+    let c_fmt_buf = Buffer.create (String.length asl_fmt) in
+    let arg_printers = ref [] in
+    let add fmt_str printer =
+      Buffer.add_string c_fmt_buf fmt_str;
+      arg_printers := printer :: !arg_printers
+    in
+    let remaining = ref tagged_args in
+    List.iter (function
+      | Utils.Fmt_lit s ->
+          Buffer.add_string c_fmt_buf s
+      | Utils.Fmt_var _ ->
+          let (tag, arg) = List.hd !remaining in
+          remaining := List.tl !remaining;
+          if tag = -1 then
+            info_format_int add arg
+          else if tag = -2 then
+            add "%s"
+              (fun fmt -> PP.fprintf fmt "(%a ? \"true\" : \"false\")" RT.pp_expr arg)
+          else if tag = -3 then
+            add "%s"
+              (fun fmt -> RT.pp_expr fmt arg)
+          else
+            info_format_bits add tag arg
+    ) (Utils.parse_fmt_string asl_fmt);
+    assert (!remaining = []);
+    let level_printer fmt = RT.pp_expr fmt level in
+    let fmt_printer fmt = PP.fprintf fmt "\"%s\"" (String.escaped (Buffer.contents c_fmt_buf)) in
+    PP.fprintf fmt "%a(%a)" asl_keyword "info"
+      (commasep (fun fmt p -> p fmt))
+      (List.rev (!arg_printers @ [fmt_printer; level_printer]))
 
   let end_execution (fmt : PP.formatter) (x : RT.rt_expr) : unit =
     PP.fprintf fmt "ASL_end_execution(%a)" RT.pp_expr x

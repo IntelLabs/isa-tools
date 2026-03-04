@@ -452,6 +452,21 @@ and bool_binop (loc : Loc.t) (fmt : PP.formatter) (op : string) (x : AST.expr) (
 
 and mk_expr (loc : Loc.t) : AST.expr -> rt_expr = Runtime.mk_rt_expr (expr loc)
 
+and mk_info (loc : Loc.t) (fmt : PP.formatter) (tes : AST.expr list)
+    (args : AST.expr list) : unit =
+  let module Runtime = (val !runtime : RuntimeLib) in
+  match args with
+  | level :: (Expr_Lit (VString fmt_str)) :: vars ->
+      let type_tags = const_int_exprs loc tes in
+      let tagged_args =
+        List.combine type_tags (List.map (mk_expr loc) vars)
+      in
+      Runtime.info fmt (mk_expr loc level) fmt_str tagged_args
+  | _ ->
+      raise
+        (InternalError
+          (loc, "mk_info: expected format string + args", FMT.none, __LOC__))
+
 and funcall (loc : Loc.t) (fmt : PP.formatter) (f : Ident.t) (tes : AST.expr list) (args : AST.expr list) : unit =
   let module Runtime = (val (!runtime) : RuntimeLib) in
   ( match (const_int_exprs loc tes, args) with
@@ -583,6 +598,8 @@ and funcall (loc : Loc.t) (fmt : PP.formatter) (f : Ident.t) (tes : AST.expr lis
   (* Printing builtin functions *)
   | ([], [x]) when Ident.equal f print_char -> Runtime.print_char fmt (mk_expr loc x)
   | ([], [x]) when Ident.equal f print_str -> Runtime.print_str fmt (mk_expr loc x)
+
+  | (_, _) when Ident.equal f info -> mk_info loc fmt tes args
 
   | ([], [x]) when Ident.equal f asl_end_execution -> Runtime.end_execution fmt (mk_expr loc x)
 

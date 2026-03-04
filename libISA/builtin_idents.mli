@@ -1,7 +1,7 @@
 (****************************************************************
  * Identifiers of builtin function, types, etc.
  *
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  * SPDX-License-Identifier: BSD-3-Clause
  ****************************************************************)
 
@@ -164,6 +164,7 @@ val print_sintN_dec  : Ident.t
 val print_sintN_hex  : Ident.t
 val print            : Ident.t
 val print_boolean    : Ident.t
+val info             : Ident.t
 
 (* deprecated *)
 val old_bits_ident : Ident.t

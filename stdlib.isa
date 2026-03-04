@@ -1,7 +1,7 @@
 ////////////////////////////////////////////////////////////////
 // Standard library
 //
-// Copyright (C) 2022-2025 Intel Corporation
+// Copyright (C) 2022-2026 Intel Corporation
 // SPDX-License-Identifier: BSD-3-Clause
 ////////////////////////////////////////////////////////////////
 
@@ -112,6 +112,8 @@ __builtin function Std::Print::String(x : String) -> ();
 // Note: although this is a builtin function, it is expanded into a sequence
 // of calls to the Std::Print::* functions by the typechecker
 __builtin function Std::Print(x : String) -> ();
+
+__builtin function Std::Info(level : Integer, x : String) -> ();
 
 __builtin function Std::End_Execution(success : Boolean) -> ();
 

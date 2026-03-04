@@ -2,7 +2,7 @@
  * ISA interpreter values
  *
  * Copyright Arm Limited (c) 2017-2019
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  * SPDX-License-Identifier: BSD-3-Clause
  ****************************************************************)
 
@@ -415,6 +415,34 @@ end
 let tracer = ref (module TextTracer : Tracer)
 
 
+let eval_prim_info (tvs : value list) (vs : value list) : unit =
+  match vs with
+  | lvl :: VString fmt_str :: vars ->
+      let value_to_string tag v =
+        match (tag, v) with
+        | (VInt n, VBits x) when Z.geq n Z.zero -> prim_cvt_bits_hexstr n x
+        | (_, VInt x) -> prim_cvt_int_decstr x
+        | (_, VBool b) -> prim_cvt_bool_str b
+        | (_, VString s) -> s
+        | _ ->
+          (* Unreachable. Failure in type checking on unsupported variable *)
+          Format.asprintf "%a" pp_value v
+      in
+      let args = List.map2 value_to_string tvs vars in
+      let buf = Buffer.create (String.length fmt_str) in
+      let remaining = ref args in
+      List.iter (function
+        | Utils.Fmt_lit s ->
+            Buffer.add_string buf s
+        | Utils.Fmt_var _ ->
+            Buffer.add_string buf (List.hd !remaining);
+            remaining := List.tl !remaining
+      ) (Utils.parse_fmt_string fmt_str);
+      assert (!remaining = []);
+      Printf.printf "%s\n" (Buffer.contents buf)
+  | _ -> ()
+
+
 (****************************************************************)
 (** {2 Primop dispatch on values}                               *)
 (****************************************************************)
@@ -627,6 +655,9 @@ let eval_prim (f : Ident.t) (tvs : value list) (vs : value list) : value option 
       prim_print_int_dec x;    Some (VTuple [])
   | [VInt n], [ VBits x ] when Ident.equal f print_bits_hex ->
       prim_print_bits_hex n x; Some (VTuple [])
+  | _, _ when Ident.equal f info ->
+      eval_prim_info tvs vs;
+      Some (VTuple [])
   | [VInt a], [ VRAM ram; VBits i ] when Ident.equal f ram_init ->
       Some (prim_init_ram a ram i.v; VTuple [])
   | [VInt a; VInt n], [ VRAM ram; VBits i; _ ] when Ident.equal f ram_read ->

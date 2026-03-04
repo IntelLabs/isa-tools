@@ -1,5 +1,5 @@
 // RUN: %aslrun %s | filecheck %s
-// Copyright (C) 2023-2025 Intel Corporation
+// Copyright (C) 2023-2026 Intel Corporation
 
 function main() -> Builtin::Foreign::CInt
 begin
@@ -24,7 +24,7 @@ begin
     Std::Print::Integer::Hex(min_64p1); Print("\n");
     // CHECK: {{^-0x7fffffffffffffff$}}
 
-    // Most runtimes use 128 Bits as the default int sizes
+    // Most runtimes use 128 bits as the default int sizes
     // so test the extreme values and near neighbors.
     let max_128 :=  0x7fff_ffff_ffff_ffff_ffff_ffff_ffff_ffff;
     let min_128 := -0x8000_0000_0000_0000_0000_0000_0000_0000;

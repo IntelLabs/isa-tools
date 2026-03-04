@@ -2,7 +2,7 @@
  * Algorithmic C runtime library support
  * This uses the C++ "Algorithmic C" library "ac_int.h"
  *
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  * SPDX-License-Identifier: BSD-3-Clause
  ****************************************************************)
 
@@ -725,6 +725,8 @@ module Runtime : RT.RuntimeLib = struct
 
   let print_str (fmt : PP.formatter) (x : RT.rt_expr) : unit =
     PP.fprintf fmt "fputs(%a, stdout)" RT.pp_expr x
+
+  let info (fmt : PP.formatter) (level : RT.rt_expr) (asl_fmt : string) (tagged_args : (int * RT.rt_expr) list) : unit = ()
 
   let end_execution (fmt : PP.formatter) (x : RT.rt_expr) : unit =
     PP.fprintf fmt "ASL_end_execution(%a)" RT.pp_expr x

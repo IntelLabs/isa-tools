@@ -1,7 +1,7 @@
 ////////////////////////////////////////////////////////////////
 // Runtime library for ASL's C backend
 //
-// Copyright (C) 2022-2025 Intel Corporation
+// Copyright (C) 2022-2026 Intel Corporation
 // SPDX-License-Identifier: BSD-3-Clause
 ////////////////////////////////////////////////////////////////
 
@@ -55,6 +55,7 @@ typedef uint64_t ASL_bits32_t;
 #endif // ASL_FALLBACK
 
 #include "asl/error.h"
+#include "asl/info.h"
 #include "asl/ram.h"
 #include "asl/track_valid.h"
 
