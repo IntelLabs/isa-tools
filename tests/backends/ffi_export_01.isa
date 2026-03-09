@@ -117,9 +117,9 @@ begin
     // CHECK: 2'x2
     // CHECK: 17'x11
 
-    // CHECK: 65'x000000041
-    // CHECK: 127'x00000007f
-    // CHECK: 128'x000000080
+    // CHECK: 65'x0_0000000000000041
+    // CHECK: 127'x0_000000000000007f
+    // CHECK: 128'x0_0000000000000080
 
     // CHECK: abcd
     // CHECK: True

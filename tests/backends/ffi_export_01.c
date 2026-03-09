@@ -6,9 +6,11 @@
 // - calls an ASL function "FFI_{T}(x : {T}) -> {T}"
 // - and prints the result
 //
-// Copyright (C) 2025-2025 Intel Corporation
+// Copyright (C) 2025-2026 Intel Corporation
 
 #include "isa_ffi.h"
+
+#include <inttypes.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -27,17 +29,17 @@ void FFI_test_exports() {
         outbuf[0] = 65;
         outbuf[1] = 0;
         FFI_bits65(outbuf, inbuf);
-        printf("65'x%lx%08lx\n", inbuf[1], inbuf[0]);
+        printf("65'x%" PRIx64 "_%016" PRIx64 "\n", inbuf[1], inbuf[0]);
 
         outbuf[0] = 127;
         outbuf[1] = 0;
         FFI_bits65(outbuf, inbuf);
-        printf("127'x%lx%08lx\n", inbuf[1], inbuf[0]);
+        printf("127'x%" PRIx64 "_%016" PRIx64 "\n", inbuf[1], inbuf[0]);
 
         outbuf[0] = 128;
         outbuf[1] = 0;
         FFI_bits65(outbuf, inbuf);
-        printf("128'x%lx%08lx\n", inbuf[1], inbuf[0]);
+        printf("128'x%" PRIx64 "_%016" PRIx64 "\n", inbuf[1], inbuf[0]);
 
         printf("%s\n", FFI_string("abcd"));
 
