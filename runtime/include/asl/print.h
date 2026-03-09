@@ -132,7 +132,7 @@ ASL_print_int_dec(int n, bool add_size, ASL_int_t x)
                 printf("%" PRId64, -bottom);
         } else {
                 // despite the name, large numbers are printed in hex
-                printf("x%08" PRIx64 "_%08" PRIx64, top, bottom);
+                printf("0x%016" PRIx64 "_%016" PRIx64, top, bottom);
         }
 #else
         if (x < 0) {
