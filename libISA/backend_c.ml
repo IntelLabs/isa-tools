@@ -1724,7 +1724,10 @@ let mk_ffi_export_wrapper
 
   let pp_wrapper fmt =
     PP.fprintf fmt "// Export wrapper for '%a'@,@," ident c_name;
-    wrap_extern true fmt (fun fmt ->
+    (* Do not wrap main function to avoid the warning:
+       'main' should not be 'extern "C"' [-Wmain] *)
+    let is_main = Ident.equal c_name (Ident.mk_ident "main") in
+    wrap_extern (not is_main) fmt (fun fmt ->
       pp_proto fmt;
       PP.fprintf fmt "@,";
       PP.fprintf fmt "%a {" pp_c_function_header ();
