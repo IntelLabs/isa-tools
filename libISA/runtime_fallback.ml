@@ -437,9 +437,19 @@ module Runtime : RT.RuntimeLib = struct
       arg_printers := printer :: !arg_printers
     in
     let remaining = ref tagged_args in
+    let add_literal s =
+      String.iter
+        (fun c ->
+          if c = '%' then
+            (* Escape '%' as '%%' *)
+            Buffer.add_string c_fmt_buf "%%"
+          else
+            Buffer.add_char c_fmt_buf c)
+        s
+    in
     List.iter (function
       | Utils.Fmt_lit s ->
-          Buffer.add_string c_fmt_buf s
+          add_literal s
       | Utils.Fmt_var _ ->
           let (tag, arg) = List.hd !remaining in
           remaining := List.tl !remaining;

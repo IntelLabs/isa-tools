@@ -10,10 +10,11 @@ begin
     let s : String := "Hello, World!";
     let b : Boolean := True;
 
-    Std::Info(1, "x={x} i={i} s={s} b={b}");
-    // CHECK-c23:         x=4'xa i=42 s=Hello, World! b=true
-    // CHECK-fallback:    x=4'xa i=42 s=Hello, World! b=true
-    // CHECK-interpreter: x=4'xa i=42 s=Hello, World! b=True
+    // Note: %x checks for proper % escaping
+    Std::Info(1, "x={x} i={i} s={s} b={b} %x");
+    // CHECK-c23:         x=4'xa i=42 s=Hello, World! b=true %x
+    // CHECK-fallback:    x=4'xa i=42 s=Hello, World! b=true %x
+    // CHECK-interpreter: x=4'xa i=42 s=Hello, World! b=True %x
 end
 
 function F_Integer()
