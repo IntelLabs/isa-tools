@@ -680,13 +680,6 @@ module Runtime : RT.RuntimeLib = struct
   let info (fmt : PP.formatter) (level : RT.rt_expr) (asl_fmt : string)
       (tagged_args : (int * RT.rt_expr) list) : unit =
     (* Tags for args: >=0 = Bits(n), -1 = Integer, -2 = Boolean, -3 = String *)
-    let commasep (pp : PP.formatter -> 'a -> unit) (fmt : PP.formatter) (xs : 'a list) : unit =
-      PP.pp_print_list
-        ~pp_sep:(fun fmt' _ -> PP.pp_print_string fmt' ", ")
-        pp
-        fmt
-        xs
-    in
     let c_fmt_buf = Buffer.create (String.length asl_fmt) in
     let arg_printers = ref [] in
     let add fmt_str printer =

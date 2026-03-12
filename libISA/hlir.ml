@@ -19,13 +19,6 @@ module FMTUtils = Format_utils
  * Pretty printing helpers
  ****************************************************************)
 
-let commasep (pp : PP.formatter -> 'a -> unit) (fmt : PP.formatter) (xs : 'a list) : unit =
-  PP.pp_print_list
-    ~pp_sep:(fun fmt' _ -> PP.pp_print_string fmt' ", ")
-    pp
-    fmt
-    xs
-
 let cutsep (pp : PP.formatter -> 'a -> unit) (fmt : PP.formatter) (xs : 'a list) : unit =
   PP.pp_print_list
     pp
@@ -137,26 +130,26 @@ let ppOp (fmt : PP.formatter) (x : op) : unit =
 
 let rec ppOperation (fmt : PP.formatter) (x : operation) : unit =
   PP.fprintf fmt "(%a) = %a(%a) ("
-    (commasep ppIdentName) x.results
+    (Utils.commasep ppIdentName) x.results
     ppOp x.op
-    (commasep ppIdentName) x.operands;
+    (Utils.commasep ppIdentName) x.operands;
   if not (Utils.is_empty x.regions) then begin
     FMTUtils.indented fmt (fun _ ->
       List.iter (ppRegion fmt) x.regions
     )
   end;
   PP.fprintf fmt ") : (%a) -> (%a)"
-    (commasep ppIdentType) x.operands
-    (commasep ppIdentType) x.results;
+    (Utils.commasep ppIdentType) x.operands
+    (Utils.commasep ppIdentType) x.results;
   if !show_loc then PP.fprintf fmt " // %a" Loc.pp x.loc;
   PP.fprintf fmt "@,"
 
 and ppRegion (fmt : PP.formatter) (x : region) : unit =
-  PP.fprintf fmt "{ input (%a)" (commasep ppIdent) x.inputs;
+  PP.fprintf fmt "{ input (%a)" (Utils.commasep ppIdent) x.inputs;
   FMTUtils.indented fmt (fun _ ->
     List.iter (ppOperation fmt) x.operations;
   );
-  PP.fprintf fmt "@,output (%a)@,}@," (commasep ppIdent) x.outputs
+  PP.fprintf fmt "@,output (%a)@,}@," (Utils.commasep ppIdent) x.outputs
 
 let ppGlobal (fmt : PP.formatter) (x : global) : unit =
   ( match x with

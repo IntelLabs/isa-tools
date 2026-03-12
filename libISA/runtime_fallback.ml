@@ -10,14 +10,7 @@
 module PP = Format
 module V = Value
 module RT = Runtime
-open Format_utils
-
-let commasep (pp : PP.formatter -> 'a -> unit) (fmt : PP.formatter) (xs : 'a list) : unit =
-  PP.pp_print_list
-    ~pp_sep:(fun fmt' _ -> PP.pp_print_string fmt' ", ")
-    pp
-    fmt
-    xs
+module FMTUtils = Format_utils
 
 module Runtime : RT.RuntimeLib = struct
 
@@ -102,7 +95,7 @@ module Runtime : RT.RuntimeLib = struct
                 "0x" ^ String.sub hex_string pos 16 ^ "ULL")
           in
           asl_keyword fmt ("int_" ^ string_of_int num_bits);
-          parens fmt (fun _ -> commasep PP.pp_print_string fmt limbs)
+          FMTUtils.parens fmt (fun _ -> Utils.commasep PP.pp_print_string fmt limbs)
       )
     in
 
@@ -125,8 +118,8 @@ module Runtime : RT.RuntimeLib = struct
           (fun i -> bit_to_hex (Z.extract x.v (i * 64) 64))
       in
       asl_keyword fmt "bits";
-      parens fmt (fun _ ->
-          commasep PP.pp_print_string fmt (string_of_int num_bits :: List.rev limbs))
+      FMTUtils.parens fmt (fun _ ->
+          Utils.commasep PP.pp_print_string fmt (string_of_int num_bits :: List.rev limbs))
     end
 
   let unop (fmt : PP.formatter) (op : string) (x : RT.rt_expr) : unit =
@@ -465,7 +458,7 @@ module Runtime : RT.RuntimeLib = struct
     let level_printer fmt = RT.pp_expr fmt level in
     let fmt_printer fmt = PP.fprintf fmt "\"%s\"" (String.escaped (Buffer.contents c_fmt_buf)) in
     PP.fprintf fmt "%a(%a)" asl_keyword "info"
-      (commasep (fun fmt p -> p fmt))
+      (Utils.commasep (fun fmt p -> p fmt))
       (List.rev (!arg_printers @ [fmt_printer; level_printer]))
 
   let end_execution (fmt : PP.formatter) (x : RT.rt_expr) : unit =

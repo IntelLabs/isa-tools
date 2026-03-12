@@ -25,13 +25,6 @@ open Utils
  * Pretty printing helpers
  ****************************************************************)
 
-let commasep (pp : PP.formatter -> 'a -> unit) (fmt : PP.formatter) (xs : 'a list) : unit =
-  PP.pp_print_list
-    ~pp_sep:(fun fmt' _ -> PP.pp_print_string fmt' ", ")
-    pp
-    fmt
-    xs
-
 let cutsep (pp : PP.formatter -> 'a -> unit) (fmt : PP.formatter) (xs : 'a list) : unit =
   PP.pp_print_list
     pp

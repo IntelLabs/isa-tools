@@ -33,6 +33,12 @@ let to_file (filename : string) (pp : Format.formatter -> unit) : unit =
 let null_formatter : Format.formatter =
   Format.make_formatter (fun _ _ _ -> ()) (fun _ -> ())
 
+let commasep (pp : Format.formatter -> 'a -> unit) (fmt : Format.formatter)
+    (xs : 'a list) : unit =
+  Format.pp_print_list
+    ~pp_sep:(fun fmt' _ -> Format.fprintf fmt' ", ")
+    pp fmt xs
+
 (****************************************************************
  * List related
  ****************************************************************)
