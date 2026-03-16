@@ -482,7 +482,6 @@ def compile_and_link(use_cxx, c_files, extra_c, exe_file, working_directory, c_f
         extra_objs.append(obj_file)
 
     cc_cmd = cc + [
-        "-Wno-format",
         "-Wno-parentheses-equality",
         "-Wno-switch-bool",
         "-Werror",

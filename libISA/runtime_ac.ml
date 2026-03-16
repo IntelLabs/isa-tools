@@ -44,6 +44,7 @@ module Runtime : RT.RuntimeLib = struct
 
   (* file header needed by this runtime variant *)
   let file_header : string list = [
+      "#include <cinttypes>";
       "#include <cstdint>";
       "#include \"ac_int.h\"";
       "#ifndef ASL_AC";
@@ -377,10 +378,10 @@ module Runtime : RT.RuntimeLib = struct
       PP.fprintf fmt "        %s = -%s;@," x x;
       PP.fprintf fmt "        printf(\"-\");@,";
       PP.fprintf fmt "      }@,";
-      PP.fprintf fmt "      printf(\"i%d'd%%llu\", (uint64_t)(%s));@," n x;
+      PP.fprintf fmt "      printf(\"i%d'd%%\" PRIu64, (uint64_t)(%s));@," n x;
       PP.fprintf fmt "    }"
     end else begin
-      PP.fprintf fmt "    printf(\"%%lld\", (uint64_t)(%s));@," x
+      PP.fprintf fmt "    printf(\"%%\" PRId64, (int64_t)(%s));@," x
     end
 
   let print_sintN_decimal (fmt : PP.formatter) (n : int) ~(add_size : bool) (x : RT.rt_expr) : unit =
