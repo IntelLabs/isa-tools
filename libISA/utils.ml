@@ -39,6 +39,10 @@ let commasep (pp : Format.formatter -> 'a -> unit) (fmt : Format.formatter)
     ~pp_sep:(fun fmt' _ -> Format.fprintf fmt' ", ")
     pp fmt xs
 
+let cutsep (pp : Format.formatter -> 'a -> unit) (fmt : Format.formatter)
+    (xs : 'a list) : unit =
+  Format.pp_print_list pp fmt xs
+
 (****************************************************************
  * List related
  ****************************************************************)

@@ -25,12 +25,6 @@ open Utils
  * Pretty printing helpers
  ****************************************************************)
 
-let cutsep (pp : PP.formatter -> 'a -> unit) (fmt : PP.formatter) (xs : 'a list) : unit =
-  PP.pp_print_list
-    pp
-    fmt
-    xs
-
 let vbox (fmt : PP.formatter) (pp : unit -> 'a) : 'a=
   PP.pp_open_vbox fmt 0;
   let r = pp () in

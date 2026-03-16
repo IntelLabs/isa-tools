@@ -25,6 +25,8 @@ val null_formatter : Format.formatter
 
 val commasep : (Format.formatter -> 'a -> unit) -> Format.formatter -> 'a list -> unit
 
+val cutsep : (Format.formatter -> 'a -> unit) -> Format.formatter -> 'a list -> unit
+
 (****************************************************************
  * List related
  ****************************************************************)

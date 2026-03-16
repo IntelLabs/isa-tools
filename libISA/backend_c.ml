@@ -85,12 +85,6 @@ let use_const_ref (loc : Loc.t) (x : AST.ty) : bool =
         raise (Error.Unimplemented (loc, msg, pp))
     )
 
-let cutsep (pp : PP.formatter -> 'a -> unit) (fmt : PP.formatter) (xs : 'a list) : unit =
-  PP.pp_print_list
-    pp
-    fmt
-    xs
-
 (** List of all the reserved words in C *)
 let reserved_c = [
   "auto";
