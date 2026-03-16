@@ -69,7 +69,7 @@ let unionToBindingSet (f : Ident.t) (xs : IdentSet.t) (bs : IdentSet.t Bindings.
     bs
 
 let pp_identset (fmt : Format.formatter) (xs : IdentSet.t) : unit =
-    Format.pp_print_list ~pp_sep:(fun fmt _ -> Format.pp_print_string fmt ", ") Ident.pp fmt (IdentSet.elements xs)
+  Utils.commasep Ident.pp fmt (IdentSet.elements xs)
 
 (** convert identifier set to sorted list of identifiers
 

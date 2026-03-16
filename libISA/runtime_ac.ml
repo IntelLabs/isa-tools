@@ -87,11 +87,7 @@ module Runtime : RT.RuntimeLib = struct
     PP.fprintf fmt "ac::bit_fill<%a>((int [%d]){"
       ty_sint n
       num_limbs;
-    PP.pp_print_list
-      ~pp_sep:(fun fmt _ -> PP.pp_print_string fmt ", ")
-      constant_u32
-      fmt
-      limbs;
+    commasep constant_u32 fmt limbs;
     PP.fprintf fmt "}, false)"
 
   let intN_literal (n : int) (fmt : PP.formatter) (x : Z.t) : unit =
@@ -126,11 +122,7 @@ module Runtime : RT.RuntimeLib = struct
       PP.fprintf fmt "ac::bit_fill<%a>((int [%d]){"
         ty_bits x.n
         num_limbs;
-      PP.pp_print_list
-        ~pp_sep:(fun fmt _ -> PP.pp_print_string fmt ", ")
-        constant_u32
-        fmt
-        limbs;
+      commasep constant_u32 fmt limbs;
       PP.fprintf fmt "}, false)"
     end
 

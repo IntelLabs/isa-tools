@@ -85,11 +85,7 @@ module Runtime : RT.RuntimeLib = struct
       ty_sint n
       n
       num_limbs;
-    PP.pp_print_list
-      ~pp_sep:(fun fmt _ -> PP.pp_print_string fmt ", ")
-      constant_u32
-      fmt
-      limbs;
+    commasep constant_u32 fmt limbs;
     PP.fprintf fmt "})"
 
   let intN_literal (n : int) (fmt : PP.formatter) (x : Z.t) : unit =
@@ -151,11 +147,7 @@ module Runtime : RT.RuntimeLib = struct
         ty_bits x.n
         x.n
         num_limbs;
-      PP.pp_print_list
-        ~pp_sep:(fun fmt _ -> PP.pp_print_string fmt ", ")
-        constant_u32
-        fmt
-        limbs;
+      commasep constant_u32 fmt limbs;
       PP.fprintf fmt "})"
     end
 
