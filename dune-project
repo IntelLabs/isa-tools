@@ -4,7 +4,7 @@
 (version 2.0.0)
 
 ; Copyright Arm Limited (c) 2017-2019
-; Copyright (C) 2022-2025 Intel Corporation
+; Copyright (C) 2022-2026 Intel Corporation
 ; SPDX-License-Identifier: BSD-3-Clause
 
 (using menhir 3.0)

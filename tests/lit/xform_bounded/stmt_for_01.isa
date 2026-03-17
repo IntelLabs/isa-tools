@@ -1,6 +1,6 @@
 // RUN: %aslopt -O0 -Obounded %s | filecheck --check-prefix=XFORM %s
 // RUN: %aslrun -O0 -Obounded %s | filecheck %s
-// Copyright (C) 2024-2025 Intel Corporation
+// Copyright (C) 2024-2026 Intel Corporation
 
 function F(x : {0..15}) -> {0..32}
 begin

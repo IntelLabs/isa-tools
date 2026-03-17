@@ -1,5 +1,5 @@
 // RUN: %iii --batchmode --exec=":xform_lower" --exec=":xform_constprop" "--exec=:xform_monomorphize" --exec=":show Reduce_n_4*" --exec=":show Reduce_n_2*" --exec=":show Reduce_n_1*" %s | filecheck %s
-// Copyright (C) 2025-2025 Intel Corporation
+// Copyright (C) 2025-2026 Intel Corporation
 
 function Reduce(x : Bits(n * esize), esize : Integer, n : Integer) -> Bits(esize)
 begin

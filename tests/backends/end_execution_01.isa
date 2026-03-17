@@ -1,5 +1,5 @@
 // RUN: not %aslrun %s
-// Copyright (C) 2025-2025 Intel Corporation
+// Copyright (C) 2025-2026 Intel Corporation
 
 function FUT(x : Bits(4))
 begin

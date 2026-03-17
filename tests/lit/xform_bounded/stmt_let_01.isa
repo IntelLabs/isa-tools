@@ -1,6 +1,6 @@
 // RUN: %aslopt -O0 -Obounded %s | filecheck --check-prefix=XFORM %s
 // RUN: %aslrun -Obounded %s | filecheck %s
-// Copyright (C) 2025-2025 Intel Corporation
+// Copyright (C) 2025-2026 Intel Corporation
 
 function FUT(x : {0..10}) -> {1..11}
 begin

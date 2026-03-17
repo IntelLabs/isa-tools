@@ -14,7 +14,7 @@
  *    Is_Zero(e[lo +: wd]) ==> ((e >> lo) AND mask) == Zeros()
  *    Is_Ones(e[lo +: wd]) ==> ((NOT e >> lo) AND mask) == Zeros()
  *
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  * SPDX-License-Identifier: BSD-3-Clause
  ****************************************************************)
 

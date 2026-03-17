@@ -1,5 +1,5 @@
 // RUN: %aslrun %s --extra-c=%S/ffi_config_00.c | filecheck %s
-// Copyright (C) 2025-2025 Intel Corporation
+// Copyright (C) 2025-2026 Intel Corporation
 
 // UNSUPPORTED: interpreter
 

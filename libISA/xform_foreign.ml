@@ -19,7 +19,7 @@
  * x_Read.0 and x_Write.0 which are imported/exported from/to C
  * with x_Read and x_Write names.
  *
- * Copyright (C) 2025-2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  * SPDX-License-Identifier: BSD-3-Clause
  ****************************************************************)
 

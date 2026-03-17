@@ -1,5 +1,5 @@
 // RUN: %iii --batchmode --exec=:xform_desugar --exec=":show --format=raw FUT" %s | filecheck %s
-// Copyright (C) 2025-2025 Intel Corporation
+// Copyright (C) 2025-2026 Intel Corporation
 
 function FUT(a : Bits(1), b : Bits(2), c : Bits(3), d : Bits(4))
 begin

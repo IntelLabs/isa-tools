@@ -1,5 +1,5 @@
 // RUN: not %iii --batchmode %s | filecheck %s
-// Copyright (C) 2023-2025 Intel Corporation
+// Copyright (C) 2023-2026 Intel Corporation
 
 config CFG : Integer := 1;
 

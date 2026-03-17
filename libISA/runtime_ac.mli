@@ -2,7 +2,7 @@
  * Algorithmic C runtime library support
  * This uses the C++ "Algorithmic C" library "ac_int.h"
  *
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  * SPDX-License-Identifier: BSD-3-Clause
  ****************************************************************)
 

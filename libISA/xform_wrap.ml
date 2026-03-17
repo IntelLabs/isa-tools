@@ -12,7 +12,7 @@
  * state, a simulator can redefine the functions to provide access
  * to its own simulation state instead.
  *
- * Copyright (C) 2024-2025 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  * SPDX-License-Identifier: BSD-3-Clause
  ****************************************************************)
 

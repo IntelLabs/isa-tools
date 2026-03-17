@@ -1,5 +1,5 @@
 // RUN: %iii --batchmode --exec=":xform_lower" --exec=":xform_constprop" "--exec=:xform_monomorphize" --exec=":show Reduce_asize_8_esize_16_m_0" --exec=":show Reduce_asize_8_esize_16_m_1" --exec=":show Reduce_asize_8_esize_16_m_2" --exec=":show Reduce_asize_8_esize_16_m_3" %s | filecheck %s
-// Copyright (C) 2025-2025 Intel Corporation
+// Copyright (C) 2025-2026 Intel Corporation
 
 // Recursively perform a tree reduction over elements x[i<<m .. (i+1)<<m-1]
 //

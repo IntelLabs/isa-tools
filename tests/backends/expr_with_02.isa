@@ -1,5 +1,5 @@
 // RUN: %aslrun %s | filecheck %s
-// Copyright (C) 2025-2025 Intel Corporation
+// Copyright (C) 2025-2026 Intel Corporation
 
 function Test_8_4(x : Bits(8), i : Integer, y : Bits(4), j : Integer, z : Bit) -> Bits(8)
 begin

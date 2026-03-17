@@ -1,5 +1,5 @@
 // RUN: %iii --batchmode --runtime-checks --exec=":xform_monomorphize" --exec=":show --format=raw FUT*" %s | filecheck %s
-// Copyright (C) 2025-2025 Intel Corporation
+// Copyright (C) 2025-2026 Intel Corporation
 
 // This function has a potential assertion failure in it
 function Error(x : Integer, y : Integer) -> Integer

@@ -10,7 +10,7 @@
  * Optimizes
  * - Slice of slice (e.g., x[63:32][8 +: 4] ---> x[40 +: 4])
  *
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  * SPDX-License-Identifier: BSD-3-Clause
  ****************************************************************)
 

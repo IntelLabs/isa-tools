@@ -1,5 +1,5 @@
 // RUN: %iii --batchmode --configuration=%S/config.json --project=%S/iii.prj %s | filecheck %s
-// Copyright (C) 2024-2025 Intel Corporation
+// Copyright (C) 2024-2026 Intel Corporation
 
 function C(x : Bits(N)) -> Integer
 begin

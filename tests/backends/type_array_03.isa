@@ -1,5 +1,5 @@
 // RUN: %aslrun --runtime-checks %s | filecheck %s
-// Copyright (C) 2023-2025 Intel Corporation
+// Copyright (C) 2023-2026 Intel Corporation
 
 var R : array [4] of Bits(32);
 

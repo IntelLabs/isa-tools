@@ -1,5 +1,5 @@
 // RUN: %iii --batchmode --runtime-checks --exec=":show --format=raw FUT*" %s | filecheck %s
-// Copyright (C) 2025-2025 Intel Corporation
+// Copyright (C) 2025-2026 Intel Corporation
 
 function FUT1(x : Bits(32), i : {0..31}) -> Bits(1)
 begin

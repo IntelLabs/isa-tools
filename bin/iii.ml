@@ -2,7 +2,7 @@
  * ISA interactive frontend
  *
  * Copyright Arm Limited (c) 2017-2019
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  * SPDX-License-Identifier: BSD-3-Clause
  ****************************************************************)
 
@@ -434,7 +434,7 @@ let banner =
   [
     {| _____  _____           |};
     {||_   _|/ ____|  /\      Intel(R) ISA specification tool|};
-    {|  | | | (___   /  \     Copyright (C) 2022-2025 Intel Corporation|};
+    {|  | | | (___   /  \     Copyright (C) 2022-2026 Intel Corporation|};
     {|  | |  \___ \ / /\ \    Copyright Arm Limited (c) 2017-2019|};
     {| _| |_ ____) / ____ \   |};
     {||_____|_____/_/    \_\  |} ^ version;

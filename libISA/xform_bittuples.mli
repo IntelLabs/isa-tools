@@ -13,7 +13,7 @@
  * v2 = __a0[3 +: 4];
  * v3 = __a0[0 +: 3];
  *
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  * SPDX-License-Identifier: BSD-3-Clause
  ****************************************************************)
 

@@ -8,7 +8,7 @@
  * 3) mul_bits_int{N}(x, y) -> mul_bits(x, mk_cvt_int_bits{N}(y, N))
  * 4) Std::Bits::Append(x, y) -> Expr_Concat(x, y)
  *
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  * SPDX-License-Identifier: BSD-3-Clause
  ****************************************************************)
 

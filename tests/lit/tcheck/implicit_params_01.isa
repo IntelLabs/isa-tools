@@ -1,5 +1,5 @@
 // RUN: %iii --batchmode %s
-// Copyright (C) 2023-2025 Intel Corporation
+// Copyright (C) 2023-2026 Intel Corporation
 
 // Correct type parameters: N can be synthesized from the type of x
 function F1(implicit N : {0..}, x : Bits(N)) -> Boolean;

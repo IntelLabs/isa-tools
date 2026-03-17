@@ -1,5 +1,5 @@
 // RUN: not %aslrun --runtime-checks %s | filecheck %s
-// Copyright (C) 2023-2025 Intel Corporation
+// Copyright (C) 2023-2026 Intel Corporation
 
 function FUT_8_4(x : Bits(8), i : Integer, y : Bits(4)) -> Bits(8)
 begin

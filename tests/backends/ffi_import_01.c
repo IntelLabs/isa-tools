@@ -2,7 +2,7 @@
 // These functions are "null" functions (or "identity" functions):
 // they all return their argument.
 //
-// Copyright (C) 2025-2025 Intel Corporation
+// Copyright (C) 2025-2026 Intel Corporation
 
 #include "isa_ffi.h"
 #include <string.h>

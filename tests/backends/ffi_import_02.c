@@ -1,5 +1,5 @@
 // FFI testing support functions to be imported into ISA test programs
-// Copyright (C) 2025-2025 Intel Corporation
+// Copyright (C) 2025-2026 Intel Corporation
 
 #include <assert.h>
 #include <stdint.h>

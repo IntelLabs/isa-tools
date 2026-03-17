@@ -1,5 +1,5 @@
 // RUN: %iii --batchmode --exec=":xform_monomorphize" --exec=":show Std::Bits::Zero_Extend" --exec=":show FUT" %s | filecheck %s
-// Copyright (C) 2025-2025 Intel Corporation
+// Copyright (C) 2025-2026 Intel Corporation
 
 optimize function Std::Bits::Zero_Extend with {source_size => 8, target_size => 16};
 
