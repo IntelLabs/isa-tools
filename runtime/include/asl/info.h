@@ -8,13 +8,24 @@
 #ifndef ASL_INFO_H
 #define ASL_INFO_H
 
+#include <stdint.h>
 #include <stdio.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-void ASL_info(int level, const char *fmt, ...);
+/**
+ * ASL_info - Emit a formatted informational message.
+ *
+ * @n_states: Number of state pointers passed as the first variadic arguments,
+ *            before the format string arguments (0 by default).
+ * @level:    Message importance level. Higher values indicate lower priority.
+ * @fmt:      printf-style format string.
+ * @...:      Exactly @n_states state pointers, each explicitly cast to void *,
+ *            followed by the arguments required by the format string.
+ */
+void ASL_info(int n_states, int64_t level, const char *fmt, ...);
 
 #if defined(ASL_INT128) || defined(ASL_C23)
 

@@ -719,7 +719,7 @@ module Runtime : RT.RuntimeLib = struct
   let print_str (fmt : PP.formatter) (x : RT.rt_expr) : unit =
     PP.fprintf fmt "fputs(%a, stdout)" RT.pp_expr x
 
-  let info (fmt : PP.formatter) (level : RT.rt_expr) (asl_fmt : string) (tagged_args : (int * RT.rt_expr) list) : unit = ()
+  let info (fmt : PP.formatter) (n_states : int) (level : RT.rt_expr) (asl_fmt : string) (pp_states : (PP.formatter -> unit) list) (tagged_args : (int * RT.rt_expr) list) : unit = ()
 
   let end_execution (fmt : PP.formatter) (x : RT.rt_expr) : unit =
     PP.fprintf fmt "ASL_end_execution(%a)" RT.pp_expr x

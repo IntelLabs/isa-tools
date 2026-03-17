@@ -139,7 +139,7 @@ module type RuntimeLib = sig
   val print_char : PP.formatter -> rt_expr -> unit
   val print_str : PP.formatter -> rt_expr -> unit
 
-  val info : PP.formatter -> rt_expr -> string -> (int * rt_expr) list -> unit
+  val info : PP.formatter -> int -> rt_expr -> string -> (PP.formatter -> unit) list -> (int * rt_expr) list -> unit
 
   val end_execution : PP.formatter -> rt_expr -> unit
 

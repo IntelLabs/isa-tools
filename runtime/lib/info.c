@@ -18,14 +18,23 @@ extern "C" {
 #endif
 
 void
-ASL_info(int level, const char *fmt, ...)
+ASL_info(int n_states, int64_t level, const char *fmt, ...)
 {
         (void)level;  // not used in this default implementation
 
         va_list args;
         va_start(args, fmt);
+
+        /* Skip first n_states arguments. These are passed in case the info
+         * message needs to access them, but this default implementation
+         * doesn't. */
+        for (int i = 0; i < n_states; ++i) {
+                (void)va_arg(args, void *);
+        }
+
         vprintf(fmt, args);
         printf("\n");
+
         va_end(args);
 }
 

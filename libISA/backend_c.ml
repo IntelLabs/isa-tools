@@ -444,11 +444,13 @@ and mk_info (loc : Loc.t) (fmt : PP.formatter) (tes : AST.expr list)
   let module Runtime = (val !runtime : RuntimeLib) in
   match args with
   | level :: (Expr_Lit (VString fmt_str)) :: vars ->
+      let pp_states = pp_client_args fmt @ pp_extra_args fmt in
+      let n_states = List.length pp_states in
       let type_tags = const_int_exprs loc tes in
       let tagged_args =
         List.combine type_tags (List.map (mk_expr loc) vars)
       in
-      Runtime.info fmt (mk_expr loc level) fmt_str tagged_args
+      Runtime.info fmt n_states (mk_expr loc level) fmt_str pp_states tagged_args
   | _ ->
       raise
         (InternalError

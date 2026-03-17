@@ -677,14 +677,15 @@ module Runtime : RT.RuntimeLib = struct
       done
     end
 
-  let info (fmt : PP.formatter) (level : RT.rt_expr) (asl_fmt : string)
+  let info (fmt : PP.formatter) (n_states : int) (level : RT.rt_expr)
+      (asl_fmt : string) (pp_states : (PP.formatter -> unit) list)
       (tagged_args : (int * RT.rt_expr) list) : unit =
     (* Tags for args: >=0 = Bits(n), -1 = Integer, -2 = Boolean, -3 = String *)
     let c_fmt_buf = Buffer.create (String.length asl_fmt) in
-    let arg_printers = ref [] in
-    let add fmt_str printer =
+    let pp_args = ref [] in
+    let add fmt_str pp =
       Buffer.add_string c_fmt_buf fmt_str;
-      arg_printers := printer :: !arg_printers
+      pp_args := pp :: !pp_args
     in
     let remaining = ref tagged_args in
     let add_literal s =
@@ -715,10 +716,22 @@ module Runtime : RT.RuntimeLib = struct
             info_format_bits add tag arg
     ) (parse_fmt_string asl_fmt);
     assert (!remaining = []);
-    let level_printer fmt = RT.pp_expr fmt level in
-    let fmt_printer fmt = PP.fprintf fmt "\"%s\"" (String.escaped (Buffer.contents c_fmt_buf)) in
-    let printers = level_printer :: fmt_printer :: List.rev !arg_printers in
-    PP.fprintf fmt "%a(%a)" asl_keyword "info" (commasep (fun fmt p -> p fmt)) printers
+    let pp_n_states fmt = PP.pp_print_int fmt n_states in
+    let pp_level fmt = RT.pp_expr fmt level in
+    let pp_fmt fmt =
+      PP.fprintf fmt "\"%s\"" (String.escaped (Buffer.contents c_fmt_buf))
+    in
+    let pp_states_cast =
+      (* Cast pointers to (void *\) to avoid undefined behavior when reading
+         them using va_args(args, void *\) *)
+      List.map (fun p fmt -> PP.fprintf fmt "(void *)%t" p) pp_states
+    in
+    let printers =
+      [ pp_n_states; pp_level; pp_fmt ] @ pp_states_cast @ (List.rev !pp_args)
+    in
+    PP.fprintf fmt "%a(%a)" asl_keyword "info"
+      (Utils.commasep (fun fmt p -> p fmt))
+      printers
 
   let end_execution (fmt : PP.formatter) (x : RT.rt_expr) : unit =
     PP.fprintf fmt "ASL_end_execution(%a)" RT.pp_expr x
