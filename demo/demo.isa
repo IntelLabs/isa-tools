@@ -157,7 +157,7 @@ begin
     endcase;
 end
 
-// If this function is called, it indicates that there is an gap in the specification
+// If this function is called, it indicates that there is a gap in the specification
 // caused by a missing feature.
 //
 // In a complete specification, there should be no calls to this function.

@@ -13,21 +13,21 @@ open Yojson
  * JSON file reading support
  ****************************************************************)
 
-(* Attempt to get a Json string *)
+(* Attempt to get a JSON string *)
 let get_string (tree : Safe.t) : string option =
   ( match tree with
   | `String s -> Some s
   | _ -> None
   )
 
-(* Attempt to get a Json list *)
+(* Attempt to get a JSON list *)
 let get_list (tree : Safe.t) : Safe.t list option =
   ( match tree with
   | `List s -> Some s
   | _ -> None
   )
 
-(* Attempt to get a Json association list entry by key *)
+(* Attempt to get a JSON association list entry by key *)
 let get_entry (key : string) (tree : Safe.t) : Safe.t option =
   ( match tree with
   | `Assoc kvs -> List.assoc_opt key kvs
@@ -53,7 +53,7 @@ let get_record (get_entry : Safe.t -> 'a option) (tree : Safe.t) : (string * 'a)
   | _ -> None
   )
 
-(* Read list of strings from Json files by key *)
+(* Read list of strings from JSON files by key *)
 let get_list_by_key (key : string) (files : Safe.t list) : string list =
   List.concat_map
     (fun json ->

@@ -67,7 +67,7 @@ The following commands are sufficient to install requirements and to build iii o
 
     apt update
     apt install -y libgmp-dev opam pkg-config
-    pip3 install -r requirement.txt
+    pip3 install -r requirements.txt
     opam init --no-setup --disable-sandboxing --compiler=4.14.2
     opam install . --deps-only --with-test --with-doc --locked --yes
     eval $(opam env)
@@ -86,7 +86,7 @@ installed using the following commands.
     chmod +x llvm.sh
     ./llvm.sh 16
 
-### On MacOS using Homebrew
+### On macOS using Homebrew
 
 To run regression tests and/or use the C23 backend on Macs, you need to
 install clang-16.  Using a more recent version of clang such as clang-19 will
@@ -99,7 +99,7 @@ not work because it limits the use of bit-precise integers to 128 bits.
     opam update
     opam init
     eval $(opam env --switch=default)
-    pip3 install -r requirement.txt
+    pip3 install -r requirements.txt
     opam init --no-setup --disable-sandboxing --compiler=4.14.2
     opam install . --deps-only --with-test --with-doc --locked --yes
     eval $(opam env)
@@ -109,10 +109,10 @@ not work because it limits the use of bit-precise integers to 128 bits.
 
 ## License and contribution
 
-The software is provided under the [BSD-3-Clause licence](https://spdx.org/licenses/BSD-3-Clause.html).
-Contributions to this project are accepted under the same licence.
+The software is provided under the [BSD-3-Clause license](https://spdx.org/licenses/BSD-3-Clause.html).
+Contributions to this project are accepted under the same license.
 
-This software includes code from one other open source projects
+This software includes code from one open source project.
 
  * The [CIL project](https://people.eecs.berkeley.edu/~necula/cil/)
    defines a useful
@@ -121,7 +121,7 @@ This software includes code from one other open source projects
    The file `visitor.ml` is a modified copy of this class that generalizes
    the type to work with an arbitrary AST.
 
-   CIL is distributed under a [BSD-3-Clause licence](https://github.com/cil-project/cil/blob/develop/LICENSE).
+   CIL is distributed under a [BSD-3-Clause license](https://github.com/cil-project/cil/blob/develop/LICENSE).
 
 
 ## Building and development
@@ -161,7 +161,7 @@ This interpreter consists of a single directory organized as follows
           * `libISA/value.ml`        - interpreter support code
           * `libISA/eval.ml`         - evaluator for ISA language
       * ISA standard library
-          * `libISA/stdlib.isa`      - builtin types and functions
+          * `stdlib.isa`             - builtin types and functions
       * Code generation
           * `libISA/xform_*.ml`      - transformations on the AST
           * `libISA/backend_*.ml`    - code generation backends
@@ -227,7 +227,7 @@ The demo directory contains an ISA specification of this ISA and consists of the
 - test.S: A simple test program: increments two registers and halts.
 - test.prj: A file of iii commands for running a test interactively.
 - simulator.c: A C simulator harness for creating compiled simulators.
-- exports.json: A list of functions required by the C simulator harness.
+- config.json: A configuration file used by the C simulator harness.
 
 The ISA specification defines the registers, memory, instruction fetch and instruction execute.  It also implements a simulator API that enable iii to use the specification as a simulator.
 
@@ -281,9 +281,9 @@ For larger architecture specifications, it can be more effective to compile the 
 
     ../_build/install/default/bin/iic --basename=sim --backend=fallback > sim.prj
 
-We then load the demo specification into iii and run the project file to generate C code. The configuration file `exports.json` is used to specify which ISA functions are called by hand-written C code.
+We then load the demo specification into iii and run the project file to generate C code. The configuration file `config.json` is used to specify which ISA functions are called by hand-written C code.
 
-    ISA_PATH=.:.. ../_build/install/default/bin/iii --project=sim.prj --configuration=exports.json demo.isa
+    ISA_PATH=.:.. ../_build/install/default/bin/iii --project=sim.prj --configuration=config.json demo.isa
 
 The generated code is in C files that start with the basename `sim` such as `sim_funs.c`.
 

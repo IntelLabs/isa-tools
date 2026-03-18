@@ -1,7 +1,7 @@
 #! /usr/bin/env python3
 
 """
-Generate script to generate C code from Intel(R) ISA Specification Language.
+Generate a script that generates C code from the Intel(R) ISA Specification Language.
 
 Typical usage:
 
@@ -80,7 +80,7 @@ base_script = """
 //     foreign export function "Reset" = Reset with {{}};
 //     foreign export function "Step" = Step with {{}};
 //
-// 2) Using the "--configuration=foo.json" flag and an example json file that
+// 2) Using the "--configuration=foo.json" flag and an example JSON file that
 // exports the same functions as follows.
 //
 //     {{

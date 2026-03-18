@@ -418,8 +418,8 @@ let options =
                                                                            'typed' - with type parameters; \
                                                                            'raw' - with type parameters on function calls and desugared operators");
       ("--max-errors",        Arg.Set_int Tcheck.max_errors,       "       Maximum number of typechecker errors");
-      ("--check-exception-markers",    Arg.Set   Global_checks.check_defn_markers, "       Check that function definitions have correct exceptions markers");
-      ("--no-check-exception-markers", Arg.Clear Global_checks.check_defn_markers, "       Do not check that function definitions have correct exceptions markers");
+      ("--check-exception-markers",    Arg.Set   Global_checks.check_defn_markers, "       Check that function definitions have correct exception markers");
+      ("--no-check-exception-markers", Arg.Clear Global_checks.check_defn_markers, "       Do not check that function definitions have correct exception markers");
       ("--check-call-markers",         Arg.Set   Global_checks.check_call_markers, "       Check that function calls have correct exception markers");
       ("--no-check-call-markers",      Arg.Clear Global_checks.check_call_markers, "       Do not check that function calls have correct exception markers");
       ("--check-constraints",          Arg.Set   Tcheck.enable_constraint_checks,  "       Check type constraints");
