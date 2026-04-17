@@ -22,11 +22,6 @@ languages and also an opportunity to fix some of the issues that we have been
 experiencing.
 
 We had been attempting to solve these problems through a number of small extensions
-(see
-[[a]]({{site.baseurl}}/{% post_url 2025-05-08-extension-named-parameters %}),
-[[b]]({{site.baseurl}}/{% post_url 2025-05-09-extension-exception-markers %}),
-[[c]]({{site.baseurl}}/{% post_url 2025-05-09-extension-parameterized-records %}),
-[[d]]({{site.baseurl}}/{% post_url 2025-05-09-extension-topslice %}))
 but we were limited in the changes we could make by our increasingly unsuccessful
 attempts to preserve consistency with the Arm's Architecture Specification Language
 which was evolving to better meet the needs of the Arm architectures and customers.
@@ -42,6 +37,10 @@ Most of the new language design is complete and has been tested at scale (by con
 a large specification to the new language) but we are still fine-tuning a few details
 as we build experience with the new language.
 
-The [ASLi tool](https://github.com/IntelLabs/asl-interpreter) will continue to exist but
+The [ASLi tool](https://github.com/IntelLabs/isa-tools) will continue to exist but
 it will change to support our new ISA specification language and it will
-be renamed accordingly.
+be renamed to [ISA tools](https://github.com/IntelLabs/isa-tools).
+
+----------
+
+*[This post has been updated to point at the new repository -- April 2026]*
