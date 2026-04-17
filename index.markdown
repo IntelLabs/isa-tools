@@ -2,8 +2,8 @@
 layout: home
 ---
 
-Architecture Specification Language (ASL) is an executable language for writing
+The [Intel® ISA Specification Language](language) is an executable language for writing
 clear, precise specifications of Instruction Set Architectures (ISAs).
 
-The ASL interpreter (ASLi) is an implementation of ASL that can execute ASL
+ISA tools is an implementation of the language that can execute
 specifications either in an interpreter or by compiling via C code.

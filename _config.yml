@@ -18,10 +18,11 @@
 # You can create any custom variable you would like, and they will be accessible
 # in the templates via {{ site.myvariable }}.
 
-title: "ASL interpreter and compiler"
+title: "ISA tools"
 description: >- # this means to ignore newlines until "baseurl:"
-  A tool for writing clear, precise ISA specifications using ASL
-baseurl: "/asl-interpreter" # the subpath of your site, e.g. /blog
+  A tool for writing clear, precise ISA specifications using
+  the Intel® ISA Specification Language
+baseurl: "/isa-tools" # the subpath of your site, e.g. /blog
 url: "https://intellabs.github.io" # the base hostname & protocol for your site, e.g. http://example.com
 
 # Build settings
@@ -34,8 +35,7 @@ permalink: /:categories/:year/:month/:day/:title:output_ext
 author: Intel Labs
 
 header_pages:
-  - asl_reading.markdown
-  - asl_writing.markdown
+  - language.markdown
   - index.markdown
   - about.markdown
 
