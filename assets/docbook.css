@@ -1,0 +1,166 @@
+/* Copyright (C) 2025-2026 Intel Corporation */
+
+@namespace docbook url("http://docbook.org/ns/docbook");
+
+index, indexterm {
+    display: none;
+}
+
+subscript, superscript { font-size: .83em }
+subscript              { vertical-align: sub }
+superscript            { vertical-align: super }
+italic, emphasis       { font-style: italic }
+bold                   { font-weight: bolder }
+underline              { text-decoration: underline }
+
+quote::before { content: open-quote; }
+quote::after { content: close-quote; }
+
+function, varname, parameter {
+    font-family: "Courier New", Courier, "Lucida Sans Typewriter", "Lucida Typewriter", monospace;
+}
+
+summary > h1, h2, h3, h4, h5, h6 {
+    display: inline-block;
+}
+
+
+/* A docbook variable list is like HTML dl/dt/dd */
+variablelist {
+    display: grid;
+    grid-template-columns: 9em 1fr;
+    column-gap: 0.5em;
+}
+variablelist variablelistentry {
+    display: contents;
+}
+variablelist term {
+    display: inline;
+    grid-column: 1;
+}
+variablelist listitem {
+    display: block;
+    grid-column: 2;
+}
+
+listitem { display: list-item }
+
+itemizedlist {
+    display: block;
+    unicode-bidi: embed;
+    margin: 1.12em 0;
+    margin-left: 40px;
+    margin-top: 0;
+    margin-bottom: 0;
+}
+
+orderedlist {
+    display: block;
+    unicode-bidi: embed;
+    list-style-type: decimal;
+    margin: 1.12em 0;
+    margin-left: 40px;
+    margin-top: 0;
+    margin-bottom: 0;
+}
+
+/* Format footnotes as a floating box */
+footnote {
+  width: 33%;
+  padding-left: 15px;
+  margin-left: 15px;
+  float: right;
+  /* font-style: italic; */
+  background-color: var(--color-footnote-background);
+}
+
+/* Format notes as a box with narrowed margins */
+note {
+  display: block;
+  margin-left: 80px;
+  margin-right: 80px;
+  background-color: var(--color-footnote-background);
+}
+
+note::before {
+  content: "NOTE";
+  display: block;
+  font-weight: bold;
+  text-align: center;
+  color: var(--color-intel-blue);
+}
+
+literal {
+    display: inline;
+    font-family: "Courier New", Courier, "Lucida Sans Typewriter", "Lucida Typewriter", monospace;
+    /* background-color: var(--color-code-background); */
+}
+
+algorithm, programlisting {
+    display: block;
+    font-family: "Courier New", Courier, "Lucida Sans Typewriter", "Lucida Typewriter", monospace;
+    white-space: pre;
+    padding-left: 10px;
+    background-color: var(--color-code-background);
+    margin: 1em 0;
+}
+
+pre, code {
+    font-family: "Courier New", Courier, "Lucida Sans Typewriter", "Lucida Typewriter", monospace;
+    font-size: 100%;
+    padding-left: 10px;
+    background-color: var(--color-code-background);
+
+    .line_number {
+        font-size: 80%;
+        color: var(--color-line-number);
+    }
+    .isa_keyword {
+        color: var(--color-keyword);
+    }
+}
+
+// A DocBook informaltable is a table without a title
+docbook|informaltable {
+    display: block table;
+}
+
+para {
+    display: block;
+    unicode-bidi: embed;
+    margin-block-start: 1em;
+    margin-block-end: 1em;
+    margin-inline-start: 0px;
+    margin-inline-end: 0px;
+    margin: 1.12em 0;
+    margin-top: 0.4em;
+    margin-bottom: 0.4em;
+    /* margin-right: 300px; */
+}
+
+/* footnotes at bottom of tables */
+para[format="TableFootnoteBLUE"], para[format="xTableNote2"] {
+    color: var(--color-intel-blue);
+    font-weight: bold;
+}
+
+/* table captions (todo: quite a poor approximation) */
+para[format="06_Table"] {
+    color: var(--color-intel-blue);
+    font-weight: bold;
+    margin-left: 10em;
+}
+
+// This is a hack: the right fix is to omit the '<para>' part
+algorithm > para {
+    display: inline;
+    unicode-bidi: embed;
+    margin-block-start: 0em;
+    margin-block-end: 0em;
+    margin-inline-start: 0px;
+    margin-inline-end: 0px;
+    margin: 0 0;
+    margin-top: 0;
+    margin-bottom: 0;
+}
+

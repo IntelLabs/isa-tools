@@ -1,0 +1,4107 @@
+<section xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink" xml:id="the-intel-isa-specification-language">
+  <title>The Intel® ISA Specification Language</title>
+
+  <para>
+
+    The Intel<superscript>®</superscript> ISA Specification Language
+    is designed for creating precise, readable, executable specifications
+    of Instruction Set Architectures.
+
+  </para>
+
+  <section xml:id="lexical-syntax">
+    <title>Lexical syntax</title>
+
+    <section xml:id="comments">
+      <title>Comments</title>
+
+      <para>
+        Two forms of comment are supported.
+      </para>
+
+        <itemizedlist>
+          <listitem>
+            <para>
+              Single line comments start with the characters <literal>//</literal> and continue until
+              the end of the line.
+            </para>
+          </listitem>
+
+          <listitem>
+            <para>
+              Fenced code blocks start with a line that starts with three apostrophe characters (<literal>'''</literal>)
+              in the first column
+              and extend until the next line that starts with three apostrophe characters (<literal>'''</literal>)
+              in the first column.
+            </para>
+
+            <para>
+              Fenced code blocks are not normally displayed when generating documentation.
+              They are used to add additional metadata to files such as documenting the category
+              of a definition or inserting documentation markup.
+            </para>
+          </listitem>
+        </itemizedlist>
+
+    </section>
+
+    <section xml:id="numeric-literals">
+      <title>Numeric literals</title>
+
+      <para>
+
+        Integer literals can be in decimal and can use underscores
+        between digits to improve clarity.
+
+        e.g., 10, 1_000_000 To write a integer literal in hex or binary, use
+        the Signed and Unsigned functions.
+
+        e.g., <literal>Unsigned(0xFFFF)</literal> or <literal>Signed(0b0111)</literal>.
+
+      </para>
+
+      <para>
+
+        Bitvector literals can be in hex or binary and can use
+        underscores between digits to improve clarity. e.g.,
+        <literal>0b0000_1111</literal>, <literal>0xFFFF_0000</literal>.
+
+        The length of the bitvector is either the number of digits excluding any underscores (for binary)
+        or 4 times the number of digits excluding any underscores (for hex).
+
+        There is no syntax for writing bitvector literals in decimal. (If you
+        really want to do it, the best option is to use a bitslice as in
+        <literal>42[7:0]</literal>.)
+      </para>
+
+      <para status="design-note">
+        <emphasis>
+          Adding a function such as <literal>Bits(42, size=&gt;8)</literal> is
+          not ideal because you have to use a named argument to distinguish the
+          size from the value.
+        </emphasis>
+      </para>
+
+      <para status="unimplemented">
+
+        [Implementation status: hex numbers are currently
+        treated as Integer. We will need to do some experiments to check
+        that treating hex numbers as bitvectors reduces clutter instead
+        of increasing it.]
+
+      </para>
+
+      <para>
+        Bitmask literals consist of a prefix <literal>0b</literal>
+        followed by a sequence of the following characters:
+        <literal>0</literal>,
+        <literal>1</literal>,
+        <literal>x</literal>, and
+        <literal>_</literal>.
+
+        The <literal>x</literal> digit represents an unspecified bit.
+
+        For example <literal>0b01xx</literal> is a 4-bit bitmask where
+        bit 3 is 0, bit 2 is 1 and bits 1 and 0 are unspecified.
+
+        You can use underscores between digits to improve clarity. e.g.,
+        <literal>0b0000_xxxx</literal>.
+
+        The length of the bitvector is the number of digits (excluding any underscores).
+      </para>
+
+    </section>
+
+    <section xml:id="identifiers-paths-and-keywords">
+      <title>Identifiers, paths and keywords</title>
+
+      <para>
+
+        Identifiers are any sequence of letters, digits and underscores
+        starting with a letter or underscore.
+
+        For example, <literal>Count_Set_Bits</literal>, <literal>Unsigned</literal>, or
+        <literal>length_of_block</literal>.
+
+      </para>
+
+      <para>
+
+        ISA supports multiple named namespaces that act similarly to a
+        simple module system.
+
+        Paths are sequences of namespace identifiers separated by
+        <literal>::</literal>.
+
+        For example, <literal>Std::Bits::Align</literal> or <literal>FP::Add</literal>.
+
+      </para>
+
+      <para>
+
+        Although not enforced by the compiler, it is recommended that all
+        identifiers with global scope start with an uppercase letter and that
+        all identifiers with local scope start with a lowercase letter.
+
+      </para>
+
+      <para status="unimplemented">
+
+        <emphasis>
+
+          [Implementation status: At the moment, namespace support does
+          little more than let you write <literal>::</literal> in the middle of an
+          identifier.
+
+          You don’t currently need to declare a namespace and there is no check
+          that you are using namespaces consistently.
+
+          As the module system is developed, checks will be added.
+
+          For example, when declaring an enumeration <literal>E</literal>, the
+          enumeration names will be required to be in the <literal>E::</literal>
+          namespace.]
+
+        </emphasis>
+
+      </para>
+
+      <para>
+        Keywords or reserved words are any of the following.
+      </para>
+
+      <programlisting>
+and         array       as          assert      begin
+bitfield    case        catch       do          downto
+else        elsif       end         endcase     endfor
+endif       endtry      endwhile    enumeration exception
+export      for         foreign     function    if
+implicit    import      let         not         of
+optimize    or          others      record      repeat
+return      then        throw       to          try
+type        until       use         var         when
+where       while       with        xor
+UNSPECIFIED
+      </programlisting>
+
+      <para>
+        The following are reserved for possible future use as keywords
+      </para>
+
+      <programlisting>
+endmodule   ensures     file        files       impure
+interface   module      ordered     pass        pure
+requires    unordered
+      </programlisting>
+
+      <para status="design">
+
+        Note that builtin types and values such as
+        <literal>Bits</literal>,
+        <literal>Integer</literal>,
+        <literal>Bit</literal>,
+        <literal>Boolean</literal>,
+        <literal>True</literal>,
+        <literal>False</literal>
+        are not keywords because that would interfere with being able to use them in paths.
+
+      </para>
+
+    </section>
+
+    <section xml:id="lexical-operators-and-delimiters">
+      <title>Operators and delimiters</title>
+
+      <table>
+        <caption>Operators</caption>
+
+        <thead>
+          <tr>
+            <th>
+              Symbol
+            </th>
+            <th>
+              Meaning
+            </th>
+          </tr>
+        </thead>
+
+        <tbody>
+
+          <tr>
+            <td>
+              <literal>:=</literal>
+            </td>
+            <td>
+              Assignment
+            </td>
+          </tr>
+
+          <tr>
+            <td>
+              <literal>==</literal>
+            </td>
+            <td>
+              Test if equal
+            </td>
+          </tr>
+
+          <tr>
+            <td>
+              <literal>!=</literal>
+            </td>
+            <td>
+              Test if not equal
+            </td>
+          </tr>
+
+          <tr>
+            <td>
+              <literal>&lt;</literal>
+            </td>
+            <td>
+              Test if less than
+            </td>
+          </tr>
+
+          <tr>
+            <td>
+              <literal>&lt;=</literal>
+            </td>
+            <td>
+              Test if less than or equal
+            </td>
+          </tr>
+
+          <tr>
+            <td>
+              <literal>&gt;</literal>
+            </td>
+            <td>
+              Test if greater than
+            </td>
+          </tr>
+
+          <tr>
+            <td>
+              <literal>&gt;=</literal>
+            </td>
+            <td>
+              Test if greater than or equal
+            </td>
+          </tr>
+
+          <tr>
+            <td>
+              <literal>&gt;&gt;</literal>
+            </td>
+            <td>
+              Shift right
+            </td>
+          </tr>
+
+          <tr>
+            <td>
+              <literal>&lt;&lt;</literal>
+            </td>
+            <td>
+              Shift left
+            </td>
+          </tr>
+
+          <tr>
+            <td>
+              <literal>+</literal>
+            </td>
+            <td>
+              Add
+            </td>
+          </tr>
+
+          <tr>
+            <td>
+              <literal>-</literal>
+            </td>
+            <td>
+              Subtract
+            </td>
+          </tr>
+
+          <tr>
+            <td>
+              <literal>*</literal>
+            </td>
+            <td>
+              Multiply
+            </td>
+          </tr>
+
+          <tr>
+            <td>
+              <literal>**</literal>
+            </td>
+            <td>
+              Raise to the power
+            </td>
+          </tr>
+
+          <tr>
+            <td>
+              <literal>/</literal>
+            </td>
+            <td>
+              Divide (both inputs must be &gt;= 0)
+            </td>
+          </tr>
+
+          <tr>
+            <td>
+              <literal>%</literal>
+            </td>
+            <td>
+              Remainder (both inputs must be &gt;= 0)
+            </td>
+          </tr>
+
+        </tbody>
+      </table>
+
+      <table>
+        <caption>Delimiters</caption>
+
+        <thead>
+          <tr>
+            <th>
+              Symbol
+            </th>
+            <th>
+              Usage
+            </th>
+          </tr>
+        </thead>
+
+        <tbody>
+
+          <tr>
+            <td>
+              <literal>;</literal>
+            </td>
+            <td>
+              Statement separator
+            </td>
+          </tr>
+
+          <tr>
+            <td>
+              <literal>,</literal>
+            </td>
+            <td>
+              Grouping (between function arguments, tuple elemets, …)
+            </td>
+          </tr>
+
+          <tr>
+            <td>
+              <literal>(</literal> and <literal>)</literal>
+            </td>
+            <td>
+              Grouping (around function arguments, tuples, subexpressions, …)
+            </td>
+          </tr>
+
+          <tr>
+            <td>
+              <literal>{</literal> and <literal>}</literal>
+            </td>
+            <td>
+              Sets
+            </td>
+          </tr>
+
+          <tr>
+            <td>
+              <literal>[</literal> and <literal>]</literal>
+            </td>
+            <td>
+              Slicing/indexing of bitvectors and arrays and function definitions
+            </td>
+          </tr>
+
+          <tr>
+            <td>
+              <literal>*:</literal>
+            </td>
+            <td>
+              Element access (bitslicing)
+            </td>
+          </tr>
+
+          <tr>
+            <td>
+              <literal>+:</literal>
+            </td>
+            <td>
+              Bitslicing
+            </td>
+          </tr>
+
+          <tr>
+            <td>
+              <literal>-:</literal>
+            </td>
+            <td>
+              Bitslicing
+            </td>
+          </tr>
+
+          <tr>
+            <td>
+              <literal>:</literal>
+            </td>
+            <td>
+              Type annotation
+            </td>
+          </tr>
+
+          <tr>
+            <td>
+              <literal>-&gt;</literal>
+            </td>
+            <td>
+              Function return type
+            </td>
+          </tr>
+
+          <tr>
+            <td>
+              <literal>?</literal>
+            </td>
+            <td>
+              Exception marker (function may throw an exception)
+            </td>
+          </tr>
+
+          <tr>
+            <td>
+              <literal>!</literal>
+            </td>
+            <td>
+              Exception marker (function always throws an exception)
+            </td>
+          </tr>
+
+          <tr>
+            <td>
+              <literal>=</literal>
+            </td>
+            <td>
+              Definitions (type synonyms, records, enumerations, exceptions, foreign functions)
+            </td>
+          </tr>
+
+          <tr>
+            <td>
+              <literal>=&gt;</literal>
+            </td>
+            <td>
+              Association of key/index/argument with value/behavior
+            </td>
+          </tr>
+
+        </tbody>
+      </table>
+
+    </section>
+
+    <section xml:id="ascii-charset">
+      <title>ASCII character encoding</title>
+
+      <para>
+        Files should use plain-ASCII 8-bit encodings.
+
+        We recommend that tab characters are not used because different editors display them as
+        different widths.
+
+        Note that when displaying specifications as documentation, we may use <quote>ligatures</quote> such as
+        displaying the two characters <literal>&lt;=</literal> as <literal>&#x2264;</literal>
+        or displaying <literal>-&gt;</literal> as <literal>&#x27f6;</literal>.
+      </para>
+
+    </section>
+
+  </section>
+
+  <section xml:id="types">
+    <title>Types</title>
+
+    <para>
+
+      Types determine the set of legal values of a variable, function argument, function result, etc.
+
+    </para>
+
+    <section xml:id="associated-functions" status="unimplemented">
+      <title>Associated Functions</title>
+
+      <para>
+
+        Associated functions are often defined for types.
+
+        These are functions that apply to the named type.
+
+        Common associated functions are:
+
+      </para>
+
+      <table>
+        <caption>Associated functions for a function &lt;T&gt;</caption>
+
+        <thead>
+          <tr>
+            <th>
+              Name
+            </th>
+            <th>
+              Meaning
+            </th>
+          </tr>
+        </thead>
+
+        <tbody>
+
+          <tr>
+            <td>
+              &lt;T&gt;::To_Integer(x)
+            </td>
+            <td>
+              Convert to integer type. (Enumerated types only.)
+            </td>
+          </tr>
+
+          <tr>
+            <td>
+              &lt;T&gt;::From_Integer(x)
+            </td>
+            <td>
+              Convert from integer type. (Enumerated types only.)
+            </td>
+          </tr>
+
+          <tr>
+            <td>
+              &lt;T&gt;::Next(x)
+            </td>
+            <td>
+              Successor of <variable>x</variable> (Ordered types only)
+            </td>
+          </tr>
+
+          <tr>
+            <td>
+              &lt;T&gt;::Prev(x)
+            </td>
+            <td>
+              Predecessor of <variable>x</variable> (Ordered types only)
+            </td>
+          </tr>
+
+          <tr>
+            <td>
+              &lt;T&gt;::Print(x)
+            </td>
+            <td>
+              Print function for values of type <variable>T</variable>
+            </td>
+          </tr>
+
+          <tr>
+            <td>
+              &lt;T&gt;::Eq(left : &lt;T&gt;, right : &lt;T&gt;) -&gt; Boolean
+            </td>
+            <td>
+              Equality test.
+            </td>
+          </tr>
+
+          <tr>
+            <td>
+              &lt;T&gt;::Ne(left : &lt;T&gt;, right : &lt;T&gt;) -&gt; Boolean
+            </td>
+            <td>
+              Inequality test.
+            </td>
+          </tr>
+
+          <tr>
+            <td>
+              &lt;T&gt;::Le(left : &lt;T&gt;, right : &lt;T&gt;) -&gt; Boolean
+            </td>
+            <td>
+              Less than or equal test. Only for ordered types.
+            </td>
+          <tr>
+
+          </tr>
+            <td>
+              &lt;T&gt;::Lt(left : &lt;T&gt;, right : &lt;T&gt;) -&gt; Boolean
+            </td>
+            <td>
+              Less than test. Only for ordered types.
+            </td>
+          <tr>
+
+          </tr>
+            <td>
+              &lt;T&gt;::Gt(left : &lt;T&gt;, right : &lt;T&gt;) -&gt; Boolean
+            </td>
+            <td>
+              Greater than test. Only for ordered types.
+            </td>
+          <tr>
+
+          </tr>
+            <td>
+              &lt;T&gt;::Ge(left : &lt;T&gt;, right : &lt;T&gt;) -&gt; Boolean
+            </td>
+            <td>
+              Greater than or equal test. Only for ordered types.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+    </section>
+
+    <programlisting>
+type = type-identifier
+     | type-identifier '(' expression-list ')'
+     | '{' set-list '}'
+     | 'array' '[' index-type ']' 'of' type
+     | '(' expression-list ')'
+
+index-type = constant-expression
+           | 'type' enumeration-type-identifier
+
+set = constant-expression
+    | '..' constant-expression
+    | constant-expression '..'
+    | constant-expression '..' constant-expression
+    </programlisting>
+
+    <para>
+
+      Types can refer to previously defined and builtin types;
+      can be parameterized by a size parameter;
+      can be sets of possible values from anothere type;
+      can arrays of values of another type;
+      or
+      can be ordered tuples of values of multiple types.
+
+    </para>
+
+    <table xml:id="table.types">
+      <caption>Example types</caption>
+
+      <thead>
+        <tr>
+          <th>
+            Syntax
+          </th>
+          <th>
+            Meaning
+          </th>
+        </tr>
+      </thead>
+
+      <tbody>
+
+        <tr>
+          <td>
+            {8, 16, 32, 64}
+          </td>
+          <td>
+            A subset of Integer containing the values 8, 16, 32, and 64.
+          </td>
+        </tr>
+
+        <tr>
+          <td>
+            {0 .. 255}
+          </td>
+          <td>
+            A subset of Integer containing all values from 0 to 255 inclusive.
+          </td>
+        </tr>
+
+        <tr>
+          <td>
+            {0 ..}
+          </td>
+          <td>
+            A subset of Integer containing all non-negative integers.
+          </td>
+        </tr>
+
+        <tr>
+          <td>
+            {.. -1}
+          </td>
+          <td>
+            A subrange of Integer containing all negative integers.
+          </td>
+        </tr>
+
+        <tr>
+          <td>
+            {0..8, 16, 32, 64}
+          </td>
+          <td>
+            A subrange of Integer containing values from 0 to 8 (inclusive), 16, 32, and
+            64.
+          </td>
+        </tr>
+
+        <tr>
+          <td>
+            Bits(32)
+          </td>
+          <td>
+            A bitvector of size 32.
+          </td>
+        </tr>
+
+        <tr>
+          <td>
+            array [32] of Bits(64)
+          </td>
+          <td>
+            An array of 32 bitvectors each of size 64.
+          </td>
+        </tr>
+
+        <tr>
+          <td>
+            (Boolean, Bits(32))
+          </td>
+          <td>
+            An ordered tuple with a Boolean in the first element
+            and a bitvector in the second element.
+          </td>
+        </tr>
+        <tr status="unimplemented">
+          <td>
+            (valid : Boolean, value : Bits(32))
+          </td>
+          <td>
+            An anonymous record with explicit fields named valid and value
+            of types Boolean and Bits(32)
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <para>
+      Most typechecking is performed statically but
+      checking of set types is performed dynamically.
+
+      For example, if a variable has the type <literal>{ 8, 16, 32, 64 }</literal>
+      then an assignment to that variable undergoes two checks.
+
+      First, a static check that the value being assigned has type
+      <literal>Integer</literal>.
+
+      Second, a runtime check that the value being assigned
+      is a member of the set although,
+      in almost all cases, the compiler is able to perform the runtime checks
+      statically.
+
+    </para>
+
+    <para status="unimplemented">
+      Note that the order of fields matters: the type
+      <literal>(x : S, y : T)</literal>
+      is not the same as
+      <literal>(y : T, x : S)</literal>.
+    </para>
+
+    <section xml:id="builtin-types">
+      <title>Builtin types</title>
+
+      There are some builtin type identifiers.
+
+      <table xml:id="table.builtin-types">
+        <caption>Builtin types</caption>
+        <thead>
+          <tr>
+            <th>
+              Name
+            </th>
+            <th>
+              Meaning
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+
+          <tr>
+            <td>
+              <literal>Std::Boolean</literal>
+            </td>
+            <td>
+              Enumeration with values False and True
+            </td>
+          </tr>
+
+          <tr>
+            <td>
+              <literal>Std::Integer</literal>
+            </td>
+            <td>
+              Unbounded integers
+            </td>
+          </tr>
+
+          <tr>
+            <td>
+              <literal>Std::Bits(n)</literal>
+            </td>
+            <td>
+              Bitvectors of length n
+            </td>
+          </tr>
+
+          <tr>
+            <td>
+              <literal>Std::Exception</literal>
+            </td>
+            <td>
+              Exception objects
+              (see
+              <link linkend="exception-definitions" endterm="exception-definitions_title"/>
+              and
+              <link linkend="exception-statements" endterm="exception-statements_title"/>).
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <para>
+
+        Note that the <literal>Std::</literal> prefix is normally omitted.
+
+      </para>
+
+    </section>
+  </section>
+
+  <section xml:id="global-declarations">
+    <title>Global declarations</title>
+
+    <para>
+      Global declarations are used to define <link linkend="type-definitions">types</link>,
+      <link linkend="variable-definitions">variables</link>,
+      <link linkend="function-definitions">functions</link>,
+      to <link linkend="module-definition">control namespaces</link>,
+      and to control compilation.
+    </para>
+
+    <para>
+      The order of declarations has no impact on the meaning of a specification.
+
+      In particular, a type, variable or function can be declared after its first use.
+    </para>
+
+    <programlisting>
+declaration = type-definition
+            | variable-definition
+            | function-definition
+            | module-definition
+            | function-instantiation
+            | ffi-definition
+    </programlisting>
+
+    <section xml:id="type-definitions">
+      <title>Type definitions</title>
+
+      <para>
+        Type definitions allow the definition of new types such as 
+        <link linkend="enumerations">enumerations</link>,
+        <link linkend="records">records</link>,
+        <link linkend="exception-definitions">exception objects</link>,
+        <link linkend="bitfields">named fields of bitvectors</link>,
+        and <link linkend="type-synonyms">synonyms for existing types</link>.
+      </para>
+
+      <programlisting>
+type-definition = 'type' identifier '=' type ';'
+                | 'type' identifier '(' identifier-list ')' '=' type ';'
+                | 'enumeration' identifier '=' '{' identifier-list '}' ';'
+                | 'record' identifier '=' '{' field-list '}' ';'
+                | 'record' identifier '(' identifier-list ')' '=' '{' field-list '}' ';'
+                | 'exception' identifier ';'
+                | 'exception' identifier '=' '{' bitfield-list '}' ';'
+                | 'bitfield' identifier '=' '{' bitfield-list '}' ';'
+
+field = identifier ':' type
+
+bitfield = identifier '=>' '[' slice-list ']'
+      </programlisting>
+
+        <table xml:id="table.type-definition">
+          <caption>Example type definitions</caption>
+
+          <tbody>
+
+            <tr>
+              <td>type        Size = {0 .. };</td>
+              <td>Define a synonym for the type <literal>{0 .. }</literal> of non-negative integers.</td>
+            </tr>
+
+            <tr>
+              <td>enumeration E = {E::A, E::B, E::C};</td>
+              <td>Define three enumeration constant E::A, E::B and E::C of type E</td>
+            </tr>
+
+            <tr status="unimplemented">
+              <td>unordered enumeration E = { E::A, E::B, E::C };</td>
+            </tr>
+
+            <tr status="unimplemented">
+              <td>ordered enumeration P = {Q, R, S};</td>
+            </tr>
+
+            <tr>
+              <td>record      Int2 = {x : Size, y : Size};</td>
+              <td>Define a record with two fields</td>
+            </tr>
+
+            <tr>
+              <td>record      Bits2(n : { 0 .. }) = { x : Bits(n), y : {-128 .. 127} };</td>
+              <td>Define a parameterized record with two fields</td>
+            </tr>
+
+            <tr>
+              <td>exception   Ex1;</td>
+              <td>Define an exception constructor Ex1</td>
+            </tr>
+
+            <tr>
+              <td>exception   Ex2 = { x : S, y : T };</td>
+              <td>Define an exception constructor Ex2 with two fields</td>
+            </tr>
+
+            <tr>
+              <td>bitfield    T = { F =&gt; [1:0], G =&gt; [2], H =&gt; [7:3] } : Bits(8);</td>
+              <td>Define named slices within a bitvector</td>
+            </tr>
+
+          </tbody>
+
+        </table>
+
+
+        <section xml:id="type-synonyms">
+          <title>Type synonyms</title>
+
+          <para>
+            A type synonym defines an abbreviation for a type.
+
+            It does not define a distinct type: in a synonym <literal>type S = T;</literal>
+            values of type <literal>S</literal> are valid values of type <literal>T</literal>
+            and vice-versa.
+
+            For example, we can define a synonym for the type <literal>{0 .. }</literal>
+          </para>
+
+          <programlisting>
+type Size = {0 .. };
+          </programlisting>
+
+          <para>
+            Type synonyms cannot be recursive: the right hand side cannot directly or
+            indirectly refer to the type being defined.
+          </para>
+
+        </section>
+
+        <section xml:id="enumerations">
+          <title>Enumeration definitions</title>
+
+          <para>
+            An enumeration definition defines a new type and a list of enumeration constants.
+          </para>
+
+          <para>
+            For example,
+          </para>
+
+          <programlisting>
+enumeration Color = {
+    Color::Red,
+    Color::Green,
+    Color::Blue
+};
+          </programlisting>
+
+          <para>
+            Note that <literal>Color</literal> plays two roles here: as the
+            name of the type and as the name of the
+            <link linkend="identifiers-paths-and-keywords">namespace</link>.
+          </para>
+
+          <para status="unimplemented">
+            Not yet implemented: use of a prefix 'ordered' or 'unordered'
+            to determine whether you can use &lt;, &lt;=, &gt;= or &gt; operators
+            to compare values.
+          </para>
+
+          <para status="design">
+            If we add algebraic data types, we could use the approach taken
+            in Rust of having parameterized enumerations.
+            For example <literal>enumeration T = { T::A(x : Integer), T::B }</literal>
+          </para>
+
+          <para status="unimplemented">
+            Enumeration constants are put in the namespace associated with
+            their type and, in keeping with the normal use of namespaces,
+            the path must be used in the definition.
+          </para>
+
+          <section status="unimplemented">
+            <para>
+              The namespace also contains some automatically generated (aka
+              <quote>derived</quote>) associated functions including
+            </para>
+
+            <programlisting>
+pure function Color::To_Integer(x : Color) -&gt; {0..2}
+pure function Color::From_Integer(x : {0..2}) -&gt; Color&quot;
+pure function Color::Next(x : Color) -&gt; Color // only for ordered enumerations
+pure function Color::Prev(x : Color) -&gt; Color // only for ordered enumerations
+pure function Color::Eq(left : Color, right : Color) -&gt; Boolean
+pure function Color::Ne(left : Color, right : Color) -&gt; Boolean
+pure function Color::Le(left : Color, right : Color) -&gt; Boolean // only for ordered enumerations
+pure function Color::Lt(left : Color, right : Color) -&gt; Boolean // only for ordered enumerations
+pure function Color::Gt(left : Color, right : Color) -&gt; Boolean // only for ordered enumerations
+pure function Color::Ge(left : Color, right : Color) -&gt; Boolean // only for ordered enumerations
+            </programlisting>
+
+            <para>
+              <emphasis>[Implementation status: none of these derived
+              functions are implemented yet.]</emphasis>
+            </para>
+
+            <para>
+              Additional associated functions can be defined by the user.
+            </para>
+
+            <para>
+              <emphasis><emphasis role="strong">Todo</emphasis>: alternative
+              names for Next/Prev are Succ/Pred or
+              Successor/Predecessor</emphasis>
+            </para>
+
+            <para>
+              The difference between ordered and unordered enumerations is
+              that values of ordered enumeration types can be compared using
+              any of {==,!=,&lt;,&lt;=,&gt;=,&gt;} but unordered enumeration
+              types can only be compared using {==,!=}.
+            </para>
+
+            <para>
+              Implementation note: Using an ordered enumeration in a for loop is a bit
+              complicated because we would ideally need one extra value in
+              the type - to detect when we have incremented past the end of
+              the loop.
+
+              Two compilation schemes:
+
+              1) A loop (<literal>for i := Red to Blue …</literal>) would use an
+                  Integer <literal>c : {0..n}</literal> to count loop iterations
+                  and starts the loop body with <literal>let i := E::From_Integer(c);</literal>
+
+              2) A loop (<literal>for i := Red to Blue …</literal>) would generate
+                  <literal>while i &lt;= Blue do …; if i == Blue then break; else i = E::Successor(i); end</literal>
+                  to avoid incrementing i past the last value in the type.
+            </para>
+          </section>
+
+        </section>
+
+        <section xml:id="records">
+          <title>Record definition</title>
+
+          <para>
+            Records consist of a number of fields and the type can be parameterized by
+            a number of size arguments.
+
+            For example,
+          </para>
+
+          <programlisting>
+record Address = { segment : Segment_Identifier, offset : Bits(64) };
+
+record Float(n : {0..}, e : {0..n-1}) = {
+    is_negative : Boolean,
+    exponent : {-2**(e-1) .. 2**(e-1)-1},
+    fraction : Bits(n-e-1),
+    is_NaN : Boolean,
+};
+          </programlisting>
+
+          <section status="unimplemented">
+            <para>
+              Records can include constant fields whose value is calculated
+              from the other fields, and default values for fields.
+            </para>
+
+            <programlisting>
+record Float(n : {0..}, e : {0..n-1}) = {
+    let p := n-e-1,
+    sign : Boolean,
+    exponent : {-2**(e-1) .. 2**(e-1)-1},
+    fraction : Bits(p),
+    is_NaN : Boolean := False // default value - can be omitted from initializer
+};
+            </programlisting>
+
+            <para>
+              <emphasis>[Implementation status: constant fields (like
+              <quote>p</quote>) and default values (like
+              <quote>is_NaN</quote>) are not implemented yet.]</emphasis>
+            </para>
+
+            <para>
+              The associated functions automatically derived for a record
+              are the constructor function (and print functions, equality
+              functions, etc. The print function will be called
+              <quote>Float::Print</quote>)
+            </para>
+
+            <para>
+              Note that constant fields would have to be expanded out in the
+              function type - which is a bit weird.
+            </para>
+
+            <programlisting>
+pure function Float(
+    n : {0..},
+    e : {0..n-1},
+    // p is omitted
+    sign : Boolean,
+    exponent : …,
+    fraction : Bits(n-e-1), // Note that we have to expand 'p' here :-(
+    is_NaN : Boolean := False
+) -&gt; Float(n, e);
+            </programlisting>
+
+            <para>
+              <emphasis>[Implementation status: the <quote>pure</quote>
+              function property is not implemented yet.]</emphasis>
+            </para>
+          </section>
+
+          <para>
+            Records cannot be recursive: the type of a field cannot directly
+            or indirectly refer to the record.
+          </para>
+
+        <para>
+          Type parameters types must be Integer or Integer Set type.
+        </para>
+
+          <para>
+            Unlike <link linkend="bitfield-definitions">bitfields</link>,
+            records don't have a defined data layout.
+
+            When storing data in a record in RAM, it is common to write
+            marshalling/unmarshalling functions to explicitly convert
+            the record to/from a bitvector.
+          </para>
+
+        </section>
+
+        <section xml:id="exception-definitions">
+          <title xml:id="exception-definitions_title">Exception definitions</title>
+
+          <para>
+            Exception objects consist of a number of fields.
+
+            For example,
+          </para>
+
+          <programlisting>
+exception Page_Fault = { virtual_address : Bits(64), cause : Bits(8) };
+          </programlisting>
+
+          <para>
+            All exception objects have type <literal>Std::Exception</literal>.
+          </para>
+
+          <para>
+            Exception objects can be created in a
+            <link linkend="exception-statements">throw statement</link>.
+
+            Different kinds of exception can be matched against in a
+            <link linkend="exception-statements">try-catch statement</link>.
+          </para>
+
+          <para>
+            Exceptions cannot be recursive: the type of a field cannot directly
+            or indirectly refer to the exception.
+          </para>
+
+          <para status="design">
+            Note that exceptions are a special case of algebraic data types.
+
+            So we should check that the syntax will be consistent.
+          </para>
+
+        </section>
+
+        <section xml:id="bitfield-definitions">
+          <title>Bitfield definitions</title>
+
+          <para>
+            Bitfield definitions allow slices of bitvectors to be named.
+
+            For example, given the following definition and a variable
+            with type <literal>float : IEEE_FP32</literal>,
+            the exponent can be extracted using
+            <literal>float.exponent</literal>
+            which is equivalent to <literal>float[30:23]</literal>.
+          </para>
+
+          <programlisting>
+bitfield IEEE_FP32 = {
+    sign =&gt; [31],
+    exponent =&gt; [30:23],
+    fraction =&gt; [22:0]
+} : Bits(32);
+          </programlisting>
+
+          <para status="design">
+            <emphasis>[Todo: At the moment, the final type must be of the
+            form <quote>Bits(…)</quote>. If this was relaxed to let us
+            extend an existing bitfield, we would get a limited form of
+            subtyping which might be useful. This makes me wonder whether
+            records could extend other records - which there may not be
+            any motivation to support.]</emphasis>
+            </para>
+
+            <para status="design">
+              todo: do we have bitfield constructors or update syntax?
+            </para>
+
+        </section>
+
+    </section>
+
+    <section xml:id="global-constants-and-variables">
+      <title>Global constants and variables</title>
+
+      <para>
+        Global variables are often used to represent processor registers.
+        Global constants provide symbolic names for constants such as integers,
+        S-box tables, etc.
+      </para>
+
+      <programlisting>
+variable-definition = 'var' identifier ':' type ';'
+                    | 'let' identifier ':' type ':=' constant-expression ';'
+      </programlisting>
+
+      <para status="design">
+        Question: should variables be required to have an initializer so that
+        all global variables are properly initialized?
+      </para>
+
+    </section>
+
+    <section xml:id="functions">
+      <title>Functions</title>
+
+      <para>
+        Functions are parameterized, named sequences of actions.
+
+        Functions can return a value and can be invoked in
+        <link linkend="expressions">expressions</link>.
+        Functions that do not return a value (sometimes called <quote>procedures</quote>)
+        can be invoked in
+        <link linkend="statements">statements</link>.
+      </para>
+
+      <para>
+        Functions can be defined and called using either conventional syntax
+        such as <literal>F(x,y)</literal> or, to support the
+        <link linkend="https://en.wikipedia.org/wiki/Uniform_access_principle">Uniform
+        Access Principle</link>,
+        they can be defined and called with no
+        arguments (e.g., <literal>G</literal>) or using an
+        array/bitslice-like syntax <literal>H[i]</literal>.
+      </para>
+
+      <para>
+        Functions can throw
+        <link linkend="expressions">expressions</link>
+        and both the definition and invocation of such functions must be
+        marked with an exception marker.
+
+        If a function may throw an exception, it is marked with the marker <literal>?</literal>.
+        If a function always throws an exception, it is marked with the marker <literal>!</literal>.
+        Functions that return a value cannot always throw an exception.
+
+      </para>
+
+      <programlisting>
+function-definition = function-header
+                      'begin'
+                          statement-list
+                      'end'
+
+function-header = 'function' identifier [function-exception-marker] formal-arguments '=>' type
+                | 'function' identifier [procedure-exception-marker] formal-arguments
+                | 'function' identifier [procedure exception-marker] formal-arguments ':=' type
+
+function-exception-marker = '?'
+procedure-exception-marker = '?' | '!'
+
+formal-arguments = empty
+                 | '(' formal-argument-list ')'
+                 | '[' formal-argument-list ']'
+
+formal-argument = ['implicit'] identifier ':' type
+                | ['implicit'] identifier ':' type ':=' expression
+      </programlisting>
+
+      <para status="implementation">
+        Not yet implemented: mark functions with the keyword "pure"
+        to enable the compiler to optimize function calls.
+      </para>
+
+      <section xml:id="size-arguments">
+        <title>Size arguments and implicit arguments</title>
+
+        <para>
+          Arguments to a function can be used as size arguments in types
+          used in the function.
+
+          In particular, size arguments can be used in the types of other arguments
+          and in the return type of the function.
+        </para>
+
+        <para>
+          For example, the standard library function
+          <function>Std::Bits::Zero</function>
+          has the following type.
+
+          Note that the return type depends on the size argument <variable>size</variable>.
+        </para>
+
+        <programlisting>
+function Std::Bits::Zero(size : {0..}) -&gt; Bits(size)
+        </programlisting>
+
+        <para>
+          When an argument type depends on a size argument, the
+          size argument is often redundant because its value can
+          be inferred from the type of the argument.
+
+          For example, suppose that we define a function that adds two
+          bitvectors together.
+
+        </para>
+
+        <programlisting>
+function Add_Explicit(size : {0..}, x : Bits(size), y : Bits(size)) -&gt; Bits(size)
+        </programlisting>
+
+        <para>
+          We would write <literal>Add_Explicit(32, x, y)</literal> to call such a function.
+
+          In cases like this, the size argument is redundant because the size of
+          the other arguments are required to match the size argument.
+        </para>
+
+        <para>
+          To avoid this redundancy and the resulting clutter, an
+          argument can be marked as <literal>implicit</literal>
+          when the value of the argument can be inferred from the types
+          of the other arguments.
+
+          For example, we could amend the function header as follows.
+        </para>
+
+        <programlisting>
+function Add_Implicit(implicit size : {0..}, x : Bits(size), y : Bits(size)) -&gt; Bits(size)
+        </programlisting>
+
+        <para>
+          Since the size argument is marked as <literal>implicit</literal>,
+          the size argument is omitted when calling this  would write
+          <literal>Add_Implicit(x, y)</literal>
+          to call such a function.
+        </para>
+
+        <para>
+          An argument can only be marked as <literal>implicit</literal> if
+          it is used as a size argument in the type of another function argument.
+
+          In particular,
+          if the argument is only used in the return type,
+          then it cannot be marked as <literal>implicit</literal>;
+          and
+          if the size calculation is a non-trivial expression such as
+          <literal>Bits(size1 + 1)</literal>,
+          then it cannot be marked as <literal>implicit</literal>.
+        </para>
+
+      </section>
+
+      <section xml:id="function-variants">
+        <title>Syntactic variations of function definitions</title>
+
+        <para>
+          To balance the need for precision / completeness against
+          readability, functions support a number of syntactic variations.
+          This is typically used for processor registers where accessing the
+          register requires some calculation such as bitslicing or masking
+          bits or where a register file is best understood as an array.
+        </para>
+
+        <para>
+          Using this alternative syntax has no impact on the behavior of the
+          functions but is used to textually simplify the appearance of the
+          specification and to support the
+          <link linkend="https://en.wikipedia.org/wiki/Uniform_access_principle">Uniform
+          Access Principle</link>.
+        </para>
+
+        <para>
+          Where these syntactic variations are used, calls to functions must
+          be consistent with the definition of the function.
+        </para>
+
+        <section xml:id="nullary-functions">
+          <title>Nullary functions</title>
+
+          <para>
+            Functions with no arguments can optionally omit the parentheses.
+            This is typically used for processor registers where accessing the
+            register requires some calculation such as bitslicing or masking
+            bits.
+          </para>
+
+          <programlisting>
+function EAX -&gt; Bits(32)
+begin
+    return RAX[31:0];
+end
+          </programlisting>
+
+          <para>
+            An example of calling this function is the expression
+            <literal>EAX + 4</literal>.
+          </para>
+
+        </section>
+
+        <section xml:id="array-functions">
+          <title>Array functions</title>
+
+          <para>
+            Functions with arguments can optionally use square brackets
+          </para>
+
+          <programlisting>
+function XMM[r : Integer] -&gt; Bits(128)
+begin
+    return ZMM[r][0 +: 128];
+end
+          </programlisting>
+
+          <para>
+            An example of calling this function is the expression
+            <literal>XMM[index]</literal>.
+          </para>
+
+        </section>
+
+        <section xml:id="assignment-functions">
+          <title>Assignment functions</title>
+
+          <para>
+            A function can be defined using assignment syntax and called using
+            the normal assignment statement syntax.
+          </para>
+
+          <para>
+            For example
+          </para>
+
+          <programlisting>
+function EAX := value : Bits(32)
+begin
+    RAX := Zero_Extend(value, 64);
+end
+          </programlisting>
+
+          <para>
+            An example of calling this function is the statement
+          </para>
+
+          <programlisting>
+EAX := Zero(32);
+          </programlisting>
+
+        </section>
+
+        <section xml:id="array-assignment-functions">
+          <title>Array assignment functions</title>
+
+          <para>
+            An example assignment function that uses the array syntax is
+          </para>
+
+          <programlisting>
+function XMM[r : Integer] := value : Bits(128)
+begin
+    ZMM[r][0 +: 128] := value;
+end
+          </programlisting>
+
+          <para>
+            An example of calling this function is the statement
+          </para>
+
+          <programlisting>
+XMM[index] := Zero(128);
+          </programlisting>
+
+        </section>
+
+        <section xml:id="limited-overloading">
+          <title>Function overloading</title>
+
+          <para>
+            A limited degree of function name overloading is possible:
+            the same name can be used for a function and for an assignment function.
+
+            The choice of which function is called is based on whether
+            a value is being read or written and that bitslice.
+
+            For example, the statement
+            <literal>EAX := EAX + 1;</literal> increments the bottom
+            doubleword of <literal>RAX</literal> by calling the function
+            <literal>EAX</literal> to read the current value, adding 1, and calling
+            the assignment function <literal>EAX:=</literal>.
+          </para>
+
+
+          <para>
+            Field and array selectors can require both a read and a write.
+
+            For example, the statement <literal>EAX[0] := 0b0;</literal>
+            clears the bottom bit of EAX by calling the function <literal>EAX</literal>,
+            assigning to the bitslice <literal>[0]</literal>, and calling the
+            assignment function <literal>EAX:=</literal>.
+          </para>
+
+        </section>
+      </section>
+
+      <section status="draft">
+        <programlisting>
+function F1(x : Integer) -&gt; Integer // the most common form
+function F2(x : Integer)            // no return type - can only be called from statement
+function F3?(x : Integer) -&gt; Integer // function F3 may raise an exception
+function F4!(x : Integer)            // function F4 always raises an exception (and therefore has no return type)
+function F5(x : Integer, y : Integer := 0) -&gt; Integer // with a default argument
+function F6[cpl : Bits(2)] -&gt; Integer // using alternate syntax
+function F7() -&gt; Integer              // a function with 0 arguments
+function F8 -&gt; Integer                // a nullary function
+function F9 := value : Integer        // a nullary assignment function
+function F10[cpl : Bits(2)] := value : Integer // an assignment function
+function F11(implicit n : {0..}, x : Bits(n)) -&gt; Bits(2*n)
+        </programlisting>
+
+        <para>
+          Note that the way a function is declared must match how it is
+          called.
+        </para>
+
+        <itemizedlist spacing="compact">
+          <listitem>
+            <para>
+              If declared using (), it must be called using ()
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              If declared using [], it must be called using []
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              If declared as a nullary function, it must be called as a
+              nullary function
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              If declared as an assignment function, it must be used in an
+              assignment
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              If declared with a return type, it must be used in an
+              expression
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              If declared with no return type, it must be used in a
+              statement
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              If declared using an exception marker, it must be called
+              with the same exception marker
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              If declared using an implicit argument, the argument must be
+              omitted when calling a function using positional arguments
+              but the argument may be provided when calling a function
+              using named arguments.
+            </para>
+          </listitem>
+        </itemizedlist>
+
+        <para>
+          todo: The way a function is declared also affects the function
+          itself. todo: rules about return statements, raising exceptions,
+          exception markers, etc.
+        </para>
+
+        <para>
+          todo: Should we require that all implicit arguments are provided
+          last in a function declaration - to keep the story about mixing
+          positional and named arguments simple?
+        </para>
+
+      </section>
+
+    </section>
+
+    <section xml:id="function-instantiation">
+      <title>Function instantiation</title>
+
+        <para>
+          When generating code in almost any programming language, we have
+          to create specialized versions of functions where each version
+          is specialized to the bitwidths used in the type of the
+          function. However, sometimes we need to specialize functions to
+          values that are not obviously bitwidths. This can be done by
+          explicitly requesting that certain sizes are optimized.
+        </para>
+
+        <programlisting>
+function-instantiation = 'optimize' 'function' function-identifier 'with' '{' argument-value-list '}' ';'
+
+argument-value = identifier '=>' constant-expression
+                | identifier '=>' '_'
+        </programlisting>
+
+        <programlisting>
+optimize function F with {size =&gt; 8};
+optimize function F with {size =&gt; 16};
+optimize function F with {size =&gt; 32};
+optimize function F with {size =&gt; 64};
+        </programlisting>
+
+        <para>
+          This requests the compiler to generate a specialized version
+          of <function>F</function> for each specified constant <variable>c</variable>
+          and to replace calls to <function>F</function> where
+          argument size is equal to <variable>c</variable> with a call to the specialized
+          function.
+        </para>
+
+        <para>
+          We also support this useful shorthand
+          to create a specialized version of a function for any concrete
+          value of <variable>size</variable> used in the specification.
+
+        </para>
+
+        <programlisting>
+optimize function F with {size =&gt; _};
+        </programlisting>
+
+        <para>
+          That is, if some function G <emphasis>or</emphasis> a specialized
+          version of G contains a call to F where the argument size is a constant
+          c, then a specialized version of F is created as if the user had
+          written <literal>function F with {size =&gt; c};</literal>.
+
+        </para>
+
+        <para>
+          Function instantiation changes (or, rather, makes possible) the compilation of
+          a specification but does not change the meaning of a specification
+          so we recommend that the <literal>optimize</literal> clauses are
+          kept separate from the main specification: in a separate file or
+          directory.
+        </para>
+
+        <para>
+          Note that this feature is backend-specific, it has no semantic
+          meaning and is only needed with some code generation strategies.
+        </para>
+
+        <para status="design">
+          The implementation has to specialize parameterized types to
+          support this so adding explicit syntax to specialize types
+          and provide a name of the users choice would be useful.
+        </para>
+
+        <para status="implementation">
+          At the moment, it is only possible to use Integer constants
+          when specializing a function.
+        </para>
+
+    </section>
+
+    <section xml:id="foreign-import-and-export">
+      <title>Foreign import and export</title>
+
+      <para>
+        Foreign import/export declarations are used to define the
+        interface between C/C++ and the specification.
+      </para>
+
+      <para>
+        Foreign import is used to allow the specification to use a
+        function, variable or type that is defined in C/C++.
+
+        Foreign export is used to allow C/C++ code to access a
+        function, variable or type that is defined in the specification.
+      </para>
+
+      <para>
+        Foreign import/export clauses provide a C/C++ identifier enclosed
+        in double-quotes and support
+        <link linkend="function-instantiation">function instantiation</link>.
+      </para>
+
+
+      <programlisting>
+ffi-definition = 'foreign' ('import' | 'export') 'function' string-literal '=' function-identifier 'with' '{' argument-value-list '}' ';'
+               | 'foreign' ('import' | 'export') 'var' string-literal '=' variable-identifier ';'
+               | 'foreign' ('import' | 'export') 'type' string-literal '=' type-identifier ';'
+
+argument-value = identifier '=>' constant-expression
+               | identifier '=>' '_'
+      </programlisting>
+
+      <para>
+        Note that this feature is backend-specific: it may change if
+        generating code in a different language.
+      </para>
+
+      <para status="draft">
+        todo: describe the restrictions on types that can be exported and rules about
+        how types are mapped to C types.
+      </para>
+
+      <section xml:id="foreign-functions">
+        <title>Foreign Functions</title>
+
+        <para>
+          For example, to allow C code to call
+          a function F optimized with a size parameter using the C name <literal>F_32</literal>;
+          a function G using the C name <literal>G</literal>;
+          and to allow the specification to call a pair of C functions
+          <literal>H_32</literal>
+          and <literal>H_64</literal>
+          using the name <literal>H</literal>, use
+          the following foreign import/export clauses.
+        </para>
+
+        <programlisting>
+foreign export function &quot;F_32&quot; = F with {size =&gt; 32};
+foreign export function &quot;G&quot; = G with {};
+foreign import function &quot;H_32&quot; = G with {size =&gt; 32};
+foreign import function &quot;H_64&quot; = G with {size =&gt; 64};
+        </programlisting>
+
+        <para status="implementation">
+          Not yet implemented: mark functions with the keyword "pure"
+          to enable the compiler to optimize foreign function calls.
+        </para>
+
+      </section>
+
+      <section xml:id="foreign-variables">
+        <title>Foreign Variables</title>
+
+        <para>
+          To enable C/C++ code to read/write a variable in the
+          specification, use a <quote>foreign export</quote>
+          declaration; and to enable the specification to read/write a
+          C/C++ variable, use a <quote>foreign import</quote>
+          declaration.
+        </para>
+
+        <programlisting>
+foreign export var &quot;Spec_X&quot; = X;
+foreign import var &quot;Config_Y&quot; = Y;
+        </programlisting>
+
+        <para>
+          In both cases, the variable is accessed by calling functions
+          to convert between the C/C++ type and the .isa type.
+        </para>
+
+        <para>
+          In a <quote>foreign export</quote>, a pair of C/C++ functions
+          are generated with name <quote>{nm}Read</quote> and
+          <quote>{nm}Write</quote> (where <quote>{nm}</quote> is the
+          name in quotes).
+        </para>
+
+        <para>
+          In a <quote>foreign import</quote>, a pair of nullary .isa
+          function are generated: a nullary function to read the
+          variable and a nullary assignment function to write the
+          variable. The name in quotes is the name of the variable.
+        </para>
+
+      </section>
+
+      <section xml:id="foreign-types" status="unimplemented">
+        <title>Foreign Types</title>
+
+        <para>
+          To enable C/C++ code to interface with functions and variables
+          that have user-defined types, use a <quote>foreign
+          export</quote> declaration. This generates the conversion
+          functions required.
+        </para>
+
+        <programlisting>
+foreign export type &quot;Address_t&quot; = Bits(64);
+        </programlisting>
+
+        <para status="design">
+          Todo: A slight modification of this design would use a a
+          <quote>foreign export type</quote> declaration to provide the
+          code needed to convert a .isa value to C/C++ and a
+          <quote>foreign import type</quote> declaration to provide the
+          code needed to convert a C/C++ value to .isa. This part of the
+          language should be considered unstable.
+        </para>
+
+      </section>
+
+    </section>
+
+  </section>
+
+  <section xml:id="expressions">
+    <title>Expressions</title>
+
+    <para>
+      Expressions are used to calculate values.
+
+      Expressions can fail due to problems such as division by zero or out-of-bound
+      array indices.
+
+      Expressions can have side-effects such as modifying a global variable and can throw an exception
+      if they call a function with side-effects or that throws an exception.
+    </para>
+
+      <programlisting>
+expression = atomic-expression
+           | unary-operator expression
+           | expression binary-operator expression
+           | if-expression
+           | slice-expression
+           | aggregate-expression
+           | function-call
+      </programlisting>
+
+    <section xml:id="atomic-expressions">
+      <title>Atomic expressions</title>
+
+      <programlisting>
+atomic-expression = integer-literal
+           | bitvector-literal
+           | string-literal
+           | variable-identifier
+           | constant-identifier
+           | 'UNSPECIFIED' : type
+           | '(' expression ')'
+      </programlisting>
+
+      <para>
+        Atomic expressions consist of
+        numeric literals (integers and bitvectors),
+        names of enumeration constants,
+        variables, and <literal>UNSPECIFIED</literal> values.
+      </para>
+
+      <para>
+        If an identifier was declared as a constant or an enumeration constant,
+        then use of that identifier in an expression indicates the value of that constant.
+      </para>
+
+      <para>
+        If an identifier was declared as a variable,
+        then use of that identifier indicates a read of the current value of the variable.
+      </para>
+
+      <para>
+        An unspecified value of type <literal>T</literal> is written <literal>UNSPECIFIED : T</literal>.
+        An implementation is free to choose any value of type <literal>T</literal> each time
+        that an unspecified expression is executed.
+
+        There is no expectation that the value will be consistent, random/fair, or different each
+        time an expression is executed.
+      </para>
+
+      <para>
+        Note that a concrete value is chosen each time the expression is executed.
+
+        This means that the following assertion never fails.
+
+        <programlisting>
+let x := UNSPECIFIED : Bits(8);
+assert x == x; // This assertion never fails
+        </programlisting>
+
+        the following assertion will always fail
+
+        <programlisting>
+let x := UNSPECIFIED : Bits(8);
+assert x != x; // This assertion always fails
+        </programlisting>
+
+        and evaluating UNSPECIFIED twice could cause the following assertion to fail (but does not guarantee it)
+
+        <programlisting>
+assert (UNSPECIFIED : Bits(8)) == (UNSPECIFIED : Bits(8)); // This assertion could fail
+        </programlisting>
+
+      </para>
+
+    </section>
+
+    <section xml:id="arithmetic-operators">
+      <title>Arithmetic operators</title>
+
+      <table>
+        <caption>Arithmetic operators</caption>
+
+        <thead>
+          <tr>
+            <th>
+              Operator
+            </th>
+            <th>
+              Types supported
+            </th>
+            <th>
+              Meaning
+            </th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <tr>
+            <td>
+              x + y
+            </td>
+            <td>
+              Integer, Bits
+            </td>
+            <td>
+              Addition
+            </td>
+          </tr>
+
+          <tr>
+            <td>
+              x - y
+            </td>
+            <td>
+              Integer, Bits
+            </td>
+            <td>
+              Subtraction
+            </td>
+          </tr>
+
+          <tr>
+            <td>
+              x * y
+            </td>
+            <td>
+              Integer, Bits
+            </td>
+            <td>
+              Multiplication
+            </td>
+          </tr>
+
+          <tr>
+            <td>
+              x / y
+            </td>
+            <td>
+              Integer
+            </td>
+            <td>
+              Division for positive inputs. Requires x &gt;=0, y &gt;
+              0
+            </td>
+          </tr>
+
+          <tr>
+            <td>
+              x % y
+            </td>
+            <td>
+              Integer
+            </td>
+            <td>
+              Remainder for positive inputs. Require x &gt;= 0, y &gt;
+              0
+            </td>
+          </tr>
+
+          <tr>
+            <td>
+              -x
+            </td>
+            <td>
+              Integer
+            </td>
+            <td>
+              Negation
+            </td>
+          </tr>
+
+          <tr>
+            <td>
+              x ** y
+            </td>
+            <td>
+              Integer
+            </td>
+            <td>
+              Exponentiation
+            </td>
+          </tr>
+
+          <tr>
+            <td>
+              x &lt;&lt; y
+            </td>
+            <td>
+              Integer
+            </td>
+            <td>
+              Shift left == x * 2**y. Requires y &gt;= 0
+            </td>
+          </tr>
+
+          <tr>
+            <td>
+              x &gt;&gt; y
+            </td>
+            <td>
+              Integer
+            </td>
+            <td>
+              Shift right == x / 2**y. Requires y &gt;= 0
+            </td>
+          </tr>
+
+        </tbody>
+      </table>
+
+      <para>
+        Note that the division operators <literal>/</literal> and <literal>%</literal>
+        produce a runtime error on negative inputs (and for division by zero).
+
+        This avoids confusion about whether division rounds towards zero or towards negative infinity.
+
+        To operate on negative values, use
+        <function>Truncated_Divide</function> and <function>Truncated_Remainder</function>
+        or
+        <function>Floor_Divide</function> and <function>Floor_Remainder</function>
+        to make the rounding behavior explicit.
+
+      </para>
+
+    </section>
+
+
+    <section xml:id="predicate-operators">
+      <title>Predicate operators</title>
+
+      <table>
+        <caption>Predicate operators (these all return Boolean)</caption>
+
+        <thead>
+          <tr>
+            <th>
+              Operator
+            </th>
+            <th>
+              Types supported
+            </th>
+            <th>
+              Meaning
+            </th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <tr>
+            <td>
+              x == y
+            </td>
+            <td>
+              All types
+            </td>
+            <td>
+              Is x equal to y?
+            </td>
+          </tr>
+          <tr>
+            <td>
+              x != y
+            </td>
+            <td>
+              All types
+            </td>
+            <td>
+              Is x not equal to y?
+            </td>
+          </tr>
+          <tr>
+            <td>
+              x &lt; y
+            </td>
+            <td>
+              Integer, ordered enumerations
+            </td>
+            <td>
+              Is x less than y?
+            </td>
+          </tr>
+          <tr>
+            <td>
+              x &lt;= y
+            </td>
+            <td>
+              Integer, ordered enumerations
+            </td>
+            <td>
+              Is x less than or equal to y?
+            </td>
+          </tr>
+          <tr>
+            <td>
+              x &gt;= y
+            </td>
+            <td>
+              Integer, ordered enumerations
+            </td>
+            <td>
+              Is x greater than or equal to y?
+            </td>
+          </tr>
+          <tr>
+            <td>
+              x &gt; y
+            </td>
+            <td>
+              Integer, ordered enumerations
+            </td>
+            <td>
+              Is x greater than y?
+            </td>
+          </tr>
+
+          <tr status="unimplemented">
+            <td>
+              x &lt;= y &lt;= z
+            </td>
+            <td>
+              Integer, ordered enumerations
+            </td>
+            <td>
+              Is y between x and z. Can also use &lt; in either
+              position.
+            </td>
+          </tr>
+
+          <tr>
+            <td>
+              x in p
+            </td>
+            <td>
+              Sets, bitmasks
+            </td>
+            <td>
+              Does x match pattern p?
+            </td>
+          </tr>
+          <tr>
+            <td>
+              x not in p
+            </td>
+            <td>
+              Sets, bitmasks
+            </td>
+            <td>
+              Does x not match pattern p?
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+    </section>
+
+    <section xml:id="boolean-and-bitvector-operators">
+      <title>Boolean and bitvector operators</title>
+
+      <table>
+        <thead>
+          <tr>
+            <th>
+              Operator
+            </th>
+            <th>
+              Types supported
+            </th>
+            <th>
+              Meaning
+            </th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <tr>
+            <td>
+              x and y
+            </td>
+            <td>
+              Boolean, Bits
+            </td>
+            <td>
+              Evaluate both x and y, return bitwise and
+            </td>
+          </tr>
+          <tr>
+            <td>
+              x and then y
+            </td>
+            <td>
+              Boolean
+            </td>
+            <td>
+              Evaluate x. If False then False. Otherwise evaluate y
+              and return y.
+            </td>
+          </tr>
+          <tr>
+            <td>
+              x or y
+            </td>
+            <td>
+              Boolean, Bits
+            </td>
+            <td>
+              Evaluate both x and y, return bitwise or
+            </td>
+          </tr>
+          <tr>
+            <td>
+              x or else y
+            </td>
+            <td>
+              Boolean
+            </td>
+            <td>
+              Evaluate x. If True then True. Otherwise evaluate y and
+              return y.
+            </td>
+          </tr>
+
+          <tr>
+            <td>
+              x xor y
+            </td>
+            <td>
+              Bits
+            </td>
+            <td>
+              Evaluate both x and y, return bitwise xor
+            </td>
+          </tr>
+          <tr>
+            <td>
+              not x
+            </td>
+            <td>
+              Boolean, Bits
+            </td>
+            <td>
+              Boolean or bitwise negation of x.
+            </td>
+          </tr>
+          <tr>
+            <td>
+              x ++ y
+            </td>
+            <td>
+              Bits
+            </td>
+            <td>
+              Concatenate two bitvectors with x as most significant bits.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      The operators <literal>and then</literal> and
+      <literal>or else</literal>
+      provide <quote>short-circuiting</quote> behavior
+      similar to <literal>x &amp;&amp; y</literal>
+      and <literal>x || y</literal>
+      in C/C++.
+
+    </section>
+
+    <section xml:id="if-expressions">
+      <title>If expressions</title>
+
+      <programlisting>
+if-expression = 'if' boolean-expression 'then' expression
+                { 'elsif' expression 'then' expression }
+                'else' expression
+      </programlisting>
+
+      <para>
+        An if-expression evaluates boolean guard-expressions
+        until the first <literal>True</literal> guard is found;
+        and then the corresponding value-expression is evaluated and returned.
+
+        If no guard-expression evaluate to <literal>True</literal> the
+        final default expression is evaluated and returned.
+      </para>
+
+      <para>
+        Parentheses are required around
+        the entire if statement if any parsing ambiguity could result.
+
+        That is, the final value-expression is not atomic and
+        the overall expression is not at the top level.
+      </para>
+
+      <para>
+        For example,
+      </para>
+
+      <programlisting>
+x := if c then 1 else 2;
+      </programlisting>
+
+      <para>
+        does not require parentheses but, parentheses are needed in
+        both of these statements
+      </para>
+
+      <programlisting>
+x := if c then 1 else (2 * y);
+x := (if c then 1 else 2) * y;
+      </programlisting>
+
+    </section>
+
+    <section xml:id="case-expressions" status="unimplemented">
+      <title>Case expressions</title>
+
+      <para>
+        todo: decide whether to add these. And, if so, do they end with
+        <literal>end</literal> or do they follow similar rules to
+        <quote>if</quote> about parentheses?
+      </para>
+
+      <blockquote>
+        <para>
+          x := case size of <quote>00</quote> =&gt; 8, <quote>01</quote>
+          =&gt; 16, <quote>10</quote> =&gt; 32, <quote>11</quote> =&gt;
+          64;
+        </para>
+      </blockquote>
+
+      <para>
+        Todo: should these require the <literal>when</literal> keyword,
+        or use <literal>,</literal> or <literal>;</literal> or
+        <literal>|</literal> or <literal>when</literal> as the separator
+        between clauses? Todo: check what other languages do.
+      </para>
+
+    </section>
+
+    <section xml:id="indexing-expressions">
+      <title>Indexing and bitslice expressions</title>
+
+      <programlisting>
+slice-expression = identifier '[' slice ']'
+slice = expression
+      | expression ':'  expression
+      | expression '+:' expression
+      | expression '-:' expression
+      | expression '*:' expression
+      </programlisting>
+
+      <unorderedlist>
+
+        <listitem>
+          <para>
+            If an identifier <variable>B</variable> has type <literal>Bits(n)</literal>,
+            then <literal>B[…]</literal> is used to extract a slice from the bitvector.
+          </para>
+
+          <orderedlist numeration="arabic" spacing="compact">
+
+            <listitem>
+              <para>
+                <literal>B[i]</literal>
+                (bit index)
+                returns the <literal>i</literal>th element
+                of the bitvector <literal>B</literal>.
+                Requires that <literal>i in {0 .. n-1}</literal>.
+              </para>
+            </listitem>
+
+            <listitem>
+              <para>
+                <literal>B[i : j]</literal>
+                (range-based bitslice)
+                returns bits <literal>j</literal> up to <literal>i</literal>
+                (inclusive)
+                of the bitvector <literal>B</literal>.
+
+                Requires that <literal>i in {j-1 .. n-1}</literal>
+                and <literal>j in {0 .. i+1}</literal>.
+              </para>
+            </listitem>
+
+            <listitem>
+              <para>
+                <literal>B[i +: j]</literal>
+                (width-based bitslice)
+                returns bits <literal>i</literal> up to <literal>i+j-1</literal>
+                (inclusive)
+                of the bitvector <literal>B</literal>.
+
+                Requires that <literal>i in {0 .. n-1}</literal>
+                and <literal>j in {0 .. n-i}</literal>.
+              </para>
+            </listitem>
+
+            <listitem>
+              <para>
+                <literal>B[i -: j]</literal>
+                (width-based bitslice)
+                returns bits <literal>i</literal> down to <literal>i-j+1</literal>
+                (inclusive)
+                of the bitvector <literal>B</literal>.
+
+                Requires that <literal>i in {0 .. n-1}</literal>
+                and <literal>j in {0 .. i}</literal>.
+              </para>
+            </listitem>
+
+            <listitem>
+              <para>
+                <literal>B[i *: j]</literal>
+                (element bitslice)
+                returns bits <literal>i*j</literal> up to <literal>i*j + j-1</literal>
+                (inclusive)
+                of the bitvector <literal>B</literal>.
+
+                Requires that <literal>i in {0 .. n/j}</literal>
+                and <literal>n % j == 0</literal>.
+              </para>
+            </listitem>
+
+            <listitem status="unimplemented">
+              <para>
+                <literal>B[i, j +: k]</literal> - any combination of the above -
+                the concatenation of a number of individual bitslices
+              </para>
+            </listitem>
+
+          </orderedlist>
+        </listitem>
+
+        <listitem>
+          <para>
+            If an identifier has array type, then <literal>'[' expression ']'</literal> is used to extract
+            an element from the array.
+
+            (In the future, we may extend array indexing to support slices as well.)
+          </para>
+
+          <para>
+            The index must be in the range <literal>{0..n-1}</literal> where <literal>n</literal>
+            is the length of the array.
+          </para>
+
+        </listitem>
+
+      </unorderedlist>
+
+      Note that the same syntax can also be used for function calls.
+
+    </section>
+
+    <section xml:id="aggregate-initializers-and-updates">
+      <title>Aggregate initializers and updates</title>
+
+      <programlisting>
+aggregate-expression = identifier [ '(' expression-list ')' ] '{' field-assignment-list '}'
+                     | '(' expression-list ')'
+                     | 'array' '(' expression-list ')'
+                     | expression 'with' '{' change-list '}'
+
+field-assignment = identifier '=>' expression
+
+change = identifier '=>' expression
+       | '[' slice-list => ']' '=>' expression
+
+slice = expression
+      | expression ':'  expression
+      | expression '+:' expression
+      | expression '-:' expression
+      | expression '*:' expression
+      </programlisting>
+
+      <para>
+        Aggregates consist of records, tuples, and arrays.
+        Aggregates can be copied with changes to form new aggregates.
+      </para>
+
+      <section xml:id="record-constructors">
+        <title>Record constructors</title>
+
+        <para>
+          Records are constructed using the name of the record type,
+          an optional list of size arguments,
+          and a list of field assignments.
+
+          For example, given these record declarations
+          <programlisting>
+record Int2 = { x : {0..}, y : {0..} };
+record FP(e_size : {0..}, size : {e+1..}) = { is_negative : Boolean, exponent : Bits(e_size), fraction : Bits(size - e_size - 1) };
+          </programlisting>
+          values of type <literal>Int2</literal> and <literal>FP(32, 8)</literal> can be constructed as follows.
+        </para>
+
+        <programlisting>
+let origin := Int2{ x => 0, y => 0 };
+let four := FP(32, 8){ is_negative => False, exponent => 0b1000_0001, fraction => Zero(23) };
+        </programlisting>
+
+        <para>
+          A value must be associated with every field of the record.
+
+          For readability and consistency, it is recommended that fields
+          are written in the same order that they occur in the declaration.
+        </para>
+
+        <para>
+          Records can be copied with changes to form new records.
+
+          For example,
+          <programlisting>
+let x1 := origin with { x => 1 };
+let minus_four := four with { is_negative => True };
+          </programlisting>
+
+        </para>
+      </section>
+
+      <section xml:id="tuple-constructors">
+        <title>Tuples</title>
+
+        <para>
+          A tuple consists of an ordered list of values that may have different types.
+        </para>
+
+        <para>
+          A tuple is constructed using a list of expressions enclosed in parentheses such as
+          <literal>(1, False)</literal>
+          or
+          <literal>(32, 0xFFFF_FFFF, 7)</literal>.
+        </para>
+
+        <para>
+          The only way to access individual elements of a tuple is by pattern matching in a
+          <link linkend="let-statements">let</link> or <link linkend="case-statements">case statement</link>.
+        </para>
+
+      </section>
+
+      <section xml:id="array-constructors">
+        <title>Arrays</title>
+
+        <para>
+          An array contains an ordered list of values that must have the same type.
+        </para>
+
+        <para>
+          An array can be constructed by the keyword <literal>array</literal>
+          followed by a list of expressions enclosed in parentheses such as
+          <literal>array (1, 4, 9)</literal>
+          or
+          <literal>array (0b00, 0b10, 0b11, 0b01)</literal>.
+        </para>
+
+        <para>
+          Elements of an array can be accessed using a zero-based integer index.
+        </para>
+
+        <para status="unimplemented">
+          <literal>array [3] (0 =&gt; Red, 1 =&gt; Green, 2 =&gt; Blue)</literal>
+        </para>
+
+        <para status="unimplemented">
+          <literal>array [100] (_ =&gt; 0)</literal> (this initializes
+              all array entries to zero)
+        </para>
+
+        <para>
+          Arrays can be copied with changes to form new arrays.
+
+          For example,
+          <programlisting>
+let a1 := array (1, 4, 9);
+let a2 := a1 with {1 => 2, 2 => 3}; // array (1, 2, 3)
+          </programlisting>
+        </para>
+
+      </section>
+
+      <section status="draft">
+        <itemizedlist spacing="compact">
+          <listitem>
+            <para>
+              <literal>(3, 1)</literal> - a record with type
+              <quote>(Integer, Integer)</quote>
+            </para>
+          </listitem>
+
+          <listitem>
+            <para>
+              <literal>(x =&gt; 3, y =&gt; 1)</literal> - a record with
+              type <literal>(x =&gt; Integer, y =&gt; Integer)</literal>
+            </para>
+          </listitem>
+
+          <listitem>
+            <para>
+              <literal>Point{x =&gt; 3, y =&gt; 1}</literal> - a record
+              with type Point.
+            </para>
+          </listitem>
+        </itemizedlist>
+
+        <para>
+          <emphasis>[Implementation status; records with named fields are
+          not implemented yet.]</emphasis>
+        </para>
+
+        <para>
+          If <quote>B</quote> is a bitvector of length n, then a bitvector
+          update can be written
+        </para>
+
+        <itemizedlist spacing="compact">
+
+          <listitem>
+            <para>
+              <quote>B with {i =&gt; x, j:k =&gt; y}</quote>
+            </para>
+          </listitem>
+
+          <listitem>
+            <para>
+              <quote>B with {F =&gt; x, G =&gt; y}</quote> - writing to
+              fields
+            </para>
+          </listitem>
+
+        </itemizedlist>
+
+        <para>
+          Todo: record constructors and exception constructors use
+          function call syntax <quote>E(x,y)</quote> or <quote>E(x =&gt;
+          3, y =&gt; 2)</quote>. They can also provide default argument
+          values.
+        </para>
+      </section>
+
+    </section>
+
+    <section xml:id="function-calls">
+      <title>Function calls</title>
+
+      <para>
+        Function calls invoke a function and either produce a value or throw an exception.
+
+        If the function can throw an exception, both the function definition and the function
+        call will be decorated with an exception marker <literal>?</literal> to warn the reader
+        that the expression could generate an exception.
+
+      </para>
+
+      <para>
+        Functions can be declared using three different syntaxes: using parentheses, using
+        square brackets or omitting parentheses/brackets (only allowed if there are no function arguments).
+
+        This flexibility allows the syntax to better reflect the role of the function.
+
+        The function call must use the same syntax that was used in the function definition.
+      </para>
+
+      <programlisting>
+function-call = function-identifier optional-function-exception-marker '(' actual-argument-list ')'
+              | function-identifier optional-function-exception-marker '[' actual-argument-list ']'
+              | function-identifier
+
+function-exception-marker = '?'
+
+actual-argument = expression
+                | identifier '=>' expression
+      </programlisting>
+
+      <para>
+        Actual arguments can be matched against non-implicit formal arguments either by position
+        (i.e., the i'th actual argument is matched against the i'th formal argument)
+        or by name
+        (i.e., a named argument <literal>f => a</literal> is used to match the actual
+        argument <literal>a</literal> against the formal argument <literal>f</literal>).
+      </para>
+
+      <para>
+        Actual arguments must be provided for all formal arguments except if the function
+        definition provides a default argument.
+      </para>
+
+      <para>
+        Named expressions can only appear after unnamed expressions.
+      </para>
+
+    </section>
+
+    <section xml:id="evaluation-order-of-expressions">
+      <title>Evaluation order of expressions</title>
+
+      <para>
+        In many languages, the evaluation order of an expression
+        can affect the value of that expression or the behavior such as
+        modifications of global variables or exceptions thrown.
+
+        To avoid the need for complex reasoning about evaluation order,
+        expressions are required to return the same value independent
+        of evaluation order.
+
+        This is enforced by the compiler performing a conservative analysis
+        of side-effects and exceptions and rejecting expressions that
+        could potentially have evaluation-order dependencies.
+
+        An exception to this rule is made for if expressions which evaluate conditions
+        in order and then execute the selected sub-expression
+        and for
+        expressions that use
+        <literal>and then</literal> or <literal>or else</literal>
+        that evaluate their first argument before optionally executing
+        their second argument.
+      </para>
+
+    </section>
+
+  </section>
+
+  <section xml:id="patterns">
+    <title>Patterns</title>
+
+    <para>
+      Patterns are used in expressions (using <literal>e 'in' pattern</literal> and
+      <literal>e 'not in' pattern</literal>), in assignments and in conditional statements.
+    </para>
+
+    <para>
+      There are two types of patterns:
+
+      <itemizedlist>
+        <listitem>
+          <quote>irrefutable patterns</quote>
+          are used to deconstruct aggregate values.
+          Matching an irrefutable pattern against a value always succeeds.
+        </listitem>
+
+        <listitem>
+          <quote>refutable patterns</quote>
+          are used both to deconstruct aggregate values.
+          and to test whether the value matches the pattern.
+        </listitem>
+
+      </itemizedlist>
+
+    </para>
+
+    <programlisting>
+pattern = irrefutable-pattern
+        | refutable-pattern
+    </programlisting>
+
+    <para>
+      Patterns can introduce new immutable variables that are bound to part of the value
+      being matched against.
+    </para>
+
+
+    <section xml:id="irrefutable-patterns">
+      <title>Irrefutable patterns</title>
+
+      <para>
+        Irrefutable patterns are primarily used to bind a value to a number of
+        variables or to discard part of a value using a wildcard pattern.
+
+        There are three types of irrefutable pattern.
+      </para>
+
+      <itemizedlist>
+        <listitem>
+          <para>
+            Matching a variable identifier pattern against a value introduces a new immutable variable
+            with that name and binds the variable to that value.
+
+            Matching always succeeds.
+          </para>
+        </listitem>
+
+        <listitem>
+          <para>
+            Matching a wildcard <literal>_</literal> against a value always succeeds.
+          </para>
+        </listitem>
+
+        <listitem>
+          <para>
+            Matching a tuple of irrefutable patterns against a tuple of values
+            is equivalent to matching each of the patterns against each of the values.
+
+            The tuples are required to be of the same length.
+
+            Matching always succeeds.
+          </para>
+        </listitem>
+      </itemizedlist>
+
+      <programlisting>
+irrefutable-pattern = variable-identifier
+                    | '_'
+                    | '(' irrefutable-pattern-list ')'
+      </programlisting>
+
+    </section>
+
+    <section xml:id="refutable-patterns">
+      <title>Refutable patterns</title>
+
+      <para>
+        Refutable patterns differ from irrefutable patterns in that
+        they may not match.
+
+        This makes them useful in conditional statements.
+      </para>
+
+      <programlisting>
+refutable-pattern = integer-literal
+                  | bitvector-literal
+                  | bitmask-literal
+                  | '{' set-pattern-list '}'
+                  | '(' pattern-list ')'
+set-pattern = constant-expression
+            | constant-expression '..' constant-expression
+            | mask-literal
+      </programlisting>
+
+      <para>
+        The syntax of refutable patterns and irrefutable patterns overlaps.
+
+        A refutable pattern is a pattern that is not also an irrefutable pattern.
+      </para>
+
+      <itemizedlist>
+        <listitem>
+          <para>
+            Matching an integer literal against a value succeeds if the value
+            of the literal is the same as the value.
+          </para>
+        </listitem>
+
+        <listitem>
+          <para>
+            Matching a bitvector literal against a value succeeds if the value
+            of the literal is the same as the value.
+          </para>
+        </listitem>
+
+        <listitem>
+          <para>
+            Matching a bitmask literal against a value succeeds if all of the defined
+            bits of the bitmask literal are the same as the corresponding bits
+            of the value.
+          </para>
+          <para>
+            For example, the pattern <literal>0b01xx</literal> matches the values
+            <literal>0b0100</literal>,
+            <literal>0b0101</literal>,
+            <literal>0b0110</literal>, and
+            <literal>0b0111</literal>
+            but does not match
+            <literal>0b0000</literal>, or
+            <literal>0b1011</literal>.
+          </para>
+        </listitem>
+
+        <listitem>
+          <para>
+            Matching a list of set-patterns against a value
+            succeeds if at least one of the set patterns matches the value.
+          </para>
+
+          <para>
+            Matching an expression set-pattern against a value succeeds if the value of the expression
+            equals the value.
+          </para>
+
+          <para>
+            Matching a range pattern <literal>lo '..' hi</literal> against a value
+            succeeds if the value is inside the inclusive range <literal>lo</literal> up to
+            <literal>hi</literal>.
+
+            That is, it matches if <literal>lo &lt;= value and value &lt;= hi</literal>.
+          </para>
+
+          <para>
+            Matching a bitmask literal against a value succeeds if all of the defined
+            bits of the bitmask literal are the same as the corresponding bits
+            of the value.
+          </para>
+        </listitem>
+
+        <listitem>
+          <para>
+            Matching a tuple of refutable patterns against a tuple of values
+            is equivalent to matching each of the patterns against each of the values.
+
+            The tuples are required to be of the same length.
+
+            Matching succeeds only if all patterns match with their corresponding value.
+          </para>
+        </listitem>
+
+      </itemizedlist>
+
+      <para status="implementation">
+        <emphasis>[Implementation note: the exception matching syntax is
+        not supported yet: use <quote>when x : E =&gt;</quote> for
+        now]</emphasis>
+      </para>
+
+      <para status="design">
+        Note: if we later choose to support algebraic datatypes, we
+        would use the same pattern matching syntax as for exceptions.
+      </para>
+
+    </section>
+
+  </section>
+
+  <section xml:id="statements">
+    <title>Statements</title>
+
+    <para>
+      Statements are used to perform a sequence of actions.
+
+      Statements can fail if they evaluate an expression that fails
+      or if they perform an incorrect actions such as writing
+      beyond the bounds of an array.
+
+      Statements can read and can modify local state and global state
+      and can throw and catch exceptions.
+    </para>
+
+    <programlisting>
+statement = variable-declaration-statement
+          | assignment-statement
+          | return-statement
+          | assertion-statement
+          | if-statement
+          | case-statement
+          | for-statement
+          | while-statement
+          | repeat-statement
+          | procedure-call
+          | throw-statement
+          | catch-statement
+    </programlisting>
+
+    <section xml:id="variable-declaration-and-initialization">
+      <title>Variable declaration and initialization</title>
+
+      <programlisting>
+variable-declaration-statement = 'let' variable-declarations [ ':' type ] := expression ';'
+                               | 'var' variable-declarations [ ':' type ] := expression ';'
+                               | 'var' identifier-list ':' type ';'
+
+variable-declarations = variable-declaration
+                      | '(' variable-declaration-list ')'
+
+variable-declaration = identifier
+                     | '_'
+                     | identifier ':' type
+                     | '_' ':' type
+      </programlisting>
+
+      <para>
+        Local variables can be mutable (can be modified after they are created)
+        or immutable (cannot be modified after they are created).
+      </para>
+
+      <para>
+        The type of a variable can be inferred from the type of its initializer
+        so it is not necessary to state the type when declaring a local variable.
+
+        If a type is provided to improve readability, it must match the type
+        of the expression.
+      </para>
+
+      <para>
+        If the type of the expression is a tuple of length n, then the tuple can be
+        deconstructed into its component parts using a variable declaration
+        of the form <literal>( v1, v2, ... vn )</literal>.
+      </para>
+
+      <para>
+        For example, if a function <function>F</function> returns a pair of values,
+        two variables <variable>x</variable> and <variable>y</variable>
+        can be declared as follows
+      </para>
+
+      <programlisting>
+let (x, y) = F();
+      </programlisting>
+
+      <para>
+        If the value of an expression or an element of a tuple, is not needed,
+        the pseudo-identifier <literal>_</literal> can be used to discard the
+        value.
+
+        The most common use of this is when calling a function that returns
+        a value for its side-effects and ignoring the return value.
+      </para>
+
+      <programlisting>
+let _ = Read_Address(address); // check the address is legal but ignore the result
+      </programlisting>
+
+      <para status="design">
+        todo: are (irrefutable) patterns allowed in assignments.
+      </para>
+
+
+      <para status="design">
+        Should 'let' be changed to 'const' to make it clearer that it is
+        a constant?
+
+        Functional languages use let for constants; Javascript uses const
+        for constants; Rust and Swift use let for constants.
+      </para>
+
+      <para status="design">
+        todo: should let expressions use <literal>=</literal> instead of
+        <literal>:=</literal> to indicate that they are not actually doing an
+        assignment.
+
+        This would make the spec a bit quieter but might raise questions in the
+        reader about the difference.
+
+        (But maybe they already have that question about let vs. var?)
+      </para>
+
+      <section xml:id="variable-initialization">
+        <title>All variables must be initialized before use</title>
+
+        <para>
+          Mutable variables do not need to be initialized at the point where
+          they are declared but they must be initialized before they are read.
+
+          This is enforced by the compiler performing a conservative analysis
+          to ensure that every path between declaration and a read contains
+          an assignment to the variable.
+        </para>
+
+        <para>
+          For example,
+        </para>
+
+        <programlisting>
+var x : Integer;
+if … then
+    x := 1;
+elsif … then
+    x := 2;
+else
+    Std::Unreachable();
+endif;
+let y := x;
+        </programlisting>
+
+        <para>
+          Note that, if the else clause was missing, or did not contain
+          <quote>Unreachable</quote>, then control flow could reach the
+          final line without initializing <quote>x</quote>. This would be
+          an error.
+        </para>
+
+        <para>
+          Note that a structure such as a record or an array must be fully
+          initialized. This can be done using either aggregate expressions
+          (i.e., record expressions and array expressions) or using a
+          previously initialized record or array.
+        </para>
+
+      </section>
+
+      <section status="unimplemented">
+        <para>
+          Patterns can use named fields
+        </para>
+
+        <programlisting>
+let (x =&gt; tx, y =&gt; ty) := G(3) // G is expected to return a tuple with fields x and y.
+        </programlisting>
+
+      </section>
+
+    </section>
+
+    <section xml:id="assignments">
+      <title>Assignments</title>
+
+      <para>
+        Assignment statements are used to change the value of mutable variables.
+      </para>
+
+      <programlisting>
+assignment-statement = lhs ':=' expression ';'
+
+lhs = name
+    | '_'
+    | '(' lhs-list ')'
+
+name = variable-identifier
+     | nullary-function-identifier
+     | name '[' actual-argument-list ']'
+     | name '.' field_name
+      </programlisting>
+
+      <table xml:id="table_example_assignments">
+        <caption>Example assignments</caption>
+
+        <thead>
+          <tr>
+            <th>
+              Syntax
+            </th>
+            <th>
+              Meaning
+            </th>
+          </tr>
+        </thead>
+
+        <tbody>
+
+          <tr>
+            <td>
+              y := y + 1;
+            </td>
+            <td>
+              Increment an Integer variable
+            </td>
+          </tr>
+
+          <tr>
+            <td>
+              A[i] := 3;
+            </td>
+            <td>
+              Set element number <literal>i</literal> of an array <variable>A</variable>
+              to <literal>3</literal>.
+            </td>
+          </tr>
+
+          <tr>
+            <td>
+              float.is_negative := True;
+            </td>
+            <td>
+              Set a field <literal>is_negative</literal> of a record <variable>float</variable>
+              to <literal>True</literal>.
+            </td>
+          </tr>
+
+          <tr>
+            <td>
+              RIP := next_rip;
+            </td>
+            <td>
+              Set a variable <variable>RIP</variable> to a new value.
+            </td>
+          </tr>
+
+          <tr>
+            <td>
+              EAX := Std::Bits::Zero(32);
+            </td>
+            <td>
+              Call an <link linkend="assignment-function">assignment function</link>
+              called <function>EAX</function> passing it the argument
+              <literal>Std::Bits::Zero(32)</literal>.
+            </td>
+          </tr>
+
+          <tr>
+            <td>
+              RIP[0] := 0b0;
+            </td>
+            <td>
+              Set the bottom bit of a variable <variable>RIP</variable> to zero.
+
+              Note that this reads the current value of
+              <variable>RIP</variable>,
+              clears the bottom bit,
+              and writes the value back to
+              <variable>RIP</variable>.
+            </td>
+          </tr>
+
+          <tr>
+            <td>
+              EAX[0] := 0b0;
+            </td>
+            <td>
+              Set the bottom bit of a variable <variable>EAX</variable> to zero.
+
+              Note that this calls the nullary function <function>EAX</function>
+              to read the current value of EAX,
+              clears the bottom bit,
+              and calls the assignment function <function>EAX:=</function>
+              to write the value back to EAX.
+            </td>
+          </tr>
+
+        </tbody>
+
+      </table>
+
+      <section status="design">
+        <para>
+          Structured mutable variables (i.e., records and arrays) can have
+          their components assigned to - but note that it must have been
+          fully initialized in advance.
+
+          That is, you need to write
+          something like <quote>var r = Point{x=&gt;0, y=&gt;0};</quote>
+          or <quote>var r = Init_Point();</quote> or <quote>var r : Point;
+          … r = Init_Point();</quote> before you can start modifying
+          individual fields.
+
+          This is because we are choosing not to try to
+          track whether each individual field has been initialized.
+        </para>
+
+        <para>
+          Note that the lhs syntax is similar to the syntax of irrefutable
+          patterns but extended to support component access and restricted
+          by omitting field patterns.
+        </para>
+
+      </section>
+
+    </section>
+
+    <section xml:id="return-statements">
+      <title>Return statements</title>
+
+      <para>
+        Return statements terminate execution of the currently executing
+        function or procedure.
+
+        If returning from a function, an expression is evaluated to
+        produce the return value of the function.
+
+        The return value must match the function return type.
+
+        Return statements are not restricted to only occurring at the
+        end of a function. For example,  they can exit in the middle of a loop.
+      </para>
+
+      <programlisting>
+return-statement = 'return' ';'
+                 | 'return' expression ';'
+      </programlisting>
+
+    </section>
+
+    <section xml:id="assertions">
+      <title>Assertions</title>
+
+      <para>
+        Assertions are used to state properties that must hold
+        at some point in the execution.
+
+        If the boolean expression evaluates to <literal>False</literal>,
+        execution of the entire specification fails.
+
+        It is not possible to catch assertion failures.
+
+        Assertion failure indicates that it is not possible to draw any
+        conclusion about the behavior of the hardware being specified.
+        The problem should be reported to the authors of the specification
+        so that the specification can be corrected.
+
+      </para>
+
+      <programlisting>
+assertion-statement = 'assert' boolean-expression ';'
+      </programlisting>
+
+    </section>
+
+
+    <section xml:id="if-statements">
+      <title>If statements</title>
+
+      <para>
+        If statements conditionally execute a list of statements
+        selected by evaluating boolean expressions until the first
+        <literal>True</literal> is found.
+
+        If no boolean-expression evaluates to <literal>True</literal>,
+        and there is an else-clause, the else clause is executed.
+
+        If no boolean-expression evaluates to <literal>True</literal>,
+        and there is no else-clause, the if statement completes
+        with no further action.
+
+      </para>
+
+      <programlisting>
+if-statement = 'if' boolean-expression 'then' statement-list
+               { 'elsif' boolean-expression 'then' statement-list }
+               [ 'else' statement-list ]
+               'endif' ';'
+      </programlisting>
+
+      <para>
+        For example,
+      </para>
+
+      <programlisting>
+if i in {1..31} then
+    return R[i];
+else
+    return Zero(32);
+endif;
+      </programlisting>
+
+    </section>
+
+    <section xml:id="case-statements">
+      <title>Case statements</title>
+
+      <para>
+        Case statements conditionally execute a list of statements
+        selected by matching a value against patterns
+        until the first match is found.
+
+        Patterns can optionally be augmented with a guard expression
+        that must evaluate to <literal>True</literal> for the pattern
+        to be considered a match.
+      </para>
+
+      <para>
+        If no pattern matches, an optional default clause is executed.
+        If no pattern matches and there is no default clause,
+        execution of the statement fails: there is no silent fall-through.
+      </para>
+
+      <programlisting>
+case-statement = 'case' expression 'of'
+                 { 'when' pattern [ guard ] '=>' statement-list }
+                 [ 'otherwise' '=>' statement-list ]
+                 'endcase' ';'
+
+guard = 'if' boolean-expression
+      </programlisting>
+
+      <para>
+        The discriminant expression is evaluated exactly once.
+      </para>
+
+      <para status="unimplemented">
+
+        Implementations should warn about incomplete pattern matches and
+        unreachable clauses but this can is complicated by the use of guard
+        conditions.
+
+      </para>
+
+    </section>
+
+    <section xml:id="for-statements">
+      <title>For statements</title>
+
+      <para>
+        For loops execute a statement list a number of times.
+
+        The loop control variable is incremented each time
+        round the loop if the <literal>to</literal> form is used
+        or decremented each time round the loop if the
+        <literal>downto</literal> form is used.
+      </para>
+
+      <programlisting>
+for-statement = 'for' identifier ':=' expression ('to'|'downto') expression 'do'
+                    statement-list
+                'endfor' ';'
+      </programlisting>
+
+      <para>
+        For example, the following loop executes the loop body 10 times.
+      </para>
+
+
+      <programlisting>
+var s := 0;
+for i := 1 to 10 do
+    s := s + i;
+endfor;
+assert s == 55;
+      </programlisting>
+
+      <para>
+        The start and end expressions are evaluated once before execution of the loop body.
+
+        The loop control variable is immutable within the body of the loop
+        and only accessible inside the loop.
+
+        The variable can be thought of as if it was declared
+        <quote>let i : {e1..e2} := …</quote> at the start of the
+        statement list.
+      </para>
+
+      <para>
+        If e1 &gt; e2, the loop executes 0 times. If e1 == e2, the loop
+        executes 1 time. The loop executes <quote>Max(1 + e2 - e1,
+        0)</quote> times.
+      </para>
+
+    </section>
+
+    <section xml:id="while-statements">
+      <title>While statements</title>
+
+      <para>
+        While loops execute a statement list as long as the guard condition is <literal>True</literal>.
+
+        The loop body will not be executed if the guard condition is <literal>False</literal>
+        when the while statement is executed.
+
+      </para>
+
+      <programlisting>
+while-statement = 'while' boolean-expression 'do'
+                    statement-list
+                  'endwhile' ';'
+      </programlisting>
+
+    </section>
+
+    <section xml:id="repeat-statements">
+      <title>Repeat statements</title>
+
+      <para>
+        Repeat loops execute a statement list until the termination condition is <literal>True</literal>.
+
+        The loop body will always be executed at least once.
+
+      </para>
+
+      <programlisting>
+repeat-statement = 'repeat'
+                      statement-list
+                   'until' boolean-expression ';'
+      </programlisting>
+
+    </section>
+
+    <section xml:id="procedure-call">
+      <title>Procedure calls</title>
+
+      <para>
+        Statements can call functions that do not return a value using a procedure call.
+
+        (To call an assignment function or a function that does return a value use an
+        <link linkend="assignment-statement">assignment statement</link>.)
+
+      </para>
+
+      <programlisting>
+procedure-call = function-identifier optional-procedure-exception-marker '(' parameter-list ')'
+
+procedure-exception-marker = '?' | '!'
+      </programlisting>
+
+    </section>
+
+    <section xml:id="exception-statements">
+      <title xml:id="exception-statements_title">Throw and Try-catch statements</title>
+
+      <para>
+        Exceptions can be thrown using a throw statement and caught using a try-catch
+        statement.
+      </para>
+
+      <programlisting>
+throw-statement = 'throw' expression ';'
+
+catch-statement =
+'try'
+    statement-list
+'with'
+    { 'when' pattern [ guard ] '=>' statement-list }
+'endtry' ';'
+
+guard = 'if' boolean-expression
+      </programlisting>
+
+      <para status="design">
+        There is a very strong argument that
+        <quote>throw</quote> should have an exception marker <literal>!</literal>.
+      </para>
+
+    </section>
+
+  </section>
+
+  <section xml:id="module-system" status="unimplemented">
+    <title>Module system</title>
+
+    <para>
+      todo: Use clauses can be used to remove paths and/or rename
+      <literal>use A::B</literal> (lets you write <literal>B::C</literal>)
+      and
+      <literal>use A::B::C as A_B_C</literal>.
+
+      We should be careful of using <literal>use</literal>
+      clauses because, if you see a call to a
+      function <literal>C(…)</literal>,
+      then you will likely search the rest
+      of the SDM for a function called <literal>C</literal> and it would be
+      hard to find the use clause that would tell you that
+      <literal>C</literal> really means <literal>A::B::C</literal>.
+
+    </para>
+
+    <para>
+      There are two types of module: atomic modules and compound
+      modules. Both types of module define import and export interfaces.
+      Both types of module can instantiate modules within them.
+    </para>
+
+    <para>
+      The difference is that
+    </para>
+
+    <itemizedlist spacing="compact">
+      <listitem>
+
+        <para>
+          An atomic module can contain global definitions. Typically
+          these are specified by a list of files containing definitions.
+        </para>
+
+      </listitem>
+      <listitem>
+
+        <para>
+          An atomic module can only instantiate another module once.
+        </para>
+
+      </listitem>
+    </itemizedlist>
+
+    <para>
+      while
+    </para>
+
+    <itemizedlist spacing="compact">
+      <listitem>
+
+        <para>
+          A compound module cannot contain global definitions
+        </para>
+
+      </listitem>
+      <listitem>
+
+        <para>
+          A compound module can instantiate the same module multiple
+          times and can explicitly specify the imports of each instance.
+        </para>
+
+      </listitem>
+    </itemizedlist>
+
+    <programlisting>
+interface I
+    function F(x : Integer) -&gt; Integer;
+end interface I
+
+interface J
+    function G(x : Integer) -&gt; Integer;
+    function H(x : Integer) -&gt; Integer:
+end interface J
+
+// an atomic module
+module Foo
+    import A : I;
+    export B : I;
+definitions
+    file &quot;F.isa&quot;; // get some additional definitions from this file
+    module C = Bar(A);  // instantiate module Bar - module instance will be called C
+    use C::G; // allows us to refer to G instead of having to write &quot;C::G&quot;
+    function B::F(x : Integer) -&gt; Integer
+    begin
+        return A::F(x+1) + G(3) * C::H(x);
+    end
+end module Foo
+    </programlisting>
+
+    <para>
+      Note the trick of naming the module the same as the interface so
+      that references to the functions will have the same qualifier as
+      definitions of the functions.
+    </para>
+
+    <programlisting>
+// another atomic module
+module Bar
+    import In : I;
+    export C : J; // use of _ means to export while keeping qualifier
+    function C::G(x : Integer) …
+end
+
+// a compound module
+module Compound
+    import A : I;  // I is an interface, A is the namespace identifier
+    export B : I;
+connect
+    B = Atomic(A);
+end module Compound
+    </programlisting>
+
+    <para>
+      Todo: In practice, we are more likely to compose modules using
+      the module instantiation API so maybe we would never use the compound module syntax?
+    </para>
+
+    <para>
+      A concrete example where we put all configuration information for
+      a specific configuration into a module and use that as an input
+      parameter to the IA specification.
+    </para>
+
+    <programlisting>
+module Config_Atom
+    export Config : Processor_Configuration;
+    let Config::Have_AVX_512 := False;
+    …
+end module Config_Atom
+</programlisting>
+
+    <para>
+      (We would expect to have Config_Xeon too.)
+    </para>
+
+    <programlisting>
+module IA_Spec
+    import Config : Processor_Configuration;
+    …
+    function …
+        if Config::Have_AVX_512 then …
+    …
+end module IA_Spec
+
+module Atom_Spec
+    …
+connect
+    config = Config_Atom();
+    spec = IA_Spec(config);
+    …
+end module Atom_Spec;
+</programlisting>
+
+    <para>
+      todo: maybe add a shorthand syntax for adding integer parameters as
+      well as interface parameters.
+    </para>
+
+  </section>
+
+  <section xml:id="standard-library">
+    <title>Standard library</title>
+
+    <para>
+      The standard library <literal>Std</literal> provides useful functions
+      for use in writing specifications.
+
+      In practice, <literal>use</literal> clauses are used to rename almost
+      all of these functions so that, for example, we can write
+      <literal>Unsigned(0b111)</literal> instead of <literal>Std::Integer::Unsigned(0b111)</literal>.
+    </para>
+
+    <section xml:id="types-2">
+      <title>Types</title>
+
+      <para>
+        The standard library includes the following types
+      </para>
+
+      <programlisting>
+type Std::Integer; // built in to the language
+
+type Std::String; // built in to the language
+
+enumeration Std::Boolean (Std::Boolean::False, Std::Boolean::True);
+
+type Std::Bits(n : {0..}) // built in to the language
+
+type Std::Bit = Std::Bits(1);
+    </programlisting>
+
+    </section>
+    <section xml:id="integer-functions">
+      <title>Integer functions</title>
+
+      <programlisting>
+// Interpret a bitvector as an unsigned number
+function Std::Integer::Unsigned(implicit size : {0..}, x : Bits(size)) -&gt; {0 .. 2**size-1};
+
+// Interpret a bitvector as an signed 2's complement number
+function Std::Integer::Signed(implicit size : {1..}, x : Bits(size)) -&gt; {-2**(size-1) .. 2**(size-1)-1};
+
+// Divide left by right and round the result towards zero
+// Requires right != 0
+function Std::Integer::Truncated_Divide(left : Integer, right : Integer) -&gt; Integer
+
+// Remainder of dividing left by right and rounding the result towards zero
+// Truncated_Divide(x, y) * y + Truncated_Remainder(x, y) == x
+// Requires right != 0
+function Std::Integer::Truncated_Remainder(left : Integer, right : Integer) -&gt; Integer
+
+// Divide left by right and round the result down towards negative infinity
+// Requires right != 0
+function Std::Integer::Floor_Divide(left : Integer, right : Integer) -&gt; Integer
+
+// Remainder of dividing left by right and rounding the result towards negative infinity
+// Floor_Divide(x, y) * y + Floor_Remainder(x, y) == x
+// Requires right != 0
+function Std::Integer::Floor_Remainder(left : Integer, right : Integer) -&gt; Integer
+
+// Absolute value
+function Std::Integer::Abs(x : Integer) -&gt; {0..}
+
+// Minimum of left and right
+function Std::Integer::Min(left : Integer, right : Integer) -&gt; Integer
+
+// Maximum of left and right
+function Std::Integer::Max(left : Integer, right : Integer) -&gt; Integer
+
+// The smallest value that is an exact multiple of alignment and not less than x
+function Std::Integer::Align_Up(x : Integer, alignment : {1..}) -&gt; Integer
+
+// The smallest value that is an exact multiple of alignment and not greater than x
+function Std::Integer::Align_Down(x : Integer, alignment : {1..}) -&gt; Integer
+
+// Logarithm of x rounded down
+function Std::Integer::Floor_Log2(x : {1..}) -&gt; {0..}
+
+// Logarithm of x rounded up
+function Std::Integer::Ceiling_Log2(x : {1..}) -&gt; {0..}
+
+// Test if x is a power of 2
+function Std::Integer::Is_Power_Of_Two(x : {1..}) -&gt; Boolean
+
+// Test if x is an odd number
+function Std::Integer::Is_Odd(x : Integer) -&gt; Boolean
+
+// Test if x is an even number
+function Std::Integer::Is_Even(x : Integer) -&gt; Boolean
+      </programlisting>
+
+      <para status="design">
+        Should we also add <function>Ceiling_Divide</function> and
+        <function>Ceiling_Remainder</function>?
+        These might be useful in defining functions like
+        <function>Align_Up</function>.
+
+        Should we add the full set of rounding variants including
+        rounding away from zero?
+      </para>
+
+      <para status="design">
+        todo: Should Align_Up/Down functions restrict alignment to power of 2?
+      </para>
+
+    </section>
+
+    <section xml:id="bitvector-functions">
+      <title>Bitvector functions</title>
+
+      <programlisting>
+// Returns a bitvector of length `size` of all zero bits
+function Std::Bits::Zero(size : {0..}) -&gt; Bits(size)
+
+// Returns a bitvector of length `size` of all one bits
+function Std::Bits::All_Ones(size : {0..}) -&gt; Bits(size)
+
+// Test whether a bitvector is zero
+function Std::Bits::Is_Zero(implicit size : {0..}, x : Bits(size)) -&gt; Boolean
+
+// Test whether a bitvector is all ones
+function Std::Bits::Is_All_Ones(implicit size : {0..}, x : Bits(size)) -&gt; Boolean
+
+// Create a larger bitvector by concatenating multiple copies of `x`.
+function Std::Bits::Repeat(implicit size : {0..}, x : Bits(size), copies : {0..}) -&gt; Bits(size * copies)
+
+// Extend a bitvector to a larger size, padding the upper bits with zeros
+function Std::Bits::Zero_Extend(implicit size : {0..}, x : Bits(size), new_size : {size..}) -&gt; Bits(new_size)
+
+// Extend a bitvector to a larger size, padding the upper bits with a copy of the sign bit `x[size-1]`
+function Std::Bits::Sign_Extend(implicit size : {1..}, x : Bits(size), new_size : {size..}) -&gt; Bits(new_size)
+
+
+// Shift a bitvector left by `amount` padding the right hand side with zeros.
+// If `amount &gt;= size`, the result is `Zero(size)`.
+//
+// Note: because the size of the result is the same as the input,
+// it is often useful to first Zero/Sign_Extend the input.
+function Std::Bits::Shift_Left(implicit size : {0..}, x : Bits(size), amount : {0..}) -&gt; Bits(size)
+
+// Shift a bitvector right by `amount` padding the right hand side with copies of the sign bit `x[size-1]`
+// If `amount &gt;= size`, the result is `Repeat(x[size-1], size)`.
+//
+// Note: because the size of the result is the same as the input,
+// it is often useful to first Zero/Sign_Extend the input.
+function Std::Bits::Shift_Right_Arithmetic(implicit size : {0..}, x : Bits(size), amount : {0..}) -&gt; Bits(size)
+
+// Shift a bitvector right by `amount` padding the right hand side with zeros.
+// If `amount &gt;= size`, the result is `Zero(size)`.
+//
+// Note: because the size of the result is the same as the input,
+// it is often useful to Zero/Sign_Extend the input.
+function Std::Bits::Shift_Right_Logical(implicit size : {0..}, x : Bits(size), amount : {0..}) -&gt; Bits(size)
+
+// Rotate a bitvector left by `amount` padding the right hand side with the upper bits of `x`
+// If `amount &gt;= size`, the result is the same as `Std::Bits::Rotate_Left(x, amount % size)`
+function Std::Bits::Rotate_Left(implicit size : {0..}, x : Bits(size), amount : {0..}) -&gt; Bits(size)
+
+// Rotate a bitvector right by `amount` padding the lower hand side with the lower bits of `x`
+// If `amount &gt;= size`, the result is the same as `Std::Bits::Rotate_Right(x, amount % size)`
+function Std::Bits::Rotate_Right(implicit size : {0..}, x : Bits(size), amount : {0..}) -&gt; Bits(size)
+
+
+// Convert an integer to a bitvector - handling overflow by saturating.
+//
+// That is, if `x` is outside the range `{0 .. 2**size-1}`,
+// the result is either `Zero(size)` or `All_Ones(size)`
+function Std::Bits::Unsigned_Saturate(x : Integer, size : {0..}) -&gt; Bits(size)
+
+// Convert an integer to a bitvector - handling overflow by saturating.
+//
+// That is, if `x` is outside the range `{-2**(size-1) .. 2**(size-1)-1}`,
+// the result is either `Bits(-2**(size-1))` or `Bits(2**(size-1)-1)`
+function Std::Bits::Signed_Saturate(x : Integer, size : {0..}) -&gt; Bits(size)
+
+// Return the number of bits set to '0b1' in x
+function Std::Bits::Count_Set_Bits(implicit size : {0..}, x : Bits(size)) -&gt; {0..size-1}
+
+// Return the number of consecutive zero bits at the top of a bitvector.
+// e.g.,. Count_Leading_Zero_Bits(0b0011_0000) == 2
+function Std::Bits::Count_Leading_Zero_Bits(implicit size : {0..}, x : Bits(size)) -&gt; {0..size-1}
+
+// Return the number of matching bits at the top of a bitvector.
+// e.g.,. Count_Leading_Sign_Bits(0b0011_0000) == 2
+// e.g.,. Count_Leading_Sign_Bits(0b1110_0000) == 3
+function Std::Bits::Count_Leading_Sign_Bits(implicit size : {1..}, x : Bits(size)) -&gt; {1..size-1}
+
+// Return the number of consecutive zero bits at the bottom of a bitvector.
+// e.g.,. Count_Trailing_Zero_Bits(0b0011_0000) == r
+function Std::Bits::Count_Trailing_Zero_Bits(implicit size : {0..}, x : Bits(size)) -&gt; {0..size-1}
+
+// Test whether there are an even number of bits set in `x`
+function Std::Bits::Is_Parity_Even(implicit size : {0..}, x : Bits(size)) -&gt; Boolean
+
+// Test whether there are an odd number of bits set in `x`
+function Std::Bits::Is_Parity_Odd(implicit size : {0..}, x : Bits(size)) -&gt; Boolean
+</programlisting>
+
+      <para status="design">
+        Note: the Shift/Rotate functions obey the rule "F(x, c + d) == F(F(x, c), d)"
+        for any non-negative integers c and d.
+      </para>
+
+      <para>
+        Note: it is interesting to note that the functions Is_Zero,
+        Is_All_Ones and Is_Parity_Even/Odd are reductions over
+        bitvectors using and, or and xor.
+
+        There is no general syntax for defining these.
+      </para>
+
+    </section>
+
+    <section xml:id="miscellaneous-functions">
+      <title>Miscellaneous functions</title>
+
+      <programlisting>
+function Std::Unreachable();
+      </programlisting>
+
+      <para>
+        <literal>Std::Unreachable</literal> is used to indicate
+        that some part of the specification cannot be reached.
+
+        That is, there are no start conditions that would result
+        in the function being called.
+      </para>
+
+      <para>
+
+        If this function is called, it indicates a bug in the specification
+        and it is not possible to draw any
+        conclusion about the behavior of the hardware being specified.
+
+        The problem should be reported to the authors of the specification
+        so that the specification can be corrected.
+      </para>
+
+      <para>
+
+        Calls to this function are primarily used to help readers understand
+        the specification but it also helps the compiler
+        to detect uninitialized local variables.
+
+      </para>
+
+      <para>
+        Note that no exception marker is required when calling this function
+        because it terminates execution, does not add any new control flow,
+        and does not raise an exception.
+      </para>
+
+      <programlisting>
+function Std::End_Execution(success : Boolean)
+      </programlisting>
+
+      <para>
+        <literal>Std::End_Execution</literal> is not normally used in
+        a specification but it can be useful when implementing
+        helper code that is used when executing a specification.
+
+        The function terminates execution of the specification either
+        indicating successful execution (e.g., because some termination
+        condition has been met) or indicating unsuccessful execution
+        (e.g., after printing an error message).
+
+      </para>
+
+      <para>
+        Note that no exception marker is required when calling this function
+        because it terminates execution, does not add any new control flow,
+        and does not raise an exception.
+      </para>
+
+    </section>
+
+    <section xml:id="print-statements">
+      <title>Print function</title>
+
+      <para>
+        The print function uses a variant of Python f-strings
+      </para>
+
+        <programlisting>
+Print("x = {x:2d}, y = {y:4x}");
+        </programlisting>
+
+      <para>
+        which will produce output like <quote>x = 0, y = ff</quote>.
+        (Note that we are printing x in a field of 2 characters and y in
+        a field of 4 characters).
+      </para>
+
+      <para>
+        Print statements are not normally used in finished specifications
+        but they can be useful when testing/debugging changes,
+        in test harnesses, etc.
+
+      </para>
+
+      <para>
+        <emphasis>[Implementation note: at the moment, format strings
+        can’t use format modifiers like <quote>:2d</quote> or
+        <quote>:4x</quote>.]</emphasis>
+      </para>
+
+      <para status="design">
+        todo: Underneath the hood, this probably depends on operations
+        to format values into string buffers. Will we expose that
+        implementation detail to users? Would it be useful?
+      </para>
+
+    </section>
+
+  </section>
+</section>
