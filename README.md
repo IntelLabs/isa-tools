@@ -66,7 +66,7 @@ To build and run the ISA interpreter, you will need to install OCaml.
 The following commands are sufficient to install requirements and to build iii on Ubuntu systems.
 
     apt update
-    apt install -y libgmp-dev opam pkg-config
+    apt install -y libgmp-dev opam pkg-config cmake
     pip3 install -r requirements.txt
     opam init --no-setup --disable-sandboxing --compiler=5.4.1
     opam install . --deps-only --with-test --with-doc --locked --yes
