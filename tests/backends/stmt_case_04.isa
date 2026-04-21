@@ -6,7 +6,7 @@
 function Test(x : Integer) -> Integer
 begin
     case x of
-        when 0x1_0000_0000_0000_0000 => return 1;
+        when 18_446_744_073_709_551_616 => return 1; // 2^64
         // CHECK: Unimplemented large (> 64 bit) integer pattern
         otherwise => return 10;
     end;
