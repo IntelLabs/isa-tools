@@ -8,13 +8,13 @@ end
 
 function main() -> Builtin::Foreign::CInt
 begin
-    Std::Print::SInt::Hex(FUT_8(0x0)); Print("\n");
+    Std::Print::SInt::Hex(FUT_8(0)); Print("\n");
     // CHECK: i8'x0
-    Std::Print::SInt::Hex(FUT_8(0x7f)); Print("\n");
+    Std::Print::SInt::Hex(FUT_8(127)); Print("\n");
     // CHECK: i8'x7f
-    Std::Print::SInt::Hex(FUT_8(-0x1)); Print("\n");
+    Std::Print::SInt::Hex(FUT_8(-1)); Print("\n");
     // CHECK: -i8'x1
-    Std::Print::SInt::Hex(FUT_8(-0x80)); Print("\n");
+    Std::Print::SInt::Hex(FUT_8(-128)); Print("\n");
     // CHECK: -i8'x80
 
     return Builtin::Foreign::CInt::From_Integer(0);

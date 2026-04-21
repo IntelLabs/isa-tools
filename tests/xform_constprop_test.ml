@@ -342,11 +342,11 @@ let constprop_tests : unit Alcotest.test_case list =
      "var i : Integer; function Foo(x : Integer) begin end"
      "case i of
          when 16 => Foo(i);
-         when 0x20 => Foo(i);
+         when 32 => Foo(i);
       endcase;"
      "case i of
          when 16 => Foo(16);
-         when 0x20 => Foo(32);
+         when 32 => Foo(32);
       endcase;");
     ("case stmt bitvectors", `Quick, test_cp_stmts
      "var i : Bits(8); function Foo(x : Bits(8)) begin end"
