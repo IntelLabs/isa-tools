@@ -48,11 +48,7 @@ let expr : test_case list =
 
     ( "literal hex",
       [ Backend_C; Backend_Verilog ],
-      "function F() -> Integer begin return 0x01_0; end" );
-
-    ( "literal hex (negative)",
-      [ Backend_C; Backend_Verilog ],
-      "function F() -> Integer begin return -0x01_0; end" );
+      "function F() -> Bits(12) begin return 0x01_0; end" );
 
     ( "literal bitvector",
       [ Backend_C; Backend_Verilog ],
