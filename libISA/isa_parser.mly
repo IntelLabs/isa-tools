@@ -434,7 +434,7 @@ let arg :=
 (* This rule is just to give a better error message *)
 let semi :=
     | ";" ; { () }
-    | { raise (Parse_error_locn (Range($symbolstartpos, $endpos), "Missing semicolon after end/endif/...")) }
+    | { raise (Parse_error_locn (Range($symbolstartpos, $endpos), "Missing semicolon after end/endif/endcase/...")) }
 
 let compound_statement :=
     | conditional_statement
