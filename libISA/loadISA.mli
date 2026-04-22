@@ -21,7 +21,6 @@ val read_files : string list -> string list -> bool -> Isa_ast.declaration list
 (** Parse and typecheck ISA files. All files are first parsed then typechecked
     together.*)
 
-val read_config : TC.Env.t -> Loc.t -> string -> Ident.t * AST.expr * AST.ty
 val read_expr : TC.Env.t -> Loc.t -> string -> AST.expr
 val read_stmt : TC.Env.t -> string -> AST.stmt list
 val read_stmts : TC.Env.t -> string -> AST.stmt list

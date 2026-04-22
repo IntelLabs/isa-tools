@@ -10,7 +10,7 @@
 
 open LibISA
 open Isa_ast
-module Parser = Asl_parser
+module Parser = Isa_parser
 module TC = Tcheck
 module AST = Isa_ast
 module FMT = Isa_fmt
@@ -112,12 +112,6 @@ let rec process_command (tcenv : TC.Env.t) (cpu : Cpu.cpu) (fname : string) (inp
       Flags.FlagMap.iter
         (fun nm (v, desc) -> Printf.printf "  %s%-27s %s\n" (if !v then "+" else "-") nm desc)
         !Flags.flags
-  | ":set" :: "config" :: rest ->
-      let cmd = String.concat " " rest in
-      let loc = mkLoc fname cmd in
-      let (v, e, ty) = LoadISA.read_config tcenv loc cmd in
-      let value = Eval.eval_expr loc cpu.env e in
-      cpu.setConfig v value
  | [ ":set"; flag ] when String.starts_with flag ~prefix:"+" -> (
      match Flags.FlagMap.find_opt (Utils.string_drop 1 flag) !Flags.flags with
      | None -> Printf.printf "Unknown flag %s\n" flag
