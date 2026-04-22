@@ -22,13 +22,13 @@ let getset_tests : unit Alcotest.test_case list =
   [
     ("nullary type", `Quick, decl
       ""
-      "function G => Integer;"
-      "function G() => Integer;");
+      "function G -> Integer;"
+      "function G() -> Integer;");
 
     ("function", `Quick, decl
       "var x : Integer;"
-      "function G => Integer begin return x; end"
-      "function G() => Integer begin return x; end");
+      "function G -> Integer begin return x; end"
+      "function G() -> Integer begin return x; end");
 
     ("assignment function type", `Quick, decl
       ""
@@ -42,13 +42,13 @@ let getset_tests : unit Alcotest.test_case list =
 
     ("array function type", `Quick, decl
       ""
-      "function G[i : Integer] => Integer;"
-      "function G(i : Integer) => Integer;");
+      "function G[i : Integer] -> Integer;"
+      "function G(i : Integer) -> Integer;");
 
     ("array function", `Quick, decl
       "var x : array [1] of Integer;"
-      "function G[i : Integer] => Integer begin return x[i]; end"
-      "function G(i : Integer) => Integer begin return x[i]; end");
+      "function G[i : Integer] -> Integer begin return x[i]; end"
+      "function G(i : Integer) -> Integer begin return x[i]; end");
 
     ("array assignment function type", `Quick, decl
       ""
@@ -63,22 +63,22 @@ let getset_tests : unit Alcotest.test_case list =
     ("__write l-expr", `Quick, decl
       "var x : Integer;"
       "function S := val : Integer begin x := val; end
-       function P() begin S = 0; end
-       function F() => Integer begin S = 0; return 0; end"
+       function P() begin S := 0; end
+       function F() -> Integer begin S := 0; return 0; end"
       "function S_write(val : Integer) begin x := val; end
        function P() begin S_write(0); end
-       function F() => Integer begin S_write(0); return 0; end");
+       function F() -> Integer begin S_write(0); return 0; end");
 
     ("__readwrite l-expr", `Quick, decl
       "var x : Bits(3);"
-      "function X => Bits(3) begin return x; end
+      "function X -> Bits(3) begin return x; end
        function X := val : Bits(3) begin x := val; end
-       function P() begin X[1 +: 2] = 0b10; end
-       function F() => Bits(3) begin X[1 +: 2] = 0b10; return X; end"
-      "function X() => Bits(3) begin return x; end
+       function P() begin X[1 +: 2] := 0b10; end
+       function F() -> Bits(3) begin X[1 +: 2] := 0b10; return X; end"
+      "function X() -> Bits(3) begin return x; end
        function X_write(val : Bits(3)) begin x := val; end
-       function P() begin var __rmw0 = X(); __rmw0[1 +: 2] = 0b10; X_write(__rmw0); end
-       function F() => Bits(3) begin var __rmw1 = X(); __rmw1[1 +: 2] = 0b10; X_write(__rmw1); return X(); end");
+       function P() begin var __rmw0 := X(); __rmw0[1 +: 2] := 0b10; X_write(__rmw0); end
+       function F() -> Bits(3) begin var __rmw1 := X(); __rmw1[1 +: 2] := 0b10; X_write(__rmw1); return X(); end");
   ]
 
 (****************************************************************
