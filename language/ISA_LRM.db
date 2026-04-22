@@ -1822,6 +1822,116 @@ argument-value = identifier '=>' constant-expression
         how types are mapped to C types.
       </para>
 
+      <table>
+        <caption>Foreign type mapping</caption>
+
+        <thead>
+          <tr>
+            <th>
+              Specification type
+            </th>
+            <th>
+              C type
+            </th>
+          </tr>
+        </thead>
+
+        <tbody>
+
+          <tr>
+            <td>
+              <literal>Boolean</literal>
+            </td>
+            <td>
+              <literal>bool</literal>
+            </td>
+          </tr>
+
+          <tr>
+            <td>
+              <literal>Bits(size)</literal> where size in {1..8}
+            </td>
+            <td>
+              <literal>uint8_t</literal>
+            </td>
+          </tr>
+
+          <tr>
+            <td>
+              <literal>Bits(size)</literal> where size in {9..16}
+            </td>
+            <td>
+              <literal>uint16_t</literal>
+            </td>
+          </tr>
+
+          <tr>
+            <td>
+              <literal>Bits(size)</literal> where size in {17..32}
+            </td>
+            <td>
+              <literal>uint32_t</literal>
+            </td>
+          </tr>
+
+          <tr>
+            <td>
+              <literal>Bits(size)</literal> where size in {33..64}
+            </td>
+            <td>
+              <literal>uint64_t</literal>
+            </td>
+          </tr>
+
+          <tr>
+            <td>
+              <literal>Bits(size)</literal> where size > 64
+            </td>
+            <td>
+              <literal>uint64_t[ceiling(size / 64)]</literal>
+            </td>
+          </tr>
+
+          <tr>
+            <td>
+              <literal>Integer</literal>
+            </td>
+            <td>
+              <literal>int64_t</literal> (note that this may not be big enough to hold all Integers)
+            </td>
+          </tr>
+
+          <tr>
+            <td>
+              <literal>String</literal>
+            </td>
+            <td>
+              <literal>const char*</literal>
+            </td>
+          </tr>
+
+          <tr>
+            <td>
+              Any enumerated type
+            </td>
+            <td>
+              The type is exported directly.
+            </td>
+          </tr>
+
+          <tr>
+            <td>
+              Records
+            </td>
+            <td>
+              Not supported at present.
+            </td>
+          </tr>
+
+        </tbody>
+      </table>
+
+
       <section xml:id="foreign-functions">
         <title>Foreign Functions</title>
 
