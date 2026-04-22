@@ -5,7 +5,7 @@
  * SPDX-License-Identifier: BSD-3-Clause
  ****************************************************************)
 
-module Parser = Asl_parser
+module Parser = Isa_parser
 module FMTUtils = Format_utils
 module ISA_FMT = Isa_fmt
 open Isa_utils

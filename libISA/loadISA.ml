@@ -6,11 +6,6 @@
  * SPDX-License-Identifier: BSD-3-Clause
  ****************************************************************)
 
-open Isa_ast
-module ASL_Lexer = Asl_lexer
-module ASL_Parser = Asl_parser
-module ASL_ParserMessages = Asl_parser_messages
-module ASL_Interp = ASL_Parser.MenhirInterpreter
 module ISA_Lexer  = Isa_lexer
 module ISA_Parser = Isa_parser
 module ISA_Interp = ISA_Parser.MenhirInterpreter
@@ -52,80 +47,6 @@ let show (text : string) (positions : Loc.pos * Loc.pos) : string =
   |> ErrorReports.compress
   |> ErrorReports.shorten 20 (* max width 43 *)
 
-
-(* [env checkpoint] extracts a parser environment out of a checkpoint,
-   which must be of the form [HandlingError env].
-
-   (This function is based on an example in the Menhir documentation.)
-*)
-
-let asl_env (checkpoint : 'a ASL_Interp.checkpoint) : 'a ASL_Interp.env =
-  ( match checkpoint with
-  | ASL_Interp.HandlingError env ->
-      env
-  | _ ->
-      assert false
-  )
-
-(* [state checkpoint] extracts the number of the current state out of a
-   checkpoint.
-
-   (This function is based on an example in the Menhir documentation.)
-*)
-
-let asl_state (checkpoint : _ ASL_Interp.checkpoint) : int option =
-  ( match ASL_Interp.top (asl_env checkpoint) with
-  | Some (ASL_Interp.Element (s, _, _, _)) ->
-      Some (ASL_Interp.number s)
-  | None ->
-      None
-  )
-
-(* [get text checkpoint i] extracts and shows the range of the input text that
-   corresponds to the [i]-th stack cell. The top stack cell is numbered zero.
-
-   (This function is based on an example in the Menhir documentation.)
-*)
-
-let asl_get (text : string) (checkpoint : _ ASL_Interp.checkpoint) (i : int) : string =
-  match ASL_Interp.get i (asl_env checkpoint) with
-  | Some (ASL_Interp.Element (_, _, pos1, pos2)) ->
-      show text (pos1, pos2)
-  | None ->
-      (* The index is out of range. This should not happen if [$i]
-         keywords are correctly inside the syntax error message
-         database. The integer [i] should always be a valid offset
-         into the known suffix of the stack. *)
-      "???"
-
-(* [fail text buffer checkpoint] is invoked when parser has encountered a
-   syntax error.
-
-   (This function is based on an example in the Menhir documentation.)
-*)
-
-let asl_fail (text : string) (buffer : (Loc.pos * Loc.pos) ErrorReports.buffer) (checkpoint : 'a ASL_Interp.checkpoint) : 'a =
-  (* Indicate where in the input file the error occurred. *)
-  let location = LexerUtils.range (ErrorReports.last buffer) in
-  (* Show the tokens just before and just after the error. *)
-  let indication = Printf.sprintf "Syntax error %s.\n" (ErrorReports.show (show text) buffer) in
-  (* Fetch an error message from the database. *)
-  let message =
-      (try
-          let message = ( match asl_state checkpoint with
-                        | Some msgid -> ASL_ParserMessages.message msgid
-                        | None -> ""
-                        )
-          in
-          (* Expand away the $i keywords that might appear in the message. *)
-          ErrorReports.expand (asl_get text checkpoint) message
-      with
-      | Not_found -> "syntax error"
-      )
-  in
-  (* Show these three components. *)
-  Printf.eprintf "%s%s%s%!" location indication message;
-  exit 1
 
 (* [env checkpoint] extracts a parser environment out of a checkpoint,
    which must be of the form [HandlingError env].
@@ -202,35 +123,6 @@ let isa_fail (text : string) (buffer : (Loc.pos * Loc.pos) ErrorReports.buffer) 
   exit 1
 
 
-(* [parse_asl_file paths filename verbose]
-   searches for [filename] in the search path list [paths]
-   and attempts to parse the file as a list of ASL declarations.
-   *)
-let parse_asl_file (paths : string list) (filename : string) (verbose : bool) : AST.declaration list =
-  let fname = find_file paths filename in
-  if verbose then Printf.printf "Processing %s\n" fname;
-
-  let (text, lexbuf) = LexerUtils.read fname in
-
-  (* Allocate and initialize a lexing buffer. *)
-  let lexbuf = LexerUtils.init fname (Lexing.from_string text) in
-  (* Wrap the lexer and lexbuf together into a supplier, that is, a
-     function of type [unit -> token * position * position]. *)
-  let supplier = ASL_Interp.lexer_lexbuf_to_supplier ASL_Lexer.token lexbuf in
-  (* Equip the supplier with a two-place buffer that records the positions
-     of the last two tokens. This is useful when a syntax error occurs, as
-     these are the token just before and just after the error. *)
-  let (buffer, supplier) = ErrorReports.wrap_supplier supplier in
-  let start_pos = { lexbuf.lex_curr_p with pos_fname = fname } in
-
-  try
-    let chkpt = ASL_Parser.Incremental.declarations_start start_pos in
-    ASL_Interp.loop_handle Fun.id (asl_fail text buffer) supplier chkpt
-  with
-  | ASL_Parser.Error ->
-    let loc = Loc.Range (lexbuf.lex_start_p, lexbuf.lex_curr_p) in
-    raise (Error.ParseError loc)
-
 (* [parse_isa_file paths filename verbose]
    searches for [filename] in the search path list [paths]
    and attempts to parse the file as a list of ISA declarations.
@@ -261,9 +153,7 @@ let parse_isa_file (paths : string list) (filename : string) (verbose : bool) : 
     raise (Error.ParseError loc)
 
 let parse_file (paths : string list) (filename : string) (verbose : bool) : AST.declaration list =
-  if String.ends_with filename ~suffix:".asl" then
-    parse_asl_file paths filename verbose
-  else if String.ends_with filename ~suffix:".isa" then
+  if String.ends_with filename ~suffix:".isa" then
     parse_isa_file paths filename verbose
   else begin
     Printf.eprintf "Unrecognized file suffix on file '%s'%!" filename;
@@ -313,12 +203,6 @@ let parse_spec (paths : string list) (filename : string) (verbose : bool) :
    with End_of_file -> close_in inchan);
   List.concat (List.rev !r)
 
-let read_config (tcenv : TC.Env.t) (loc : Loc.t) (s : string) : Ident.t * AST.expr * AST.ty =
-  let lexbuf = Lexing.from_string s in
-  let (CLI_Config (v, e)) = ASL_Parser.config_command_start ASL_Lexer.token lexbuf in
-  let (e', ty) = TC.tc_expr tcenv loc e in
-  (v, e', ty)
-
 let read_expr (tcenv : TC.Env.t) (loc : Loc.t) (s : string) : AST.expr =
   let lexbuf = Lexing.from_string s in
   let e = ISA_Parser.expr_command_start ISA_Lexer.token lexbuf in
@@ -341,7 +225,7 @@ let read_stmts (tcenv : TC.Env.t) (s : string) : AST.stmt list =
 let read_declarations_unsorted (tcenv : TC.GlobalEnv.t) (s : string) :
     AST.declaration list =
   let lexbuf = Lexing.from_string s in
-  let s = ASL_Parser.declarations_start ASL_Lexer.token lexbuf in
+  let s = ISA_Parser.declarations_file ISA_Lexer.token lexbuf in
   ( match TC.tc_declarations tcenv ~isPrelude:false ~sort_decls:false s with
   | None -> exit 1
   | Some s' -> s'
@@ -352,8 +236,6 @@ let read_files (paths : string list) (filenames : string list) (verbose : bool)
   let parse fname =
     if String.ends_with fname ~suffix:".spec" then
       parse_spec paths fname verbose
-    else if String.ends_with fname ~suffix:".asl" then
-      parse_asl_file paths fname verbose
     else if String.ends_with fname ~suffix:".isa" then
       parse_isa_file paths fname verbose
     else
