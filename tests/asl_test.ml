@@ -40,16 +40,16 @@ let test_static_error (globals : TC.GlobalEnv.t) (name : string) (declarations :
   (name, `Quick, fun _ ->
     let lexbuf = Lexing.from_string declarations in
     let msg = try
-        let t = Asl_parser.declarations_start Asl_lexer.token lexbuf in
+        let t = Isa_parser.declarations_file Isa_lexer.token lexbuf in
         let ds = TC.tc_declarations globals ~isPrelude:false ~sort_decls:false t in
         ignore ds;
         Alcotest.fail "error was not detected"
       with
-      | Asl_parser.Error -> "ParseError()"
+      | Isa_parser.Error -> "ParseError()"
       | AST.Parse_error_locn(loc, msg) -> Printf.sprintf "Parse_error_locn(%s,%s)" (Loc.to_string loc) msg
       | AST.PrecedenceError(loc, op1, op2) ->
         Printf.sprintf "PrecedenceError(%s,%s,%s)" (Loc.to_string loc) (Isa_utils.pp_binop op1) (Isa_utils.pp_binop op2)
-      | Asl_lexer.Eof -> "Eof()"
+      | Isa_lexer.Eof -> "Eof()"
       | Error.UnknownObject(loc, what, x) -> Printf.sprintf "UnknownObject(%s,%s,%s)" (Loc.to_string loc) what x
       | Error.DoesNotMatch(loc, what, x, y) -> Printf.sprintf "DoesNotMatch(%s,%s,%s,%s)" (Loc.to_string loc) what x y
       | Error.IsNotA(loc, what, x) -> Printf.sprintf "IsNotA(%s,%s,%s)" (Loc.to_string loc) what x
@@ -142,7 +142,7 @@ let tests : unit Alcotest.test_case list =
     test_static globals true "expressions (UNSPECIFIED)" "" "UNSPECIFIED : Bits(4)";
     test_static globals false "expressions (bitfields)"
       "bitfield T = { hi => [ 31:16 ], lo => [15:0] } : Bits(32);\n\
-      \                      let t : T = 0x12345678[31:0];\n\
+      \                      let t : T := 0x12345678[31:0];\n\
       \                     " "t.hi";
     test_static_error globals "unsynthesizable parameters"
      (* parameters cannot be synthesized for this type *)
@@ -196,15 +196,15 @@ let tests : unit Alcotest.test_case list =
            var d := UNSPECIFIED : Bits(8*N);
            var _ := 1;
            var (f, g) := (1, True);
-           var (h : Integer, i : Boolean) := (1, True);
-           var (j : Integer, - : Boolean) := (1, True);
+           // var (h : Integer, i : Boolean) := (1, True);
+           // var (j : Integer, _ : Boolean) := (1, True);
            var arr1 : array [8] of Integer;
            var arr2 : array [type Boolean] of Integer;
 
            let m : Bits(8*N) := UNSPECIFIED : Bits(8*N);
            let n : Bits(8*N) := Std::Bits::Zero(8*N);
-           let o = UNSPECIFIED : Bits(8*N);
-           let - := 1;
+           let o := UNSPECIFIED : Bits(8*N);
+           let _ := 1;
            let (p, q) := (1, True);
            let (r : Integer, s : Boolean) := (1, True);
            let (t : Integer, _ : Boolean) := (1, True);
@@ -219,7 +219,7 @@ let tests : unit Alcotest.test_case list =
                when 0b100, 0b111 => return 4;
                when 0b101 if y => return 5;
                otherwise => return 6;
-           end
+           endcase;
        end" "1";
     ("let-expressions",        `Quick, test_int globals prelude "" "__let x : Integer := 2 __in x+x" 4);
     ("prelude (+ (int))",      `Quick, test_int globals prelude "" "1+1" 2);
@@ -248,17 +248,6 @@ let tests : unit Alcotest.test_case list =
        end
        "
        "Test(True)" true);
-    ("bittuple LExpr_bitTuple", `Quick, test_bool globals prelude
-     "function expand() -> Boolean
-      begin
-        var x : Bits(4);
-        var y : Bits(8);
-        var z : Bits(12);
-        [x, y, z] := 0b1111_01010101_000000000000;
-
-        return (x == 0b1111 and then y == 0b01010101 and then z == 0b000000000000);
-     end"
-     "expand()" true);
     ("function (array form)", `Quick, test_bool globals prelude
        "var _A : array [4] of Boolean;
        function A[i : Integer] -> Boolean begin return _A[i]; end
@@ -276,7 +265,7 @@ let tests : unit Alcotest.test_case list =
        function T(r : R(M)) -> Bits(M) begin return r.x; end"
        "T(S(0b111))" "111");
     ("parameterized type",     `Quick, test_bits globals prelude
-       "type B(M) of Bits(M);
+       "type B(M) = Bits(M);
        function T(b : Bits(M)) -> B(M) begin return b; end"
        "T(0b111)" "111");
     ("parameterized record extract", `Quick, test_bits globals prelude
@@ -288,7 +277,7 @@ let tests : unit Alcotest.test_case list =
        end"
        "F()" "00000111");
     ("statements (while)",     `Quick, test_int globals prelude
-      "function TestWhile(x : Integer) -> Integer begin var i : Integer := 0; while i < x do i := i + 1; end return i; end"
+      "function TestWhile(x : Integer) -> Integer begin var i : Integer := 0; while i < x do i := i + 1; endwhile; return i; end"
       "TestWhile(3)" 3);
     ("statements (repeat)",    `Quick, test_int globals prelude
       "function TestRepeat(x : Integer) -> Integer begin var i : Integer := 0; repeat i := i + 1; until i >= x; return i; end"

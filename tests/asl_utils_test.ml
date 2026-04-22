@@ -77,11 +77,11 @@ let side_effect_tests : unit Alcotest.test_case list =
     ("increment function", `Quick, test_side_effects globals prelude
        "function T(x : Integer) -> Integer begin return x + 1; end" "T" ([], [], ["Std::Integer::Add"], false));
     ("destructive increment function", `Quick, test_side_effects globals prelude
-       "function T(x : Integer) -> Integer begin var y = x; y = y + 1; return y; end" "T" ([], [], ["Std::Integer::Add"], false));
+       "function T(x : Integer) -> Integer begin var y := x; y := y + 1; return y; end" "T" ([], [], ["Std::Integer::Add"], false));
     ("global read function", `Quick, test_side_effects globals prelude
        "var X : Integer; function T() -> Integer begin return X; end" "T" (["X"], [], [], false));
     ("global write function", `Quick, test_side_effects globals prelude
-       "var X : Integer; function T() begin X = 1; return; end" "T" ([], ["X"], [], false));
+       "var X : Integer; function T() begin X := 1; return; end" "T" ([], ["X"], [], false));
   ]
 
 (****************************************************************
@@ -126,12 +126,12 @@ let impure_function_tests : unit Alcotest.test_case list =
        function Id(x : Integer) -> Integer begin return x; end
        function Len2(x : Bits(n)) -> Integer begin return n; end
        function Inc(x : Integer) -> Integer begin return x + 1; end
-       function Inc2(x : Integer) -> Integer begin var y = x; y = y + 1; return y; end
-       let K42 : Integer = 42;
+       function Inc2(x : Integer) -> Integer begin var y := x; y := y + 1; return y; end
+       let K42 : Integer := 42;
        var X : Integer;
        function ReadConst() -> Integer begin return K42; end
        function Read() -> Integer begin return X; end
-       function Write() begin X = 1; return; end
+       function Write() begin X := 1; return; end
        function IndirectRead() -> Integer begin return Read(); end
        function IndirectWrite() begin Write(); end
        "
@@ -235,22 +235,22 @@ let reachable_decls_tests : unit Alcotest.test_case list =
     ("diamond graph", `Quick, test_reachable_decls globals prelude
        "var X : Integer;
         function Read() -> Integer begin return X; end
-        function Write(x : Integer) begin X = x; end
-        function T() begin var x = Read(); Write(x); end"
+        function Write(x : Integer) begin X := x; end
+        function T() begin var x := Read(); Write(x); end"
        ["T"] ["T.0"; "T.0"; "Write.0"; "Write.0"; "Read.0"; "Read.0"; "X"]
     );
     ("lexpr write", `Quick, test_reachable_decls globals prelude
-       "function F => Bits(1);
+       "function F -> Bits(1);
         function F := value : Bits(1);
         function T() begin F := 0b0; end"
        ["T"] ["T.0"; "T.0"; "F_write.0"]
     );
     ("lexpr read-write", `Quick, test_reachable_decls globals prelude
-       "function F => Bits(1);
+       "function F -> Bits(1);
         function F := x : Bits(1);
-        function G => Bits(1);
+        function G -> Bits(1);
         function G := x : Bits(1);
-        function T() begin [F, G] = 0b00; end"
+        function T() begin F[0] := 0b0; G[0] := 0b0; end"
        ["T"]
        ["T.0"; "T.0"; "G_write.0"; "G.0"; "F_write.0"; "F.0"]
     );

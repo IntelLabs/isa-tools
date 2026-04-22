@@ -67,7 +67,7 @@ let bitslice_tests : unit Alcotest.test_case list =
        "x[0][0] := Std::Bits::And(x[0][0], not Std::Bits::Shift_Left_Logical_Restricted(Std::Bits::Mk_Mask(7, 8), 1))
                   or Std::Bits::Shift_Left_Logical_Restricted(Std::Bits::Zero_Extend(y, 8), 1);");
     ("assignment to field Bitslice", `Quick, stmts
-       "record J { j : Bits(8); }; record I { i : J; }; var x : I; var y : Bits(7);"
+       "record J = { j : Bits(8) }; record I = { i : J }; var x : I; var y : Bits(7);"
        "x.i.j[1 +: 7] := y;"
        "x.i.j := Std::Bits::And(x.i.j, not Std::Bits::Shift_Left_Logical_Restricted(Std::Bits::Mk_Mask(7, 8), 1))
                 or Std::Bits::Shift_Left_Logical_Restricted(Std::Bits::Zero_Extend(y, 8), 1);");

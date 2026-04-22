@@ -48,7 +48,7 @@ let constprop_tests : unit Alcotest.test_case list =
     ("bool", `Quick, test_cp_expr globals prelude "" "1 == 2" "False");
     ("in", `Quick, test_cp_expr globals prelude "" "8 in {8, 16}" "True");
     ("enum", `Quick, test_cp_expr globals prelude
-       "enumeration T { E1, E2 };" "if True then E1 else E2" "E1");
+       "enumeration T = { E1, E2 };" "if True then E1 else E2" "E1");
     ("assert expr dead code", `Quick, test_cp_expr globals prelude
        "var x : Bits(8);" "__assert True __in x" "x");
     ("assert expr live code 1", `Quick, test_cp_expr globals prelude
@@ -334,7 +334,7 @@ let constprop_tests : unit Alcotest.test_case list =
       "case vc of when c => return; endcase;"
       "case vc of when 0b1 => return; endcase;");
     ("enum pattern in case stmt" , `Quick, test_cp_stmts
-      "enumeration T { E1, E2 }; let d : T := E2;
+      "enumeration T = { E1, E2 }; let d : T := E2;
        var vd : T;"
       "case vd of when d => return; endcase;"
       "case vd of when E2 => return; endcase;");

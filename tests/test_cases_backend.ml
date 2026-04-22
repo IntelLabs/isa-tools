@@ -12,74 +12,74 @@ let expr : test_case list =
   [
     ( "Bitslice lowd (> 64b)",
       [ Backend_C; Backend_Verilog ],
-      "function F(x : Bits(127)) => Bits(65) begin return x[4 +: 65]; end" );
+      "function F(x : Bits(127)) -> Bits(65) begin return x[4 +: 65]; end" );
 
     ( "literal int",
       [ Backend_C; Backend_Verilog ],
-      "function F() => Integer begin return 01_000; end" );
+      "function F() -> Integer begin return 01_000; end" );
 
     ( "literal int (negative)",
       [ Backend_C; Backend_Verilog ],
-      "function F() => Integer begin return -01_000; end" );
+      "function F() -> Integer begin return -01_000; end" );
 
     ( "literal int (int64 max)",
       [ Backend_C; Backend_Verilog ],
-      "function F() => Integer begin return 9223372036854775807; end" );
+      "function F() -> Integer begin return 9223372036854775807; end" );
 
     ( "literal int (int64 max + 1)",
       [ Backend_C; Backend_Verilog ],
-      "function F() => Integer begin return 9223372036854775808; end" );
+      "function F() -> Integer begin return 9223372036854775808; end" );
 
     ( "literal int (int64 min)",
       [ Backend_C; Backend_Verilog ],
-      "function F() => Integer begin return -9223372036854775808; end" );
+      "function F() -> Integer begin return -9223372036854775808; end" );
 
     ( "literal int (int64 min - 1)",
       [ Backend_C; Backend_Verilog ],
-      "function F() => Integer begin return -9223372036854775809; end" );
+      "function F() -> Integer begin return -9223372036854775809; end" );
 
     ( "literal int (int128 max)",
       [ Backend_C; Backend_Verilog ],
-      "function F() => Integer begin return 170141183460469231731687303715884105727; end" );
+      "function F() -> Integer begin return 170141183460469231731687303715884105727; end" );
 
     ( "literal int (int128 min)",
       [ Backend_C; Backend_Verilog ],
-      "function F() => Integer begin return -170141183460469231731687303715884105728; end" );
+      "function F() -> Integer begin return -170141183460469231731687303715884105728; end" );
 
     ( "literal hex",
       [ Backend_C; Backend_Verilog ],
-      "function F() => Integer begin return 0x01_0; end" );
+      "function F() -> Integer begin return 0x01_0; end" );
 
     ( "literal hex (negative)",
       [ Backend_C; Backend_Verilog ],
-      "function F() => Integer begin return -0x01_0; end" );
+      "function F() -> Integer begin return -0x01_0; end" );
 
     ( "literal bitvector",
       [ Backend_C; Backend_Verilog ],
-      "function F() => Bits(8) begin return 0b1111_0000; end" );
+      "function F() -> Bits(8) begin return 0b1111_0000; end" );
 
     ( "literal bitvector (> 64b)",
       [ Backend_C; Backend_Verilog ],
-      "function F() => Bits(65)
+      "function F() -> Bits(65)
        begin
            return 0b1_0111111111111111111111111111111111111111111111111111111111110000;
        end" );
 
     ( "literal String",
       [ Backend_C; Backend_Verilog ],
-      "function F() => String begin return \"str\"; end" );
+      "function F() -> String begin return \"str\"; end" );
 
     ( "literal String with escapes",
       [ Backend_C; Backend_Verilog ],
-      "function F() => String begin return \"Hello \\\" World\"; end" );
+      "function F() -> String begin return \"Hello \\\" World\"; end" );
 
     ( "function call",
       [ Backend_C; Backend_Verilog ],
-      "function B() => Integer begin return 0; end function F() => Integer begin return B(); end" );
+      "function B() -> Integer begin return 0; end function F() -> Integer begin return B(); end" );
 
     ( "parentheses",
       [ Backend_C; Backend_Verilog ],
-      "function F() => Integer begin return ( 0 ); end" );
+      "function F() -> Integer begin return ( 0 ); end" );
 
     ( "bitvector concatenation",
       [ Backend_Verilog ],
@@ -117,19 +117,19 @@ let fun_decl : test_case list  =
   [
     ( "built-in",
       [ Backend_C; Backend_Verilog ],
-      "__builtin function f() => Integer;" );
+      "__builtin function f() -> Integer;" );
 
     ( "type",
       [ Backend_C; Backend_Verilog ],
-      "function F() => Integer;" );
+      "function F() -> Integer;" );
 
     ( "definition",
       [ Backend_C; Backend_Verilog ],
-      "function F() => Integer begin return 0; end" );
+      "function F() -> Integer begin return 0; end" );
 
     ( "definition with params",
       [ Backend_C; Backend_Verilog ],
-      "function F(x : Integer, y : Integer) => Integer begin return 0; end" );
+      "function F(x : Integer, y : Integer) -> Integer begin return 0; end" );
   ]
 
 let proc_decl : test_case list  =
@@ -214,7 +214,7 @@ let var_decl : test_case list  =
 
     ( "const (Integer)",
       [ Backend_C ],
-      "let x : Integer = 0;" );
+      "let x : Integer := 0;" );
   ]
 
 (****************************************************************

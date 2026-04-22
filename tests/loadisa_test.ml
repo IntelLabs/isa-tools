@@ -10,11 +10,11 @@ module AST = Isa_ast
 
 let test_function_declaration () : unit =
   (* Create two tempoary files with contents: *)
-  let (full_f1,o1) = Filename.open_temp_file "prefix" ".asl" in
-  let (full_f2,o2) = Filename.open_temp_file "prefix" ".asl" in
+  let (full_f1,o1) = Filename.open_temp_file "prefix" ".isa" in
+  let (full_f2,o2) = Filename.open_temp_file "prefix" ".isa" in
 
-  Out_channel.output_string o1 "function f (x : Integer) => Integer begin return x; end";
-  Out_channel.output_string o2 "function main () => () begin let b = f(5); end";
+  Out_channel.output_string o1 "function f (x : Integer) -> Integer begin return x; end";
+  Out_channel.output_string o2 "function main () -> () begin let b := f(5); end";
   Out_channel.flush o1;
   Out_channel.flush o2;
   Out_channel.close o1;
