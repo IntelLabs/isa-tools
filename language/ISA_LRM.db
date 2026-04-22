@@ -50,18 +50,6 @@
 
       <para>
 
-        Integer literals can be in decimal and can use underscores
-        between digits to improve clarity.
-
-        e.g., 10, 1_000_000 To write a integer literal in hex or binary, use
-        the Signed and Unsigned functions.
-
-        e.g., <literal>Unsigned(0xFFFF)</literal> or <literal>Signed(0b0111)</literal>.
-
-      </para>
-
-      <para>
-
         Bitvector literals can be in hex or binary and can use
         underscores between digits to improve clarity. e.g.,
         <literal>0b0000_1111</literal>, <literal>0xFFFF_0000</literal>.
@@ -72,6 +60,22 @@
         There is no syntax for writing bitvector literals in decimal. (If you
         really want to do it, the best option is to use a bitslice as in
         <literal>42[7:0]</literal>.)
+
+        There is no syntax for writing bitvector literals whose length is not
+        a multiple of 4. (If you need this, the best option is to use a bitslice
+        as in the 15-bit constant <literal>0x7fff[0 +: 15]</literal>.
+      </para>
+
+      <para>
+
+        Integer literals can be in decimal and can use underscores
+        between digits to improve clarity.
+
+        e.g., 10, 1_000_000 To write a integer literal in hex or binary, use
+        the Signed and Unsigned functions.
+
+        e.g., <literal>Unsigned(0xFFFF)</literal> or <literal>Signed(0b0111)</literal>.
+
       </para>
 
       <para status="design-note">
