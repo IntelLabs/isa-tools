@@ -1,6 +1,6 @@
 (lang dune 3.13)
 
-(name asli)
+(name isa-tools)
 (version 2.0.0)
 
 ; Copyright Arm Limited (c) 2017-2019
@@ -10,7 +10,7 @@
 (using menhir 3.0)
 
 (package
-  (name asli)
+  (name isa-tools)
   (synopsis "Interpreter for Intel(R) ISA Specification Language")
   (description "\| Intel(R) ISA Specification Language is an executable language for writing
                "\| clear, precise specifications of Instruction Set Architectures (ISAs).
@@ -44,9 +44,9 @@
 (license BSD-3-Clause)
 (authors "Alastair Reid")
 (maintainers "Alastair Reid <alastair.reid@intel.com>")
-(source (github IntelLabs/asl-interpreter))
-(bug_reports "https://github.com/IntelLabs/asl-interpreter/issues")
-(homepage "https://github.com/IntelLabs/asl-interpreter")
+(source (github IntelLabs/isa-tools))
+(bug_reports "https://github.com/IntelLabs/isa-tools/issues")
+(homepage "https://github.com/IntelLabs/isa-tools")
 ; (documentation ...)
 
 (generate_opam_files true)

@@ -6,7 +6,7 @@ a full copy of ~/.opam.
 
 Typical usage:
 
-    cd asl-interpreter
+    cd isa-tools
     ./mk_install.py --release-dir=$HOME/release --version=`date -I`
     # will be released into ${release_dir}/${version}
 
@@ -58,7 +58,7 @@ def main() -> int:
     print(f"Copying release to {release_dir}")
 
     shutil.copytree(f"_build/install/default", release_dir, dirs_exist_ok=True)
-    shutil.rmtree(f"{release_dir}/lib/asli/libISA") # just a copy of the source code
+    shutil.rmtree(f"{release_dir}/lib/isa-tools/libISA") # just a copy of the source code
 
     # copy Z3 file over into release (user will need to set LD_LIBRARY_PATH to lib_dir)
     shutil.copy(f"{opam_switch}/lib/stublibs/libz3.so", lib_dir)

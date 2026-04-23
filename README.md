@@ -1,5 +1,5 @@
 # ISA Interpreter
-[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/IntelLabs/asl-interpreter/badge)](https://scorecard.dev/viewer/?uri=github.com/IntelLabs/asl-interpreter)
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/IntelLabs/isa-tools/badge)](https://scorecard.dev/viewer/?uri=github.com/IntelLabs/isa-tools)
 [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/9891/badge)](https://www.bestpractices.dev/projects/9891)
 [![License](https://img.shields.io/badge/License-BSD_3--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause)
 
@@ -53,9 +53,9 @@ Please run the tests by running `make test` before creating a pull request.
 
 # Feedback
 We encourage feedback and suggestions via
-[GitHub Issues](https://github.com/IntelLabs/asl-interpreter/issues) as well
+[GitHub Issues](https://github.com/IntelLabs/isa-tools/issues) as well
 as via
-[GitHub Discussions](https://github.com/IntelLabs/asl-interpreter/discussions).
+[GitHub Discussions](https://github.com/IntelLabs/isa-tools/discussions).
 
 
 ## Requirements and Building
@@ -131,7 +131,7 @@ This software includes code from one open source project.
 Since the repository contains submodules, be sure to recursively clone it:
 
 ```
-    git clone --recursive https://github.com/IntelLabs/asl-interpreter.git
+    git clone --recursive https://github.com/IntelLabs/isa-tools.git
 ```
 
 ### Directory structure

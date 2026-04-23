@@ -477,9 +477,9 @@ let main () =
   Tcheck.verbose := verbose 2;
 
   let exe_dir = Filename.dirname (get_executable_path ()) in
-  let stdlib_dir = Filename.concat exe_dir "../share/asli/stdlib" in
-  let runtime_dir = Filename.concat exe_dir "../lib/asli/runtime" in
-  let runtime_include_dir = Filename.concat exe_dir "../lib/asli/runtime_include" in
+  let stdlib_dir = Filename.concat exe_dir "../share/isa-tools/stdlib" in
+  let runtime_dir = Filename.concat exe_dir "../lib/isa-tools/runtime" in
+  let runtime_include_dir = Filename.concat exe_dir "../lib/isa-tools/runtime_include" in
   let default_path = stdlib_dir ^ ":." in
   let legacy_path = Option.value (Sys.getenv_opt "ASL_PATH") ~default:default_path in
   let paths = Option.value (Sys.getenv_opt "ISA_PATH") ~default:legacy_path
