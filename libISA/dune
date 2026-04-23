@@ -23,7 +23,7 @@
 
 (library
  (name libISA)
- (public_name asli.libISA)
+ (public_name isa-tools.libISA)
  (flags
   (:standard -w -27 -cclib -lstdc++))
  (modules

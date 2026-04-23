@@ -22,8 +22,8 @@ linked with other C/C++ libraries.
 maintainer: ["Alastair Reid <alastair.reid@intel.com>"]
 authors: ["Alastair Reid"]
 license: "BSD-3-Clause"
-homepage: "https://github.com/IntelLabs/asl-interpreter"
-bug-reports: "https://github.com/IntelLabs/asl-interpreter/issues"
+homepage: "https://github.com/IntelLabs/isa-tools"
+bug-reports: "https://github.com/IntelLabs/isa-tools/issues"
 depends: [
   "dune" {>= "3.13"}
   "alcotest" {with-test}
@@ -50,4 +50,4 @@ build: [
     "@doc" {with-doc}
   ]
 ]
-dev-repo: "git+https://github.com/IntelLabs/asl-interpreter.git"
+dev-repo: "git+https://github.com/IntelLabs/isa-tools.git"

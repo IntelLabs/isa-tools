@@ -32,17 +32,17 @@ build::
 
 install::
 	$(DUNE) build @install
-	${RM} -r ${OPAM_SWITCH_PREFIX}/lib/asli/*
+	${RM} -r ${OPAM_SWITCH_PREFIX}/lib/isa-tools/*
 	$(DUNE) install
 
 uninstall::
 	$(DUNE) build @install
 	$(DUNE) uninstall
-	${RM} -r ${OPAM_SWITCH_PREFIX}/lib/asli/*
+	${RM} -r ${OPAM_SWITCH_PREFIX}/lib/isa-tools/*
 
 publish::
 	$(DUNE) build @install
-	$(OPAM) publish https://github.com/alastairreid/asl-interpreter/archive/$(VERSION).tar.gz
+	$(OPAM) publish https://github.com/IntelLabs/isa-tools/archive/$(VERSION).tar.gz
 
 doc::
 	$(DUNE) build @doc
@@ -103,16 +103,16 @@ build_systemc:
 
 test_backend_sc: build_systemc
 
-asli.opam.locked:
+isa-tools.opam.locked:
 	opam lock .
 
 # This target can be used to create reproducible builds
 # by installing exactly the versions of dependencies that
-# are specified in the asli.opam.locked file.
+# are specified in the isa-tools.opam.locked file.
 # It is not essential to use this step but we will try to
 # keep the locked file up to date so that it is always a good
 # / reliable option.
-install_dependencies: asli.opam.locked
+install_dependencies: isa-tools.opam.locked
 	opam install . --deps-only --locked
 
 ################################################################
