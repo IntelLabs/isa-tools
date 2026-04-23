@@ -198,11 +198,10 @@ rule token = parse
     | "{"  { LBRACE      }
     | "}"  { RBRACE      }
     | eof  { EOF         }
-    | _ as c { Printf.printf "%s:%d Unrecognized character '%c'\n"
-                   lexbuf.lex_curr_p.pos_fname
-                   lexbuf.lex_curr_p.pos_lnum
-                   c;
-               exit 0 }
+    | _ as c { Printf.printf "Unrecognized character: '%c'\n" c;
+               let loc = Loc.Range (lexbuf.lex_start_p, lexbuf.lex_curr_p) in
+               raise (Error.ParseError loc)
+             }
 
 and comment depth = parse
   | "/*"     { comment (depth+1) lexbuf }
