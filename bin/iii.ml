@@ -10,7 +10,6 @@
 
 open LibISA
 open Isa_ast
-module Parser = Isa_parser
 module TC = Tcheck
 module AST = Isa_ast
 module FMT = Isa_fmt
