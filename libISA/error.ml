@@ -34,7 +34,7 @@ let print_exception (e : exn) : unit =
   | Parser.Error ->
       Printf.printf "  Parser error\n";
   | ParseError loc ->
-      Printf.printf "  Parser error\n%s\n" (Loc.to_string loc);
+      Printf.printf "  Parser error at %s\n" (Loc.to_string loc);
   | UnknownObject (loc, what, x) ->
     Printf.printf "  %s: Type error: Unknown %s %s\n" (Loc.to_string loc) what x
   | DoesNotMatch (loc, what, x, y) ->
