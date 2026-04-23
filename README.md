@@ -68,7 +68,7 @@ The following commands are sufficient to install requirements and to build iii o
     apt update
     apt install -y libgmp-dev opam pkg-config
     pip3 install -r requirements.txt
-    opam init --no-setup --disable-sandboxing --compiler=4.14.2
+    opam init --no-setup --disable-sandboxing --compiler=4.14.3
     opam install . --deps-only --with-test --with-doc --locked --yes
     eval $(opam env)
 
