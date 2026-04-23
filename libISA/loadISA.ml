@@ -321,19 +321,37 @@ let read_config (tcenv : TC.Env.t) (loc : Loc.t) (s : string) : Ident.t * AST.ex
 
 let read_expr (tcenv : TC.Env.t) (loc : Loc.t) (s : string) : AST.expr =
   let lexbuf = Lexing.from_string s in
-  let e = ISA_Parser.expr_command_start ISA_Lexer.token lexbuf in
-  let (e', _) = TC.tc_expr tcenv loc e in
-  e'
+  ( try
+      let e = ISA_Parser.expr_command_start ISA_Lexer.token lexbuf in
+      let (e', _) = TC.tc_expr tcenv loc e in
+      e'
+  with
+  | ISA_Parser.Error ->
+    let loc = Loc.Range (lexbuf.lex_start_p, lexbuf.lex_curr_p) in
+    raise (Error.ParseError loc)
+  )
 
 let read_stmt (tcenv : TC.Env.t) (s : string) : AST.stmt list =
   let lexbuf = Lexing.from_string s in
-  let s = ISA_Parser.stmt_command_start ISA_Lexer.token lexbuf in
-  TC.tc_stmt tcenv s
+  ( try
+      let s = ISA_Parser.stmt_command_start ISA_Lexer.token lexbuf in
+      TC.tc_stmt tcenv s
+  with
+  | ISA_Parser.Error ->
+    let loc = Loc.Range (lexbuf.lex_start_p, lexbuf.lex_curr_p) in
+    raise (Error.ParseError loc)
+  )
 
 let read_stmts (tcenv : TC.Env.t) (s : string) : AST.stmt list =
   let lexbuf = Lexing.from_string s in
-  let s = ISA_Parser.stmts_command_start ISA_Lexer.token lexbuf in
-  TC.tc_stmts tcenv Loc.Unknown s
+  ( try
+      let s = ISA_Parser.stmts_command_start ISA_Lexer.token lexbuf in
+      TC.tc_stmts tcenv Loc.Unknown s
+  with
+  | ISA_Parser.Error ->
+    let loc = Loc.Range (lexbuf.lex_start_p, lexbuf.lex_curr_p) in
+    raise (Error.ParseError loc)
+  )
 
 (* This entrypoint is used for testing so it does not sort its inputs to make
  * the output easier to predict/control
@@ -341,10 +359,16 @@ let read_stmts (tcenv : TC.Env.t) (s : string) : AST.stmt list =
 let read_declarations_unsorted (tcenv : TC.GlobalEnv.t) (s : string) :
     AST.declaration list =
   let lexbuf = Lexing.from_string s in
-  let s = ASL_Parser.declarations_start ASL_Lexer.token lexbuf in
-  ( match TC.tc_declarations tcenv ~isPrelude:false ~sort_decls:false s with
-  | None -> exit 1
-  | Some s' -> s'
+  ( try
+      let s = ISA_Parser.declarations_file ISA_Lexer.token lexbuf in
+      ( match TC.tc_declarations tcenv ~isPrelude:false ~sort_decls:false s with
+      | None -> exit 1
+      | Some s' -> s'
+      )
+  with
+  | ISA_Parser.Error ->
+    let loc = Loc.Range (lexbuf.lex_start_p, lexbuf.lex_curr_p) in
+    raise (Error.ParseError loc)
   )
 
 let read_files (paths : string list) (filenames : string list) (verbose : bool)

@@ -20,29 +20,24 @@ let rec to_string (l : t) : string =
     | Unknown -> "no location information available"
     | Generated l -> Printf.sprintf "Generated: %s"  (to_string l)
     | Range(p1, p2) ->
-        if String.equal p1.Lexing.pos_fname p2.Lexing.pos_fname then begin
-            if p1.Lexing.pos_lnum = p2.Lexing.pos_lnum then
-                Printf.sprintf "file %s line %d char %d - %d"
-                    p1.Lexing.pos_fname
+        let f = if String.length p1.Lexing.pos_fname == 0
+          then ""
+          else Printf.sprintf "file %s " p1.Lexing.pos_fname
+        in
+        let p = if p1.Lexing.pos_lnum = p2.Lexing.pos_lnum
+                then
+                  Printf.sprintf "line %d char %d - %d"
                     p1.Lexing.pos_lnum
                     (p1.Lexing.pos_cnum - p1.Lexing.pos_bol)
                     (p2.Lexing.pos_cnum - p2.Lexing.pos_bol)
-            else
-                Printf.sprintf "file %s line %d char %d - line %d char %d"
-                    p1.Lexing.pos_fname
+                else
+                  Printf.sprintf "line %d char %d - line %d char %d"
                     p1.Lexing.pos_lnum
                     (p1.Lexing.pos_cnum - p1.Lexing.pos_bol)
                     p2.Lexing.pos_lnum
                     (p2.Lexing.pos_cnum - p2.Lexing.pos_bol)
-        end else begin
-            Printf.sprintf "file %s line %d char %d - file %s line %d char %d"
-                p1.Lexing.pos_fname
-                p1.Lexing.pos_lnum
-                (p1.Lexing.pos_cnum - p1.Lexing.pos_bol)
-                p2.Lexing.pos_fname
-                p2.Lexing.pos_lnum
-                (p2.Lexing.pos_cnum - p2.Lexing.pos_bol)
-        end
+        in
+        f ^ p
     | Int(s,lo) -> Printf.sprintf "%s %s" s (match lo with Some l -> to_string l | None -> "none")
     )
 
