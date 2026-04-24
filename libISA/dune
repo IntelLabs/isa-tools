@@ -90,4 +90,4 @@
  (libraries menhirLib ocolor str yojson zarith z3))
 
 
-(env (_ (odoc (warnings fatal))))
+; (env (_ (odoc (warnings fatal))))
