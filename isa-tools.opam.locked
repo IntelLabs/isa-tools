@@ -27,6 +27,9 @@ depends: [
   "alcotest" {= "1.9.1" & with-test}
   "astring" {= "0.8.5"}
   "base-bigarray" {= "base"}
+  "base-domains" {= "base"}
+  "base-effects" {= "base"}
+  "base-nnp" {= "base"}
   "base-threads" {= "base"}
   "base-unix" {= "base"}
   "camlp-streams" {= "5.0.1"}
@@ -46,9 +49,10 @@ depends: [
   "menhirGLR" {= "20260209"}
   "menhirLib" {= "20260209"}
   "menhirSdk" {= "20260209"}
-  "ocaml" {= "4.14.3"}
-  "ocaml-base-compiler" {= "4.14.3"}
-  "ocaml-config" {= "2"}
+  "ocaml" {= "5.4.1"}
+  "ocaml-base-compiler" {= "5.4.1"}
+  "ocaml-compiler" {= "5.4.1"}
+  "ocaml-config" {= "3"}
   "ocaml-options-vanilla" {= "1"}
   "ocaml-syntax-shims" {= "1.0.0" & with-test}
   "ocamlbuild" {= "0.16.1"}
