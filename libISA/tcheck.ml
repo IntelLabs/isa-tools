@@ -2731,7 +2731,7 @@ let tc_print (env : Env.t) (loc : Loc.t) (args : AST.expr list) : AST.stmt list 
       raise (error "Print must always be used with a literal format string like \"x = {x}\"")
   )
 
-(** Extract variable names from a format string like "x={x} y={y}".
+(** Extract variable names from a format string like "x=\{x\} y=\{y\}".
   * Backslash escapes are skipped.
   *)
 let extract_fmt_vars (loc : Loc.t) (fmt : string) : string list =
