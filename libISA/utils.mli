@@ -158,10 +158,10 @@ val round_up_to_pow2 : int -> int
 (** Segments of parsed ASL format string *)
 type fmt_segment =
   | Fmt_lit of string  (** Literal text *)
-  | Fmt_var of string  (** Variable from { } *)
+  | Fmt_var of string  (** Variable from \{ \} *)
 
 (** Parse an ASL format string into segments.
-    Raises Failure if { has no matching }. *)
+    Raises Failure if \{ has no matching \}. *)
 val parse_fmt_string : string -> fmt_segment list
 
 (****************************************************************
