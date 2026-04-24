@@ -32,7 +32,7 @@
     ("alcotest"  :with-test)
     "linenoise"
     ("menhir"    :build)
-    ("ocaml"     (>= "4.14"))
+    ("ocaml"     (>= "5.4"))
     ("ocolor"    (>= "1.2.2"))
     "odoc"
     "yojson"

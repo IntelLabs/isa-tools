@@ -22,7 +22,7 @@ jobs:
       - name: Setup OCaml
         uses: ocaml/setup-ocaml@v3
         with:
-          ocaml-compiler: 4
+          ocaml-compiler: 5
 
       - name: Install APT dependencies
         run: |
@@ -40,8 +40,9 @@ jobs:
 
       - name: Install OCaml tools and libraries
         run: |
-          opam init --no-setup --disable-sandboxing --compiler=4.14.3
-          opam env
+          opam init --no-setup --disable-sandboxing
+          opam switch create 5.4.1
+          eval $(opam env --switch=5.4.1)
           opam install . --deps-only --with-test --with-doc --locked --yes
 
       - name: Build
