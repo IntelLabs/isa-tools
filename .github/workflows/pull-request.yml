@@ -19,11 +19,6 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Setup OCaml
-        uses: ocaml/setup-ocaml@v3
-        with:
-          ocaml-compiler: 5
-
       - name: Install APT dependencies
         run: |
           sudo apt update
@@ -38,11 +33,18 @@ jobs:
       - name: Install Python dependencies
         run: python3 -m pip install --no-deps --require-hashes --requirement requirements.txt
 
-      - name: Install OCaml tools and libraries
+      - name: Setup OCaml
+        uses: ocaml/setup-ocaml@v3
+        with:
+          ocaml-compiler: 5
+          opam-disable-sandboxing: true
+          dune-cache: true
+        env:
+          OPAMLOCKED: locked
+
+      - name: Install OCaml dependencies
         run: |
-          opam init --no-setup --disable-sandboxing
-          opam switch create 5.4.1
-          eval $(opam env --switch=5.4.1)
+          eval $(opam env)
           opam install . --deps-only --with-test --with-doc --locked --yes
 
       - name: Build
