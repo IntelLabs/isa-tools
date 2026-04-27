@@ -408,6 +408,8 @@ let options =
       ("--batchmode",         Arg.Set opt_batchmode,               "       Fail on error");
       ("--legacy-prelude",    Arg.Set opt_enable_legacy_prelude,   "       Enable use of legacy ISA function names");
       ("--no-legacy-prelude", Arg.Clear opt_enable_legacy_prelude, "       Disable use of legacy ISA function names");
+      ("--lang-hex-is-bits",  Arg.Set Isa_lexer.lang_hex_is_bits,  "       Hex literals have type Bits()");
+      ("--lang-hex-is-int",   Arg.Clear Isa_lexer.lang_hex_is_bits,"       Hex literals have type Integer");
       ("--configuration",     Arg.String Configuration.read_configuration_file,
                                                                    "       Load JSON configuration file");
       ("--exec",              Arg.String add_exec,                 "       Execute command");
