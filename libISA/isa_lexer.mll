@@ -10,6 +10,8 @@ open Isa_parser       (* The type token is defined in parser.mli *)
 
 exception Eof
 
+let lang_hex_is_bits = ref true
+
 let keywords : (string * Isa_parser.token) list = [
     ("UNSPECIFIED",            UNSPECIFIED);
     ("_",                      UNDERSCORE);
@@ -127,7 +129,7 @@ rule token = parse
       { BITSLIT(Primops.mkBits (int_of_string len) (Z.of_string_base 16 nibbles)) }
     | '0''x'(['0'-'9' 'A'-'F' 'a'-'f' '_']+ as nibbles)
       {
-        if true then
+        if !lang_hex_is_bits then
           let x = Utils.drop_chars nibbles '_' in
           BITSLIT(Primops.mkBits (4 * String.length x) (Z.of_string_base 16 x))
         else
