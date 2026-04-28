@@ -680,7 +680,7 @@ let ffi_definition :=
       "var"; nm=STRINGLIT; "="; v=path; ";";
       { Decl_VarFFI(nm, is_export, v, Range($symbolstartpos, $endpos)) }
     | "foreign"; is_export=ffi_direction;
-      "type"; nm=STRINGLIT; "="; t=ty; ";";
+      "type"; nm=STRINGLIT; "="; t=path; ";";
       { Decl_TypeFFI(nm, is_export, t, Range($symbolstartpos, $endpos)) }
 
 let ffi_parameter_value :=
