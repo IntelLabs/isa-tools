@@ -11,7 +11,7 @@ exception DoesNotMatch of (Loc.t * string * string * string)
 exception IsNotA of (Loc.t * string * string)
 exception Ambiguous of (Loc.t * string * string)
 exception TypeError of (Loc.t * string)
-exception ParseError of Loc.t
+exception ParseError of (Loc.t * string)
 
 val print_exception : exn -> unit
 
