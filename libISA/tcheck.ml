@@ -3336,6 +3336,8 @@ let genPrototypes (ds : AST.declaration list) :
       | Decl_FunDefn (qid, fty, _, loc) ->
           post := d :: !post;
           pre := Decl_FunType (qid, fty, loc) :: !pre
+      | Decl_FunFFI (_, _, _, _, _) ->
+          post := d :: !post;
       | _ -> pre := d :: !pre)
     ds;
   (List.rev !pre, List.rev !post)
