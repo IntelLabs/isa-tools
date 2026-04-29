@@ -20,7 +20,7 @@ exception IsNotA of (Loc.t * string * string)
 exception Ambiguous of (Loc.t * string * string)
 exception TypeError of (Loc.t * string)
 
-exception ParseError of Loc.t
+exception ParseError of (Loc.t * string)
 
 let print_exception (e : exn) : unit =
   match e with
@@ -33,8 +33,8 @@ let print_exception (e : exn) : unit =
         (pp_binop op1) (pp_binop op2) (Loc.to_string loc);
   | Parser.Error ->
       Printf.printf "  Parser error\n";
-  | ParseError loc ->
-      Printf.printf "  Parser error at %s\n" (Loc.to_string loc);
+  | ParseError (loc, msg) ->
+      Printf.printf "  %s: Parser error %s\n" (Loc.to_string loc) msg;
   | UnknownObject (loc, what, x) ->
     Printf.printf "  %s: Type error: Unknown %s %s\n" (Loc.to_string loc) what x
   | DoesNotMatch (loc, what, x, y) ->

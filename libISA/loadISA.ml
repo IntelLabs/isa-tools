@@ -229,7 +229,7 @@ let parse_asl_file (paths : string list) (filename : string) (verbose : bool) : 
   with
   | ASL_Parser.Error ->
     let loc = Loc.Range (lexbuf.lex_start_p, lexbuf.lex_curr_p) in
-    raise (Error.ParseError loc)
+    raise (Error.ParseError (loc, ""))
 
 (* [parse_isa_file paths filename verbose]
    searches for [filename] in the search path list [paths]
@@ -258,7 +258,7 @@ let parse_isa_file (paths : string list) (filename : string) (verbose : bool) : 
   with
   | ISA_Parser.Error ->
     let loc = Loc.Range (lexbuf.lex_start_p, lexbuf.lex_curr_p) in
-    raise (Error.ParseError loc)
+    raise (Error.ParseError (loc, ""))
 
 let parse_file (paths : string list) (filename : string) (verbose : bool) : AST.declaration list =
   if String.ends_with filename ~suffix:".asl" then
@@ -328,7 +328,7 @@ let read_expr (tcenv : TC.Env.t) (loc : Loc.t) (s : string) : AST.expr =
   with
   | ISA_Parser.Error ->
     let loc = Loc.Range (lexbuf.lex_start_p, lexbuf.lex_curr_p) in
-    raise (Error.ParseError loc)
+    raise (Error.ParseError (loc, ""))
   )
 
 let read_stmt (tcenv : TC.Env.t) (s : string) : AST.stmt list =
@@ -339,7 +339,7 @@ let read_stmt (tcenv : TC.Env.t) (s : string) : AST.stmt list =
   with
   | ISA_Parser.Error ->
     let loc = Loc.Range (lexbuf.lex_start_p, lexbuf.lex_curr_p) in
-    raise (Error.ParseError loc)
+    raise (Error.ParseError (loc, ""))
   )
 
 let read_stmts (tcenv : TC.Env.t) (s : string) : AST.stmt list =
@@ -350,7 +350,7 @@ let read_stmts (tcenv : TC.Env.t) (s : string) : AST.stmt list =
   with
   | ISA_Parser.Error ->
     let loc = Loc.Range (lexbuf.lex_start_p, lexbuf.lex_curr_p) in
-    raise (Error.ParseError loc)
+    raise (Error.ParseError (loc, ""))
   )
 
 (* This entrypoint is used for testing so it does not sort its inputs to make
@@ -368,7 +368,7 @@ let read_declarations_unsorted (tcenv : TC.GlobalEnv.t) (s : string) :
   with
   | ISA_Parser.Error ->
     let loc = Loc.Range (lexbuf.lex_start_p, lexbuf.lex_curr_p) in
-    raise (Error.ParseError loc)
+    raise (Error.ParseError (loc, ""))
   )
 
 let read_files (paths : string list) (filenames : string list) (verbose : bool)
