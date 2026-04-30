@@ -848,7 +848,7 @@ let declaration ?(short=false) (fmt : PP.formatter) (x : AST.declaration) : unit
           nbsp fmt;
           eq fmt;
           nbsp fmt;
-          parens fmt (fun _ -> commasep fmt (varname fmt) es);
+          braces fmt (fun _ -> commasep fmt (varname fmt) es);
           semicolon fmt
       | Decl_Var (v, t, loc) ->
           kw_var fmt;
