@@ -253,10 +253,10 @@ backend_c_flags = {
     'sc':          ['-DASL_SC'] + sc_types_include,
 }
 
-def get_c_flags(iii, backend):
+def get_c_flags(iii, iii_flags, backend):
     if "opam" in iii:
         # iii has been installed: query it for flags
-        c_flags = subprocess.check_output([iii, "--print-c-flags"]).decode('utf-8').strip().split()
+        c_flags = subprocess.check_output([iii, "--print-c-flags"] + iii_flags).decode('utf-8').strip().split()
     else:
         # iii has not been installed so let's assume that it is being run
         # directly out of the build tree and the path looks like this ../_build/install/default/bin/iii
@@ -276,10 +276,10 @@ backend_ld_flags = {
     'sc':          ["-lsystemc"],
 }
 
-def get_ld_flags(iii, backend):
+def get_ld_flags(iii, iii_flags, backend):
     if "opam" in iii:
         # iii has been installed: query it for flags
-        ld_flags = subprocess.check_output([iii, "--print-ld-flags"]).decode('utf-8').strip().split()
+        ld_flags = subprocess.check_output([iii, "--print-ld-flags"] + iii_flags).decode('utf-8').strip().split()
     else:
         # iii has not been installed so let's assume that it is being run
         # directly out of the build tree and the path looks like this ../_build/install/default/bin/iii
@@ -422,11 +422,12 @@ def generate_config_file(config_file, exports, imports):
         print("}", file=f)
     report(f"# Generated configuration file {config_file}\n")
 
-def run_iii(iii, args, isa_files, project_file, configurations):
+def run_iii(iii, iii_flags, args, isa_files, project_file, configurations):
     iii_cmd = [
         iii,
         "--batchmode", "--nobanner",
     ]
+    iii_cmd.extend(iii_flags)
     iii_cmd.append("--check-call-markers")
     iii_cmd.append("--check-exception-markers")
     if args.constraint_checks: print("Warning: ignoring --check-constraints")
@@ -523,6 +524,7 @@ def main() -> int:
     parser.add_argument("--generate-cxx", help="generate C++ code", action="store_true", default=False)
     parser.add_argument("--import", dest="imports", help="import this symbol (C generation only)", action='append', default=[])
     parser.add_argument("--line-info", help="insert line directives into C code", action=argparse.BooleanOptionalAction)
+    parser.add_argument("--language-version", help="select language version", choices=['2026-00', '2026-01'], default='2026-00')
     parser.add_argument("--new-ffi", help="use the new FFI", action="store_true", default=False)
     parser.add_argument("--ffi-integer", help="select type for Integer in new FFI (default: int)", choices=['int', 'int64_t'], default='int')
     parser.add_argument("--runtime-checks", help="perform runtime checks (array bounds, etc.)", action=argparse.BooleanOptionalAction)
@@ -568,6 +570,15 @@ def main() -> int:
         print("Error: must specify --generate-cxx with --const-ref")
         exit(1)
 
+    # flags to select language version
+    language_flags = {
+        '2026-00': ['--lang-hex-is-int'],
+        '2026-01': ['--lang-hex-is-bits'],
+    }
+
+    iii_flags = []
+    iii_flags = language_flags[args.language_version]
+
     # when running tests, we need to be able to use iii without having installed it
     iii = pathlib.Path(__file__).parent / "iii"
     if not iii.exists():
@@ -575,9 +586,9 @@ def main() -> int:
     iii = str(iii)
 
     if args.print_c_flags:
-        print(' '.join(get_c_flags(iii, args.backend)))
+        print(' '.join(get_c_flags(iii, iii_flags, args.backend)))
     elif args.print_ld_flags:
-        print(' '.join(get_ld_flags(iii, args.backend)))
+        print(' '.join(get_ld_flags(iii, iii_flags, args.backend)))
     elif not args.build:
         print(mk_script(args, args.output_dir))
     elif args.run and args.backend == "interpreter":
@@ -585,6 +596,7 @@ def main() -> int:
             iii,
             "--batchmode", "--nobanner",
         ]
+        iii_cmd.extend(iii_flags)
         iii_cmd.append("--check-call-markers")
         iii_cmd.append("--check-exception-markers")
         if args.constraint_checks: print("Warning: ignoring --check-constraints")
@@ -608,6 +620,7 @@ def main() -> int:
             f"--exec=:generate_mlir --output-file={mlir_file}",
             "--exec=:quit",
         ]
+        iii_cmd.extend(iii_flags)
         iii_cmd.extend(args.isa_files)
         generate_config_file(config_file, ["main"] + args.exports, args.imports)
         run(iii_cmd)
@@ -625,12 +638,12 @@ def main() -> int:
         generate_project(old_project_file, script) # deprecated
         generate_project(project_file, script)
         generate_config_file(config_filename, ["main"] + args.exports, args.imports)
-        run_iii(iii, args, args.isa_files, project_file, [config_filename]+args.configuration)
+        run_iii(iii, iii_flags, args, args.isa_files, project_file, [config_filename]+args.configuration)
         if args.show_final_isa:
             pass
         elif args.run:
-            c_flags = get_c_flags(iii, backend)
-            ld_flags = get_ld_flags(iii, backend)
+            c_flags = get_c_flags(iii, iii_flags, backend)
+            ld_flags = get_ld_flags(iii, iii_flags, backend)
             compile_and_link(args.generate_cxx, c_files, args.extra_c, exe_file, working_directory, c_flags, ld_flags)
             run([exe_file])
         if not args.save_temps: shutil.rmtree(working_directory)
