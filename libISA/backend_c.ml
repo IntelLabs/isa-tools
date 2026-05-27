@@ -1401,10 +1401,12 @@ let fun_decls (xs : AST.declaration list) : AST.declaration list =
 (****************************************************************
  * The core of this process is data conversion for which we
  * generate the following from the ASL variable name and type
- * - A C variable name
- * - The corresponding C type
- * - Code to convert the ASL type to the C type
- * - Code to convert the C type to the ASL type
+ * - c_name: A C variable name
+ * - pp_c_type: Code to generate the corresponding C type
+ * - pp_c_decl: Code to generate a declaration for the C variable
+ * - pp_c_ref: Code to pass the argument by reference (either x (for arrays) or &x)
+ * - pp_asl_to_c: Code to convert the ASL type to the C type
+ * - pp_c_to_asl: Code to convert the C type to the ASL type
  * The type and conversion code are Format functions.
  * Optionally, the C variable can be a pointer to a value.
  * For convenience, the ASL variable and type are also part of the
@@ -1417,6 +1419,7 @@ type ffi_conversion = {
     c_name : Ident.t;
     pp_c_type : (PP.formatter -> unit) option;
     pp_c_decl : PP.formatter -> unit;
+    pp_c_ref : (PP.formatter -> unit);
     pp_asl_to_c : PP.formatter -> unit;
     pp_c_to_asl : PP.formatter -> unit;
 }
@@ -1434,6 +1437,7 @@ let mk_ffi_conversion (loc : Loc.t) (indirect : bool) (c_name : Ident.t) (asl_na
       pp_c_type = Some (fun fmt -> PP.fprintf fmt "uint%d_t" n_fixed);
       pp_c_decl = (fun fmt ->
         PP.fprintf fmt "uint%d_t %a%a" n_fixed ptr () ident c_name);
+      pp_c_ref = (fun fmt -> PP.fprintf fmt "&%a" ident c_name);
       pp_asl_to_c = (fun fmt ->
         PP.fprintf fmt "%a%a = %a;"
           ptr ()
@@ -1455,6 +1459,7 @@ let mk_ffi_conversion (loc : Loc.t) (indirect : bool) (c_name : Ident.t) (asl_na
         PP.fprintf fmt "uint64_t %a[%d]"
           ident c_name
           chunks);
+      pp_c_ref = (fun fmt -> PP.fprintf fmt "%a" ident c_name); (* no & required *)
       pp_asl_to_c = (fun fmt ->
         Runtime.ffi_asl2c_bits_large fmt n pp_c_name pp_asl_name);
       pp_c_to_asl = (fun fmt ->
@@ -1469,6 +1474,7 @@ let mk_ffi_conversion (loc : Loc.t) (indirect : bool) (c_name : Ident.t) (asl_na
         c_name = c_name;
         pp_c_type = Some (fun fmt -> PP.fprintf fmt "bool%a" ptr ());
         pp_c_decl = (fun fmt -> PP.fprintf fmt "bool %a%a" ptr () ident c_name);
+        pp_c_ref = (fun fmt -> PP.fprintf fmt "&%a" ident c_name);
         pp_asl_to_c = (fun fmt -> PP.fprintf fmt "%a%a = %a;" ptr () ident c_name ident asl_name);
         pp_c_to_asl = (fun fmt -> PP.fprintf fmt "bool %a = %a%a;" ident asl_name ptr () ident c_name);
       }
@@ -1483,6 +1489,7 @@ let mk_ffi_conversion (loc : Loc.t) (indirect : bool) (c_name : Ident.t) (asl_na
         c_name = c_name;
         pp_c_type = Some (fun fmt -> PP.fprintf fmt "const char*%a" ptr ());
         pp_c_decl = (fun fmt -> PP.fprintf fmt "const char *%a%a" ptr () ident c_name);
+        pp_c_ref = (fun fmt -> PP.fprintf fmt "&%a" ident c_name);
         pp_asl_to_c = (fun fmt -> PP.fprintf fmt "%a%a = %a;" ptr () ident c_name ident asl_name);
         pp_c_to_asl = (fun fmt -> PP.fprintf fmt "const char *%a = %a%a;" ident asl_name ptr () ident c_name);
       }
@@ -1493,6 +1500,7 @@ let mk_ffi_conversion (loc : Loc.t) (indirect : bool) (c_name : Ident.t) (asl_na
         c_name = c_name;
         pp_c_type = Some (fun fmt -> PP.fprintf fmt "enum %a%a" ident tc ptr ());
         pp_c_decl = (fun fmt -> PP.fprintf fmt "enum %a %a%a" ident tc ptr () ident c_name);
+        pp_c_ref = (fun fmt -> PP.fprintf fmt "&%a" ident c_name);
         pp_asl_to_c = (fun fmt -> PP.fprintf fmt "%a%a = %a;" ptr () ident c_name ident asl_name);
         pp_c_to_asl = (fun fmt -> PP.fprintf fmt "%a %a = %a%a;" ident tc ident asl_name ptr () ident c_name);
       }
@@ -1502,6 +1510,7 @@ let mk_ffi_conversion (loc : Loc.t) (indirect : bool) (c_name : Ident.t) (asl_na
         c_name = c_name;
         pp_c_type = Some (fun fmt -> PP.fprintf fmt "int%a" ptr ());
         pp_c_decl = (fun fmt -> PP.fprintf fmt "int %a%a" ptr () ident c_name);
+        pp_c_ref = (fun fmt -> PP.fprintf fmt "&%a" ident c_name);
         pp_asl_to_c = (fun fmt -> PP.fprintf fmt "%a%a = %a;" ptr () ident c_name ident asl_name);
         pp_c_to_asl = (fun fmt -> PP.fprintf fmt "%a %a = %a%a;" ident tc ident asl_name ptr () ident c_name);
       }
@@ -1511,6 +1520,7 @@ let mk_ffi_conversion (loc : Loc.t) (indirect : bool) (c_name : Ident.t) (asl_na
         c_name = c_name;
         pp_c_type = Some (fun fmt -> PP.fprintf fmt "%s%a" !ffi_integer ptr ());
         pp_c_decl = (fun fmt -> PP.fprintf fmt "%s %a%a" !ffi_integer ptr () ident c_name);
+        pp_c_ref = (fun fmt -> PP.fprintf fmt "&%a" ident c_name);
         pp_asl_to_c = (fun fmt ->
           PP.fprintf fmt "%a%a = %a;"
             ptr ()
@@ -1530,6 +1540,7 @@ let mk_ffi_conversion (loc : Loc.t) (indirect : bool) (c_name : Ident.t) (asl_na
         c_name = c_name;
         pp_c_type = Some (fun fmt -> PP.fprintf fmt "int%a" ptr ());
         pp_c_decl = (fun fmt -> PP.fprintf fmt "int %a%a" ptr () ident c_name);
+        pp_c_ref = (fun fmt -> PP.fprintf fmt "&%a" ident c_name);
         pp_asl_to_c = (fun fmt ->
           PP.fprintf fmt "%a%a = %a;"
             ptr ()
@@ -1807,8 +1818,7 @@ let mk_ffi_import_wrapper
                            Ident.pp asl_field_name
                            Ident.pp asl_name
                      in
-                     let pp_c_arg fmt = PP.fprintf fmt "&%a" Ident.pp field.c_name in
-                     (pp_insert, field_indirect.pp_c_decl, field.pp_c_decl, pp_c_arg, field.pp_c_to_asl)
+                     (pp_insert, field_indirect.pp_c_decl, field.pp_c_decl, field.pp_c_ref, field.pp_c_to_asl)
                    )
                 |> Utils.split5
               in
