@@ -1,0 +1,36 @@
+// RUN: %aslrun %s --transform-foreign --extra-c=%S/ffi_import_03.c | filecheck %s
+// Copyright (C) 2025-2026 Intel Corporation
+
+// UNSUPPORTED: interpreter
+
+// Check that returning a tuple containing a large bitvector works
+// (Fixes a bug caused by the generated C containing "&v1"
+// when v1 is the array the result should be placed in.
+// This is incorrect because C automatically promotes arrays to pointers
+// by implicitly adding the "&" for us.)
+//
+// Note that this test does not invoke the :xform_tuples transform so
+// we manually apply the effect of :xform_tuples by introducing the
+// __Return_FFI_bits_bool tuple.
+
+record __Return_FFI_bits_bool = {
+    r0 : Bits(128),
+    r1 : Boolean
+};
+
+function FFI_bits_bool(x : Integer) -> __Return_FFI_bits_bool;
+
+foreign import function "FFI_bits_bool" = FFI_bits_bool with {};
+
+function main() -> Builtin::Foreign::CInt
+begin
+    let ret1 := FFI_bits_bool(3);
+
+    Std::Print::Bits::Hex(ret1.r0); Print("\n");
+    // CHECK: 128'x30000000000000003
+
+    Std::Print::Boolean(ret1.r1); Print("\n");
+    // CHECK: True
+
+    return Builtin::Foreign::CInt::From_Integer(0);
+end
