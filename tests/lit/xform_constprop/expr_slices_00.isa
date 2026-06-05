@@ -1,0 +1,20 @@
+// RUN: %iii --batchmode --exec=:xform_constprop --exec=":show --format=raw FUT" %s | filecheck %s
+
+// Copyright (C) 2026-2026 Intel Corporation
+
+function FUT() -> Bits(8)
+begin
+    return 8'xab[0 +: 8];
+end
+
+// CHECK:               function FUT.0{}() -> Bits(8){{$}}
+// CHECK-NEXT:          begin
+// CHECK-NEXT{LITERAL}:     return 8'xab;
+// CHECK-NEXT:          end
+
+function main() -> Integer
+begin
+    Std::Print::Bits::Hex(FUT()); Print("\n");
+
+    return 0;
+end
