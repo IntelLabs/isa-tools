@@ -227,6 +227,27 @@ class constEvalClass (env : Env.t) =
     method eval_expr (x : expr) : expr = Isa_visitor.visit_expr (self :> Isa_visitor.isaVisitor) x
     method eval_slice (x : slice) : slice = Isa_visitor.visit_slice (self :> Isa_visitor.isaVisitor) x
 
+    (* Constant fold a single expression whose subexpressions have already been
+       evaluated *)
+    method fold_expr (x : expr) : expr =
+      if isConstant env x then x
+      else if isPure x && List.for_all (isConstant env) (subexprs_of_expr x)
+      then
+        let env0 = Env.to_concrete env in
+        let x' =
+            ( try Option.value (value_to_expr (Eval.eval_expr Unknown env0 x)) ~default:x with
+            | _ -> x
+            )
+        in
+        (*
+            let fmt = Format.std_formatter in
+            Format.pp_print_string fmt "const: "; Isa_fmt.expr fmt x; Format.pp_print_string fmt " -> "; Isa_fmt.expr fmt x'; Format.pp_print_string fmt "\n";
+        *)
+        x'
+      else
+        (* Format.pp_print_string Format.std_formatter "\nnonconst "; Isa_fmt.expr fmt x; *)
+        algebraic_simplifications x
+
     method! vexpr x =
       match x with
       | Expr_Var v -> (
@@ -286,33 +307,16 @@ class constEvalClass (env : Env.t) =
           let t' = self#eval_type t in
           let e' = self#eval_expr e in
           let ss' = List.map self#eval_slice ss in
+
           (* optimization: remove empty slices *)
           let ss'' = List.filter (function (Slice_LoWd(_, w)) -> w <> zero | _ -> true) ss' in
           let r = if Utils.is_empty ss'' then empty_bits else Expr_Slices (t', e', ss'') in
-          Visitor.ChangeTo r
+
+          Visitor.ChangeTo (self#fold_expr r)
       | Expr_TApply (f, [n], [e], NoThrow) when Ident.equal f Builtin_idents.length && isPure e ->
           Visitor.ChangeTo (self#eval_expr n)
       | _ -> (
           try
-            let eval (x : expr) : expr =
-              if isConstant env x then x
-              else if isPure x && List.for_all (isConstant env) (subexprs_of_expr x)
-              then
-                let env0 = Env.to_concrete env in
-                let x' =
-                    ( try Option.value (value_to_expr (Eval.eval_expr Unknown env0 x)) ~default:x with
-                    | _ -> x
-                    )
-                in
-                (*
-                        let fmt = Format.std_formatter in
-                        Format.pp_print_string fmt "const: "; Isa_fmt.expr fmt x; Format.pp_print_string fmt " -> "; Isa_fmt.expr fmt x'; Format.pp_print_string fmt "\n";
-                        *)
-                x'
-              else
-                (* Format.pp_print_string Format.std_formatter "\nnonconst "; Isa_fmt.expr fmt x; *)
-                algebraic_simplifications x
-            in
             (*
                 let fmt = Format.std_formatter in
                 List.iter (fun bs ->
@@ -321,8 +325,8 @@ class constEvalClass (env : Env.t) =
                     ) bs)
                     (ScopeStack.bindings (Env.locals env));
                 Eval.Env.pp fmt (Env.to_concrete env);
-                *)
-            ChangeDoChildrenPost (x, eval)
+            *)
+            ChangeDoChildrenPost (x, self#fold_expr)
           with _ -> DoChildren)
   end
 
