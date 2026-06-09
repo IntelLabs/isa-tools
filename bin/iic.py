@@ -150,6 +150,14 @@ base_script = """
 // introduced by previous transforms
 :xform_constprop --nounroll
 
+// Wrap arrays in records to simplify C code generation.
+// This is a workaround for the fact that C does not support array
+// assignment but does support struct assignment.
+// The transformation must be done after monomorphization because
+// we need to generate a separate tuple for each distinct array
+// size&type.
+{xform_arrays}
+
 // Optimization: optionally use :xform_bounded to represent any
 // constrained integers by an integer that is exactly the right size
 // to contain it.
@@ -331,7 +339,8 @@ def mk_script(args, output_directory):
     if args.O0:
         script = []
         script.append(":filter_unlisted_functions imports")
-        script.append(":filter_reachable_from --no-keep-builtins exports")
+        script.append(":filter_reachable_from exports")
+        if args.Oarrays: script.append(":xform_arrays")
         if args.Obounded: script.append(":xform_bounded")
         if args.transform_foreign: script.append(":xform_foreign")
         if args.show_final_isa:
@@ -341,6 +350,7 @@ def mk_script(args, output_directory):
         return "\n".join(script)
 
     substitutions = {
+        'auto_case_split': '--no-auto-case-split',
         'bounded_int': "",
         'command':     " ".join(sys.argv),
         'generate_c':  generate_c,
@@ -350,6 +360,7 @@ def mk_script(args, output_directory):
         'xform_int_bitslices': "",
         'track_valid': "",
         'wrap_variables': "",
+        'xform_arrays': "",
     }
     if args.instrument_unknown: substitutions['track_valid'] = ":xform_valid track-valid"
     if args.transform_foreign:
@@ -365,12 +376,9 @@ def mk_script(args, output_directory):
             // e.g., if "x : integer", then "x[1 +: 8]" to "cvt_int_bits(x, 9)[1 +: 8]"
             :xform_int_bitslices""")
     if args.wrap_variables: substitutions['wrap_variables'] = ":xform_wrap"
-    if not args.auto_case_split:
-        substitutions['auto_case_split'] = '--no-auto-case-split'
-    else:
-        substitutions['auto_case_split'] = '--auto-case-split'
-    if args.Obounded:
-        substitutions['bounded_int'] = ':xform_bounded'
+    if args.auto_case_split: substitutions['auto_case_split'] = '--auto-case-split'
+    if args.Oarrays: substitutions['xform_arrays'] = ':xform_arrays'
+    if args.Obounded: substitutions['bounded_int'] = ':xform_bounded'
     if args.backend in ["ac", "sc"]: substitutions['suppress_bitslice_xform'] = "--notransform"
 
     script = base_script.format(**substitutions)
@@ -431,6 +439,7 @@ def run_iii(iii, args, isa_files, project_file, configurations):
     iii_cmd.append("--check-exception-markers")
     if args.constraint_checks: print("Warning: ignoring --check-constraints")
     iii_cmd.append("--runtime-checks" if args.runtime_checks else "--no-runtime-checks")
+    if args.Oarrays: iii_cmd.append("--exec=:xform_arrays")
     if args.Obounded: iii_cmd.append("--exec=:xform_bounded")
     iii_cmd.append(f"--project={project_file}")
     for file in configurations:
@@ -532,6 +541,7 @@ def main() -> int:
     parser.add_argument("--instrument-unknown", help="instrument assignments of UNKNOWN", action=argparse.BooleanOptionalAction)
     parser.add_argument("--wrap-variables", help="wrap global variables into functions", action=argparse.BooleanOptionalAction)
     parser.add_argument("-O0", help="perform minimal set of transformations", action=argparse.BooleanOptionalAction)
+    parser.add_argument("-Oarrays", help="enable array lowering optimization", action="store_true", default=False)
     parser.add_argument("-Obounded", help="enable integer bounding optimization", action="store_true", default=False)
     parser.add_argument("--backend", help="select backend (default: c23)", choices=['ac', 'c23', 'interpreter', 'fallback', 'mlir', 'sc'], default='c23')
     parser.add_argument("--print-c-flags", help="print the C flags needed to use the selected ISA C runtime", action=argparse.BooleanOptionalAction)
@@ -589,6 +599,7 @@ def main() -> int:
         iii_cmd.append("--check-exception-markers")
         if args.constraint_checks: print("Warning: ignoring --check-constraints")
         iii_cmd.append("--runtime-checks" if args.runtime_checks else "--no-runtime-checks")
+        if args.Oarrays: iii_cmd.append("--exec=:xform_arrays")
         if args.Obounded: iii_cmd.append("--exec=:xform_bounded")
         iii_cmd.extend([
             "--exec=let result := main();",
