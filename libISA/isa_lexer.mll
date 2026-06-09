@@ -10,6 +10,8 @@ open Isa_parser       (* The type token is defined in parser.mli *)
 
 exception Eof
 
+let lang_hex_is_bits = ref true
+
 let keywords : (string * Isa_parser.token) list = [
     ("UNSPECIFIED",            UNSPECIFIED);
     ("_",                      UNDERSCORE);
@@ -125,7 +127,14 @@ rule token = parse
       { BITSLIT(Primops.mkBits (int_of_string len) (Z.of_string_base 10 digits)) }
     | (['0'-'9']+ as len) '\'' 'x' (['0'-'9' 'A'-'F' 'a'-'f' '_']+ as nibbles) (* deprecated *)
       { BITSLIT(Primops.mkBits (int_of_string len) (Z.of_string_base 16 nibbles)) }
-    | '0''x'(['0'-'9' 'A'-'F' 'a'-'f' '_']+ as nibbles) { INTLIT(None, Z.of_string_base 16 nibbles) } (* todo: change to BITLIT *)
+    | '0''x'(['0'-'9' 'A'-'F' 'a'-'f' '_']+ as nibbles)
+      {
+        if !lang_hex_is_bits then
+          let x = Utils.drop_chars nibbles '_' in
+          BITSLIT(Primops.mkBits (4 * String.length x) (Z.of_string_base 16 x))
+        else
+          INTLIT(None, Z.of_string_base 16 nibbles)
+      }
     | 'i' (['0'-'9']+ as len) '\'' 'b' (['0'-'1']+ as bits) { INTLIT(Some (int_of_string len), Z.of_string_base 2 bits) }
     | 'i' (['0'-'9']+ as len) '\'' 'd' (['0'-'9']+ as digits) { INTLIT(Some (int_of_string len), Z.of_string digits) }
     | 'i' (['0'-'9']+ as len) '\'' 'x' (['0'-'9' 'A'-'F' 'a'-'f']+ as nibbles) { INTLIT(Some (int_of_string len), Z.of_string_base 16 nibbles) }
