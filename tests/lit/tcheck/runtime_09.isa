@@ -1,0 +1,8 @@
+// RUN: not %iii --batchmode --runtime-checks %s | filecheck %s
+// Copyright (C) 2026-2026 Intel Corporation
+
+function Test()
+begin
+    let t := Std::Integer::Truncated_Divide(3, 0);
+// CHECK: Type error: Runtime check for division by zero will always fail
+end

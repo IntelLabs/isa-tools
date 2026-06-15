@@ -1,0 +1,9 @@
+// RUN: not %iii --batchmode --runtime-checks %s | filecheck %s
+// Copyright (C) 2026-2026 Intel Corporation
+
+function Test(a : array [4] of Boolean)
+begin
+    let t := a[5];
+// CHECK: Type error: Runtime check for array index is in bounds will always fail
+end
+
