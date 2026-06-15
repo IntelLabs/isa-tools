@@ -537,25 +537,32 @@ let rec const_fold_expr (x : AST.expr) : AST.expr =
     | _ -> None
     )
   in
-  let to_expr (x : Z.t) : AST.expr = Expr_Lit (VInt x) in
+  let to_int_expr (x : Z.t) : AST.expr = Expr_Lit (VInt x) in
+  let to_bool_expr (x : bool) : AST.expr = Expr_Lit (VBool x) in
 
   ( match x with
   | Expr_TApply (f, [], [a; b], _) when Ident.equal f eq_int && a = b -> asl_true
   | Expr_TApply (f, tes, es, throws) ->
       let es' = List.map const_fold_expr es in
       ( match flatten_map_option eval es' with
-      | Some [a]    when Ident.equal f neg_int -> to_expr (Primops.prim_neg_int a)
-      | Some [a; b] when Ident.equal f add_int -> to_expr (Primops.prim_add_int a b)
-      | Some [a; b] when Ident.equal f sub_int -> to_expr (Primops.prim_sub_int a b)
-      | Some [a; b] when Ident.equal f mul_int -> to_expr (Primops.prim_mul_int a b)
-      | Some [a; b] when Ident.equal f exact_div_int -> to_expr (Primops.prim_exact_div_int a b)
-      | Some [a; b] when Ident.equal f pdiv_int -> to_expr (Primops.prim_pdiv_int a b)
-      | Some [a; b] when Ident.equal f shl_int -> to_expr (Primops.prim_shl_int a b)
-      | Some [a; b] when Ident.equal f shr_int -> to_expr (Primops.prim_shr_int a b)
-      | Some [a; b] when Ident.equal f min -> to_expr (Z.min a b)
-      | Some [a; b] when Ident.equal f max -> to_expr (Z.max a b)
-      | Some [a]    when Ident.equal f pow2_int -> to_expr (Primops.prim_pow2_int a)
-      | Some [a; b] when Ident.equal f pow_int_int -> to_expr (Primops.prim_pow_int_int a b)
+      | Some [a; b] when Ident.equal f eq_int -> to_bool_expr (a =  b)
+      | Some [a; b] when Ident.equal f ne_int -> to_bool_expr (a <> b)
+      | Some [a; b] when Ident.equal f le_int -> to_bool_expr (a <= b)
+      | Some [a; b] when Ident.equal f lt_int -> to_bool_expr (a <  b)
+      | Some [a; b] when Ident.equal f ge_int -> to_bool_expr (a >= b)
+      | Some [a; b] when Ident.equal f gt_int -> to_bool_expr (a >  b)
+      | Some [a]    when Ident.equal f neg_int -> to_int_expr (Primops.prim_neg_int a)
+      | Some [a; b] when Ident.equal f add_int -> to_int_expr (Primops.prim_add_int a b)
+      | Some [a; b] when Ident.equal f sub_int -> to_int_expr (Primops.prim_sub_int a b)
+      | Some [a; b] when Ident.equal f mul_int -> to_int_expr (Primops.prim_mul_int a b)
+      | Some [a; b] when Ident.equal f exact_div_int -> to_int_expr (Primops.prim_exact_div_int a b)
+      | Some [a; b] when Ident.equal f pdiv_int -> to_int_expr (Primops.prim_pdiv_int a b)
+      | Some [a; b] when Ident.equal f shl_int -> to_int_expr (Primops.prim_shl_int a b)
+      | Some [a; b] when Ident.equal f shr_int -> to_int_expr (Primops.prim_shr_int a b)
+      | Some [a; b] when Ident.equal f min -> to_int_expr (Z.min a b)
+      | Some [a; b] when Ident.equal f max -> to_int_expr (Z.max a b)
+      | Some [a]    when Ident.equal f pow2_int -> to_int_expr (Primops.prim_pow2_int a)
+      | Some [a; b] when Ident.equal f pow_int_int -> to_int_expr (Primops.prim_pow_int_int a b)
       | _ -> Expr_TApply (f, tes, es', throws)
       )
   | Expr_Assert (e1, e2, loc) ->
@@ -1003,8 +1010,18 @@ let rec least_supertype (env : Env.t) (loc : Loc.t) (ty1 : AST.ty) (ty2 : AST.ty
 
 let check_vars = new Isa_utils.nameSupply "__check"
 
-let add_check (loc : Loc.t) (asserts : check list ref) (x : AST.expr) : unit =
-  asserts := (x, loc) :: !asserts
+let add_check (loc : Loc.t) (asserts : check list ref) (x : AST.expr) (what : string) : unit =
+  let x' = const_fold_expr (simplify_expr x) in
+  (if !verbose then Format.printf "Adding check %a (%a)\n" FMT.expr x' FMT.expr x);
+  ( match x' with
+  | Expr_Lit (VBool false) ->
+      let msg = Format.asprintf "Runtime check for %s will always fail" what in
+      raise (TypeError (loc, msg))
+  | Expr_Lit (VBool true) ->
+      ()
+  | _ ->
+      asserts := (x', loc) :: !asserts
+  )
 
 let mk_expr_safe_to_replicate (lets : binding list ref) (x : AST.expr) (ty : AST.ty) : AST.expr =
   if is_safe_to_replicate x then
@@ -1014,31 +1031,34 @@ let mk_expr_safe_to_replicate (lets : binding list ref) (x : AST.expr) (ty : AST
     lets := (v, ty, x) :: !lets;
     Expr_Var v
 
-let mk_zero_check (loc : Loc.t) (lets : binding list ref) (asserts : check list ref) (x : AST.expr) : AST.expr =
+let mk_zero_check (loc : Loc.t) (lets : binding list ref) (asserts : check list ref) (x : AST.expr) (what : string) : AST.expr =
   if not !enable_runtime_checks then
       x
   else
       let x' = mk_expr_safe_to_replicate lets x type_integer in
-      add_check loc asserts (mk_ne_int zero x');
+      add_check loc asserts (mk_ne_int zero x') what;
       x'
 
-let mk_pos_check (loc : Loc.t) (lets : binding list ref) (asserts : check list ref) (x : AST.expr) : AST.expr =
+let mk_pos_check (loc : Loc.t) (lets : binding list ref) (asserts : check list ref) (x : AST.expr) (what : string) : AST.expr =
   if not !enable_runtime_checks then
       x
   else
       let x' = mk_expr_safe_to_replicate lets x type_integer in
-      add_check loc asserts (mk_le_int zero x');
+      add_check loc asserts (mk_lt_int zero x') what;
       x'
 
-let mk_nonneg_check (loc : Loc.t) (lets : binding list ref) (asserts : check list ref) (x : AST.expr) : AST.expr =
+let mk_nonneg_check (loc : Loc.t) (lets : binding list ref) (asserts : check list ref) (x : AST.expr) (what : string) : AST.expr =
   if not !enable_runtime_checks then
       x
   else
       let x' = mk_expr_safe_to_replicate lets x type_integer in
-      add_check loc asserts (mk_lt_int zero x');
+      add_check loc asserts (mk_le_int zero x') what;
       x'
 
-let mk_exactdiv_check (loc : Loc.t) (lets : binding list ref) (asserts : check list ref) (x : AST.expr) (y : AST.expr) : (AST.expr * AST.expr) =
+let mk_exactdiv_check (loc : Loc.t) (lets : binding list ref) (asserts : check list ref)
+    (x : AST.expr) (y : AST.expr) (what : string)
+  : (AST.expr * AST.expr)
+  =
   if not !enable_runtime_checks then
       (x, y)
   else
@@ -1046,20 +1066,21 @@ let mk_exactdiv_check (loc : Loc.t) (lets : binding list ref) (asserts : check l
       let y' = mk_expr_safe_to_replicate lets y type_integer in
       (* The exact div runtime check is disabled at present because it breaks too much code *)
       (* add_check loc asserts (mk_eq_int zero (mk_zrem_int x' y')); *)
-      add_check loc asserts (mk_ne_int zero y');
+      add_check loc asserts (mk_ne_int zero y') what;
       (x', y')
 
 let mk_index_check (loc : Loc.t) (lets : binding list ref) (asserts : check list ref) (ixty : AST.ixtype) (ix : AST.expr) : AST.expr =
   if not !enable_runtime_checks then
       ix
   else
+      let what = "array index is in bounds" in
       ( match ixty with
       | Index_Enum tc -> ix
       | Index_Int size ->
           let size' = mk_expr_safe_to_replicate lets size type_integer in
           let ix'   = mk_expr_safe_to_replicate lets ix type_integer in
-          add_check loc asserts (mk_le_int zero ix');
-          add_check loc asserts (mk_lt_int ix' size');
+          add_check loc asserts (mk_le_int zero ix') what;
+          add_check loc asserts (mk_lt_int ix' size') what;
           ix'
       )
 
@@ -1067,44 +1088,45 @@ let mk_slice_check (loc : Loc.t) (lets : binding list ref) (asserts : check list
   if not !enable_runtime_checks then
       s
   else
+      let what = "bitslice is in bounds" in
       ( match s with
       | Slice_Single ix ->
           let size' = mk_expr_safe_to_replicate lets size type_integer in
           let ix'   = mk_expr_safe_to_replicate lets ix type_integer in
-          add_check loc asserts (mk_le_int zero ix');
-          add_check loc asserts (mk_lt_int ix' size');
+          add_check loc asserts (mk_le_int zero ix') what;
+          add_check loc asserts (mk_lt_int ix' size') what;
           Slice_Single ix'
       | Slice_HiLo (hi, lo) ->
           let size' = mk_expr_safe_to_replicate lets size type_integer in
           let hi'   = mk_expr_safe_to_replicate lets hi type_integer in
           let lo'   = mk_expr_safe_to_replicate lets lo type_integer in
-          add_check loc asserts (mk_le_int zero lo');
-          add_check loc asserts (mk_le_int lo' (mk_add_int hi' one));
-          add_check loc asserts (mk_lt_int hi' size');
+          add_check loc asserts (mk_le_int zero lo') what;
+          add_check loc asserts (mk_le_int lo' (mk_add_int hi' one)) what;
+          add_check loc asserts (mk_lt_int hi' size') what;
           Slice_HiLo (hi', lo')
       | Slice_LoWd (lo, wd) ->
           let size' = mk_expr_safe_to_replicate lets size type_integer in
           let lo'   = mk_expr_safe_to_replicate lets lo type_integer in
           let wd'   = mk_expr_safe_to_replicate lets wd type_integer in
-          add_check loc asserts (mk_le_int zero lo');
-          add_check loc asserts (mk_le_int zero wd');
-          add_check loc asserts (mk_le_int (mk_add_int lo' wd') size');
+          add_check loc asserts (mk_le_int zero lo') what;
+          add_check loc asserts (mk_le_int zero wd') what;
+          add_check loc asserts (mk_le_int (mk_add_int lo' wd') size') what;
           Slice_LoWd (lo', wd')
       | Slice_HiWd (hi, wd) ->
           let size' = mk_expr_safe_to_replicate lets size type_integer in
           let hi'   = mk_expr_safe_to_replicate lets hi type_integer in
           let wd'   = mk_expr_safe_to_replicate lets wd type_integer in
-          add_check loc asserts (mk_lt_int hi' size');
-          add_check loc asserts (mk_le_int zero wd');
-          add_check loc asserts (mk_le_int wd' (mk_add_int hi' one));
+          add_check loc asserts (mk_lt_int hi' size') what;
+          add_check loc asserts (mk_le_int zero wd') what;
+          add_check loc asserts (mk_le_int wd' (mk_add_int hi' one)) what;
           Slice_HiWd (hi', wd')
       | Slice_Element (ix, wd) ->
           let size' = mk_expr_safe_to_replicate lets size type_integer in
           let ix'   = mk_expr_safe_to_replicate lets ix type_integer in
           let wd'   = mk_expr_safe_to_replicate lets wd type_integer in
-          add_check loc asserts (mk_le_int zero ix');
-          add_check loc asserts (mk_le_int zero wd');
-          add_check loc asserts (mk_le_int (mk_mul_int ix' wd') (mk_sub_int size' wd'));
+          add_check loc asserts (mk_le_int zero ix') what;
+          add_check loc asserts (mk_le_int zero wd') what;
+          add_check loc asserts (mk_le_int (mk_mul_int ix' wd') (mk_sub_int size' wd')) what;
           Slice_Element (ix, wd')
       )
 
@@ -1113,7 +1135,7 @@ let mk_constraint_check (loc : Loc.t) (lets : binding list ref) (asserts : check
       x
   else
       let x' = mk_expr_safe_to_replicate lets x type_integer in
-      add_check loc asserts (constraint_ranges_to_expr x' crs);
+      add_check loc asserts (constraint_ranges_to_expr x' crs) "type constraint";
       x'
 
 let mk_type_check (loc : Loc.t) (lets : binding list ref) (asserts : check list ref) (t : AST.ty) (x : AST.expr) : AST.expr =
@@ -1422,15 +1444,15 @@ let apply_with_runtime_checks (loc : Loc.t) (fty : fun_instance) (es : AST.expr 
   let asserts = ref [] in
   let r =
     ( match es with
-    | [x; y] when Ident.in_list fty.name [fdiv_int; frem_int; zdiv_int; zrem_int] ->
-        let y' = mk_zero_check loc lets asserts y in
+    | [x; y] when Ident.in_list fty.name [cdiv_int; crem_int; fdiv_int; frem_int; zdiv_int; zrem_int] ->
+        let y' = mk_zero_check loc lets asserts y "division by zero" in
         Expr_TApply (fty.name, fty.parameters, [x; y'], throws)
     | [x; y] when Ident.in_list fty.name [pdiv_int; prem_int] ->
-        let x' = mk_pos_check loc lets asserts x in
-        let y' = mk_nonneg_check loc lets asserts y in
+        let x' = mk_nonneg_check loc lets asserts x "non-negative dividend" in
+        let y' = mk_pos_check loc lets asserts y "positive divisor" in
         Expr_TApply (fty.name, fty.parameters, [x'; y'], throws)
     | [x; y] when Ident.equal fty.name Builtin_idents.exact_div_int ->
-        let (x', y') = mk_exactdiv_check loc lets asserts x y in
+        let (x', y') = mk_exactdiv_check loc lets asserts x y "exactly divides" in
         Expr_TApply (fty.name, fty.parameters, [x'; y'], throws)
     | _ ->
         Expr_TApply (fty.name, fty.parameters, es, throws)

@@ -1,0 +1,8 @@
+// RUN: not %iii --batchmode --runtime-checks %s | filecheck %s
+// Copyright (C) 2026-2026 Intel Corporation
+
+function Test()
+begin
+    let t := 1 / 0;
+// CHECK: Type error: Runtime check for positive divisor will always fail
+end
