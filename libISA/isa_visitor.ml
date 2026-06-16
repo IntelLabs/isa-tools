@@ -60,6 +60,19 @@ class type isaVisitor =
   end
 
 (****************************************************************)
+(** {2 Nested scope handler}                                    *)
+(****************************************************************)
+
+(** Handle nested scope by adding a nested scope level with
+ *  list of variables `ls` that are introduced by `f`.
+ *)
+let with_locals (vis : isaVisitor) (ls : Ident.t list) (f : 'a -> 'b) (x: 'a) : 'b =
+  vis#enter_scope ls;
+  let result = f x in
+  vis#leave_scope ls;
+  result
+
+(****************************************************************)
 (** {2 ISA visitor functions}                                   *)
 (****************************************************************)
 
@@ -185,9 +198,11 @@ and visit_expr (vis : isaVisitor) (x : expr) : expr =
         let v' = visit_var vis Definition v in
         let t' = visit_type vis t in
         let e' = visit_expr vis e in
-        let b' = visit_expr vis b in
-        if v == v' && t == t' && e == e' && b == b' then x
-        else Expr_Let (v', t', e', b')
+        with_locals vis [v] (fun _ ->
+          let b' = visit_expr vis b in
+          if v == v' && t == t' && e == e' && b == b' then x
+          else Expr_Let (v', t', e', b')
+        ) ()
     | Expr_Assert (e1, e2, loc) ->
         let e1' = visit_expr vis e1 in
         let e2' = visit_expr vis e2 in
@@ -381,12 +396,6 @@ and visit_lexpr (vis : isaVisitor) (x : lexpr) : lexpr =
         else LExpr_ReadWrite (f', g', tes', es', throws)
   in
   doVisit vis (vis#vlexpr x) aux x
-
-let with_locals (vis : isaVisitor) (ls : Ident.t list) (f : 'a -> 'b) (x: 'a) : 'b =
-  vis#enter_scope ls;
-  let result = f x in
-  vis#leave_scope ls;
-  result
 
 let rec locals_of_declitem (x : decl_item) : Ident.t list =
   match x with
