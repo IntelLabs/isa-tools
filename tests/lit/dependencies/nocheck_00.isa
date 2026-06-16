@@ -1,0 +1,9 @@
+// RUN: %iii --batchmode --exec=":dependencies %t.json" %s
+// RUN: not grep temporary_variable %t.json
+
+// Copyright (C) 2026-2026 Intel Corporation
+
+function FUT1(i : {0..15}) -> {1..256}
+begin
+    return __let temporary_variable : {1..16} := i+1 __in temporary_variable * temporary_variable;
+end
