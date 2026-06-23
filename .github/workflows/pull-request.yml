@@ -36,7 +36,7 @@ jobs:
       - name: Setup OCaml
         uses: ocaml/setup-ocaml@v3
         with:
-          ocaml-compiler: 5
+          ocaml-compiler: 5.4.1
           opam-disable-sandboxing: true
           dune-cache: true
         env:
