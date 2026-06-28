@@ -212,3 +212,10 @@ However, like Sail, we did include a few features that greatly
 improve readability of the specification but that cause us problems
 when compiling the code.
 
+--------------------------------
+
+*This article is part of a series of articles about the design of the The Intel® ISA Specification Language.
+For more articles, see*
+
+- [Designing a language for readability]({{ site.baseurl }}{% post_url 2026-06-27-designing-a-language-for-readability %})
+- [Naming conventions for readability]({{ site.baseurl }}{% post_url 2026-06-28-naming-conventions-for-readability %})
