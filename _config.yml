@@ -26,7 +26,11 @@ baseurl: "/isa-tools" # the subpath of your site, e.g. /blog
 url: "https://intellabs.github.io" # the base hostname & protocol for your site, e.g. http://example.com
 
 # Build settings
-theme: minima
+
+# use minima v3 theme (the default github theme is v2)
+remote_theme: "jekyll/minima"
+# theme: minima
+
 plugins:
   - jekyll-feed
 

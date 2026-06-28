@@ -1,0 +1,16 @@
+/* Fix display of definition lists - broken by default style sheet */
+
+dt, dd {
+  margin-left: $spacing-unit;
+}
+
+dt {
+  font-weight: bold;
+}
+
+/* Fix display of inline code - default style sheet adds too much left/right
+   space for us to use inline code as heavily as we want to.
+ */
+code.highlighter-rouge {
+  padding: 1px 1px;
+}
