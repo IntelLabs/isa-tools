@@ -19,7 +19,8 @@ It must be obvious what the syntax means.
 For more articles, see 
 [#1]({{ site.baseurl }}{% post_url 2026-06-27-designing-a-language-for-readability %}),
 [#2]({{ site.baseurl }}{% post_url 2026-06-28-naming-conventions-for-readability %}),
-[#3]({{ site.baseurl }}{% post_url 2026-06-29-designing-syntax-for-readability %})
+[#3]({{ site.baseurl }}{% post_url 2026-06-29-designing-syntax-for-readability %}),
+[#4]({{ site.baseurl }}{% post_url 2026-06-30-designing-types-for-readability %}).
 ]*
 
 ## Character set
@@ -548,3 +549,4 @@ For more articles, see*
 - [Designing a language for readability]({{ site.baseurl }}{% post_url 2026-06-27-designing-a-language-for-readability %})
 - [Naming conventions for readability]({{ site.baseurl }}{% post_url 2026-06-28-naming-conventions-for-readability %})
 - [Designing syntax for readability]({{ site.baseurl }}{% post_url 2026-06-29-designing-syntax-for-readability %})
+- [Designing types for readability]({{ site.baseurl }}{% post_url 2026-06-30-designing-types-for-readability %}).
