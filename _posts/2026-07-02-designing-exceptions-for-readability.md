@@ -368,3 +368,4 @@ For more articles, see*
 - [Designing syntax for readability]({{ site.baseurl }}{% post_url 2026-06-29-designing-syntax-for-readability %})
 - [Designing types for readability]({{ site.baseurl }}{% post_url 2026-06-30-designing-types-for-readability %}).
 - [Designing exceptions for readability]({{ site.baseurl }}{% post_url 2026-07-02-designing-exceptions-for-readability %}).
+- [Designing functions for readability]({{ site.baseurl }}{% post_url 2026-07-03-designing-functions-for-readability %}).

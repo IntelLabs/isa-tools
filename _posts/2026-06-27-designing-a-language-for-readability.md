@@ -163,7 +163,19 @@ what design decisions they think are the most important to the success of their 
 Many languages are said to be based on the Algol tradition
 so we can benefit from the familiarity that this brings.
 But I don't think anybody ever says what they think the Algol tradition is
-and which bits of Algol they chose to adopt or reject.
+and which bits of Algol they chose to adopt or reject.[^wirth-does]
+
+[^wirth-does]:
+    *[Added 3rd July 2026]*
+    While writing one of the later articles, I reread Niklaus Wirth's
+    HOPL III article ["The history of Modula-2 and Oberon"](https://people.inf.ethz.ch/wirth/Articles/Modula-Oberon-June.pdf)
+    in which Wirth defines what "ALGOL-like" means to him
+
+    > By “ALGOL-like” is meant the procedural paradigm, a rigorously defined syntax,
+    > traditional mathematical notation for expressions (without esoteric ++, ==, /=
+    > symbols), block structure providing scopes of identifiers and the concept of
+    > locality, the availability of recursion for procedures and functions, and a
+    > strict, static data typing scheme.
 
 Some features of Algol compared with other languages from that time
 such as COBOL and FORTRAN are so ingrained in language design that they
@@ -222,3 +234,4 @@ For more articles, see*
 - [Designing syntax for readability]({{ site.baseurl }}{% post_url 2026-06-29-designing-syntax-for-readability %})
 - [Designing types for readability]({{ site.baseurl }}{% post_url 2026-06-30-designing-types-for-readability %}).
 - [Designing exceptions for readability]({{ site.baseurl }}{% post_url 2026-07-02-designing-exceptions-for-readability %}).
+- [Designing functions for readability]({{ site.baseurl }}{% post_url 2026-07-03-designing-functions-for-readability %}).
