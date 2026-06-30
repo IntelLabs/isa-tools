@@ -170,3 +170,4 @@ For more articles, see*
 - [Naming conventions for readability]({{ site.baseurl }}{% post_url 2026-06-28-naming-conventions-for-readability %})
 - [Designing syntax for readability]({{ site.baseurl }}{% post_url 2026-06-29-designing-syntax-for-readability %})
 - [Designing types for readability]({{ site.baseurl }}{% post_url 2026-06-30-designing-types-for-readability %}).
+- [Designing exceptions for readability]({{ site.baseurl }}{% post_url 2026-07-02-designing-exceptions-for-readability %}).

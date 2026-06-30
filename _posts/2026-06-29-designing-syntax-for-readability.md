@@ -20,7 +20,8 @@ For more articles, see
 [#1]({{ site.baseurl }}{% post_url 2026-06-27-designing-a-language-for-readability %}),
 [#2]({{ site.baseurl }}{% post_url 2026-06-28-naming-conventions-for-readability %}),
 [#3]({{ site.baseurl }}{% post_url 2026-06-29-designing-syntax-for-readability %}),
-[#4]({{ site.baseurl }}{% post_url 2026-06-30-designing-types-for-readability %}).
+[#4]({{ site.baseurl }}{% post_url 2026-06-30-designing-types-for-readability %}),
+[#5]({{ site.baseurl }}{% post_url 2026-07-02-designing-exceptions-for-readability %}).
 ]*
 
 ## Character set
@@ -550,3 +551,4 @@ For more articles, see*
 - [Naming conventions for readability]({{ site.baseurl }}{% post_url 2026-06-28-naming-conventions-for-readability %})
 - [Designing syntax for readability]({{ site.baseurl }}{% post_url 2026-06-29-designing-syntax-for-readability %})
 - [Designing types for readability]({{ site.baseurl }}{% post_url 2026-06-30-designing-types-for-readability %}).
+- [Designing exceptions for readability]({{ site.baseurl }}{% post_url 2026-07-02-designing-exceptions-for-readability %}).
