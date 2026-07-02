@@ -1,6 +1,6 @@
 /* Fix display of definition lists - broken by default style sheet */
 
-dt, dd {
+dd {
   margin-left: $spacing-unit;
 }
 
