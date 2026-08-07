@@ -365,6 +365,19 @@ let bounds_of_cofun2 (f : Z.t -> Z.t -> Z.t) (r1 : bounds) (r2 : bounds) : bound
   let (lo2, hi2) = r2 in
   (f lo1 hi2, f hi1 lo2)
 
+(* Bounds of a 2-input function that is either monotonic or antimonotonic *)
+let bounds_of_mfun2 (f : Z.t -> Z.t -> Z.t) (r1 : bounds) (r2 : bounds) : bounds =
+  let (lo1, hi1) = r1 in
+  let (lo2, hi2) = r2 in
+  let a = f lo1 lo2 in
+  let b = f lo1 hi2 in
+  let c = f lo1 lo2 in
+  let d = f hi1 hi2 in
+  let lo = Z.min (Z.min a b) (Z.min c d) in
+  let hi = Z.max (Z.max a b) (Z.max c d) in
+  (lo, hi)
+
+
 (* Bounds of a 1-input covariant function *)
 let bounds_of_fun1 (f : Z.t -> Z.t) (r1 : bounds) : bounds =
   let (lo1, hi1) = r1 in
@@ -401,6 +414,40 @@ let range_of_mul (r1 : range) (r2 : range) : range =
       r1
       r2
 
+(* Calculate range of divide operation taking care of division by zero and negative numbers *)
+let range_of_div (op : Z.t -> Z.t -> Z.t) (r1 : range) (r2 : range) : range =
+    map2_option
+      (fun b1 b2 ->
+        let (lo1, hi1) = b1 in
+        let (lo2, hi2) = b2 in
+        (* three cases: divisor positive, divisor negative or divisor straddles zero *)
+        if Z.gt lo2 Z.zero then bounds_of_mfun2 op b1 b2
+        else if Z.gt Z.zero hi2 then bounds_of_mfun2 op b1 b2
+        else (* lo2 < 0 < hi2 : combine results for r1 / {1..hi2} and r2 / {lo2..-1} *)
+          let fmt = Format.std_formatter in
+          union_bounds (bounds_of_mfun2 op b1 (Z.one, hi2))
+                       (bounds_of_mfun2 op b1 (lo2, Z.minus_one))
+      )
+      r1
+      r2
+
+(* Calculate range of remainder operation taking care of division by zero and negative numbers *)
+let range_of_rem (r1 : range) (r2 : range) : range =
+    Option.map
+      (fun b2 ->
+        (* Simplification (which results in approximate result)
+         * Ignore b1 and just return (-r+1 .. r-1)
+         *   where r = Max(|lo2|, |hi2|)
+         * This is not a very tight bound (because it might allow a
+         * negative result when that is impossible) but it is probably
+         * good enough.
+         *)
+        let (lo2, hi2) = b2 in
+        let r = Z.max (Z.abs lo2) (Z.abs hi2) in
+        (Z.sub Z.one r, Z.sub r Z.one)
+      )
+      r2
+
 let range_of_power2 (r : range) : range =
   range_of_fun1 power2 (range_restrict_ge Z.zero r)
 
@@ -433,6 +480,7 @@ let mk_unop (op : range -> range) (f : Ident.t) (e1 : AST.expr) : AST.expr optio
   let r1 = range_of_expr e1 in
   let rr = op r1 in
   let r = union_range r1 rr in
+  if !verbose then Format.printf "%a : %a -> %a\n" Ident.pp f pp_range r1 pp_range rr;
   Option.map (fun b ->
     let n = int_of_bounds b in
     mk_cvt_sintN_int n (AST.Expr_TApply (f, [expr_of_int n], [mk_cvt_int_sintN n e1], NoThrow))
@@ -443,7 +491,7 @@ let mk_binop (op : range -> range -> range) (f : Ident.t) (e1 : AST.expr) (e2 : 
   let r2 = range_of_expr e2 in
   let rr = op r1 r2 in
   let r = union_range (union_range r1 r2) rr in
-  if !verbose then Format.printf "op : %a %a -> %a\n" pp_range r1 pp_range r2 pp_range rr;
+  if !verbose then Format.printf "%a : %a %a -> %a\n" Ident.pp f pp_range r1 pp_range r2 pp_range rr;
   Option.map (fun b ->
     let n = int_of_bounds b in
     mk_cvt_sintN_int n (AST.Expr_TApply (f, [expr_of_int n], [mk_cvt_int_sintN n e1; mk_cvt_int_sintN n e2], NoThrow))
@@ -480,6 +528,15 @@ let primop (f : Ident.t) (ftype : AST.function_type) (ps : AST.expr list) (args 
   | ([],  [x1])     when Ident.equal f neg_int -> mk_unop (range_of_cofun1 prim_neg_int) neg_sintN x1
   | ([],  [x1; x2]) when Ident.equal f sub_int -> mk_binop (range_of_cofun2 prim_sub_int) sub_sintN x1 x2
   | ([],  [x1; x2]) when Ident.equal f mul_int -> mk_binop range_of_mul mul_sintN x1 x2
+  | ([],  [x1; x2]) when Ident.equal f cdiv_int -> mk_binop (range_of_div prim_cdiv_int) cdiv_sintN x1 x2
+  | ([],  [x1; x2]) when Ident.equal f crem_int -> mk_binop range_of_rem crem_sintN x1 x2
+  | ([],  [x1; x2]) when Ident.equal f fdiv_int -> mk_binop (range_of_div prim_fdiv_int) fdiv_sintN x1 x2
+  | ([],  [x1; x2]) when Ident.equal f frem_int -> mk_binop range_of_rem frem_sintN x1 x2
+  | ([],  [x1; x2]) when Ident.equal f pdiv_int -> mk_binop (range_of_div prim_pdiv_int) zdiv_sintN x1 x2 (* change pdiv to zdiv  on assumption that it is simplest replacement *)
+  | ([],  [x1; x2]) when Ident.equal f prem_int -> mk_binop range_of_rem zrem_sintN x1 x2
+  | ([],  [x1; x2]) when Ident.equal f zdiv_int -> mk_binop (range_of_div prim_zdiv_int) zdiv_sintN x1 x2
+  | ([],  [x1; x2]) when Ident.equal f zrem_int -> mk_binop range_of_rem zrem_sintN x1 x2
+  | ([],  [x1; x2]) when Ident.equal f exact_div_int -> mk_binop (range_of_div prim_zdiv_int) exact_div_sintN x1 x2
   | ([],  [x1; x2]) when Ident.equal f shl_int -> mk_binop range_of_shl shl_sintN x1 x2
   | ([],  [x1; x2]) when Ident.equal f mod_pow2_int -> mk_binop range_of_mod_pow2 mod_pow2_sintN x1 x2
   | ([],  [x1; x2]) when Ident.equal f align_int -> mk_binop range_of_align_down align_sintN x1 x2
