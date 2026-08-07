@@ -1,0 +1,23 @@
+// RUN: %aslopt -O0 -Obounded %s | filecheck --check-prefix=XFORM %s
+// RUN: %aslrun -Obounded %s | filecheck %s
+
+// Copyright (C) 2026-2026 Intel Corporation
+
+function FUT(x : {-8..7}, y : {-8..7}) -> {-8..8}
+begin
+    return Ceiling_Divide(x, y);
+end
+
+// XFORM-LABEL: function FUT.0{}(x : __sint(4), y : __sint(4)) -> __sint(5)
+// XFORM-NEXT:  begin
+// XFORM-NEXT:      return Std::SInt::Ceiling_Divide.0{5}(Std::SInt::Resize.0{4, 5}(x, 5), Std::SInt::Resize.0{4, 5}(y, 5));
+// XFORM-NEXT:  end
+
+function main() -> Builtin::Foreign::CInt
+begin
+    Std::Print::Integer::Dec(FUT(7, 3));
+    // CHECK: 3
+    Std::Print::Integer::Dec(FUT(7, -3));
+    // CHECK: -2
+    return Builtin::Foreign::CInt::From_Integer(0);
+end
