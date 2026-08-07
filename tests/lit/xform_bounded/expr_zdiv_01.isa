@@ -1,0 +1,27 @@
+// RUN: %aslopt -O0 -Obounded %s | filecheck --check-prefix=XFORM %s
+// RUN: %aslrun -Obounded %s | filecheck %s
+
+// Copyright (C) 2026-2026 Intel Corporation
+
+function FUT(dividend : Bits(128), divisor : Bits(64)) -> Bits(128)
+begin
+    let x := Unsigned(dividend);
+    let y := Unsigned(divisor);
+    let r := Truncated_Divide(x, y);
+    return r[0 +: 128];
+end
+
+// XFORM-LABEL: function FUT.0{}(dividend : Bits(128), divisor : Bits(64)) -> Bits(128)
+// XFORM-NEXT:  begin
+// XFORM-NEXT:      let x : __sint(128) := Std::SInt::Unsigned.0{128}(dividend);
+// XFORM-NEXT:      let y : __sint(64) := Std::SInt::Unsigned.0{64}(divisor);
+// XFORM-NEXT:      let r : __sint(129) := Std::SInt::Truncated_Divide.0{129}(Std::SInt::Resize.0{128, 129}(x, 129), Std::SInt::Resize.0{64, 129}(y, 129));
+// XFORM-NEXT:      return {Integer}Std::SInt::To_Integer.0{129}(r)[Std::SInt::To_Integer.0{1}(i1'x0) +: Std::SInt::To_Integer.0{9}(i9'x128)];
+// XFORM-NEXT:  end
+
+function main() -> Builtin::Foreign::CInt
+begin
+    Std::Print::Bits::Hex(FUT(All_Ones(128), Zero_Extend(0b1, 64)));
+    // CHECK: 128'xffffffffffffffffffffffffffffffff
+    return Builtin::Foreign::CInt::From_Integer(0);
+end
