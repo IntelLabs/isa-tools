@@ -532,8 +532,6 @@ let primop (f : Ident.t) (ftype : AST.function_type) (ps : AST.expr list) (args 
   | ([],  [x1; x2]) when Ident.equal f crem_int -> mk_binop range_of_rem crem_sintN x1 x2
   | ([],  [x1; x2]) when Ident.equal f fdiv_int -> mk_binop (range_of_div prim_fdiv_int) fdiv_sintN x1 x2
   | ([],  [x1; x2]) when Ident.equal f frem_int -> mk_binop range_of_rem frem_sintN x1 x2
-  | ([],  [x1; x2]) when Ident.equal f pdiv_int -> mk_binop (range_of_div prim_pdiv_int) zdiv_sintN x1 x2 (* change pdiv to zdiv  on assumption that it is simplest replacement *)
-  | ([],  [x1; x2]) when Ident.equal f prem_int -> mk_binop range_of_rem zrem_sintN x1 x2
   | ([],  [x1; x2]) when Ident.equal f zdiv_int -> mk_binop (range_of_div prim_zdiv_int) zdiv_sintN x1 x2
   | ([],  [x1; x2]) when Ident.equal f zrem_int -> mk_binop range_of_rem zrem_sintN x1 x2
   | ([],  [x1; x2]) when Ident.equal f exact_div_int -> mk_binop (range_of_div prim_zdiv_int) exact_div_sintN x1 x2
