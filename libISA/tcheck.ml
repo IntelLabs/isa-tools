@@ -851,8 +851,6 @@ let is_legal_constraint_range (cr : AST.set_range) : AST.expr option =
 let lift2 (f : 'a -> 'a -> 'a) (ox : 'a option) (oy : 'a option) : 'a option =
   ( match (ox, oy) with
   | (Some x, Some y) -> Some (f x y)
-  | (Some x, _) -> ox
-  | (_, Some y) -> oy
   | _ -> None
   )
 
