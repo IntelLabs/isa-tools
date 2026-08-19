@@ -14,9 +14,10 @@ end
 // XFORM-LABEL: function FUT.0{}(dividend : Bits(128), divisor : Bits(64)) -> Bits(128)
 // XFORM-NEXT:  begin
 // XFORM-NEXT:      let x : __sint(129) := Std::SInt::Unsigned.0{128}(dividend);
-// XFORM-NEXT:      let y : __sint(64) := Std::SInt::Unsigned.0{64}(divisor);
-// XFORM-NEXT:      let r : __sint(129) := Std::SInt::Truncated_Divide.0{129}(x, Std::SInt::Resize.0{64, 129}(y, 129));
-// XFORM-NEXT:      return {Integer}Std::SInt::To_Integer.0{129}(r)[Std::SInt::To_Integer.0{1}(i1'x0) +: Std::SInt::To_Integer.0{9}(i9'x128)];
+// XFORM-NEXT:      let y : __sint(65) := Std::SInt::Unsigned.0{64}(divisor);
+// XFORM-NEXT:      let r : __sint(130) := Std::SInt::Truncated_Divide.0{130}(Std::SInt::Resize.0{129, 130}(x, 130), Std::SInt::Resize.0{65, 130}(y, 130));
+// XFORM-NEXT:      return {Integer}Std::SInt::To_Integer.0{130}(r)[Std::SInt::To_Integer.0{1}(i1'x0) +: Std::SInt::To_Integer.0{9}(i9'x128)];
+
 // XFORM-NEXT:  end
 
 function main() -> Builtin::Foreign::CInt
