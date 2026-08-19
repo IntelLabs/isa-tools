@@ -6,7 +6,7 @@ function FUT(dividend : Bits(128), divisor : Bits(64)) -> Bits(128)
 begin
     let x := Std::SInt::Unsigned(dividend);
     let y := Std::SInt::Unsigned(divisor);
-    let r := Std::SInt::Truncated_Divide(Std::SInt::Resize(x, 129), Std::SInt::Resize(y, 129));
+    let r := Std::SInt::Truncated_Divide(x, y);
     return Std::SInt::To_Integer(r)[0 +: 128];
 end
 
