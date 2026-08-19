@@ -1,4 +1,4 @@
-// FFI testing support functions to be imported into ASL test programs
+// FFI testing support functions to be imported into ISA test programs
 // Copyright (C) 2025-2026 Intel Corporation
 #include <stdint.h>
 #include "isa_ffi.h"
