@@ -893,6 +893,26 @@ let subst_fun_type (replace : Ident.t -> expr option) (x : ty) : ty =
   visit_type subst x
 
 (****************************************************************)
+(** {2 Map over type parameters}                                *)
+(****************************************************************)
+
+class map_type_parameter_class (f : AST.expr -> AST.expr) =
+  object
+    inherit nopIsaVisitor
+
+    method! vtype ty =
+      ( match ty with
+      | Type_Bits (e, fs) -> ChangeTo (Type_Bits (f e, fs))
+      | Type_Constructor (tc, es) -> ChangeTo (Type_Constructor (tc, List.map f es))
+      | _ -> DoChildren
+      )
+  end
+
+let map_type_parameters (f : AST.expr -> AST.expr) (x : AST.ty) : AST.ty =
+  let cls = new map_type_parameter_class f in
+  visit_type cls x
+
+(****************************************************************)
 (** {2 Expression transformation}                               *)
 (****************************************************************)
 
