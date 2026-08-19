@@ -3,7 +3,7 @@
 
 function FUT4(x : Bits(4)) -> __sint(5)
 begin
-    return Std::SInt::Resize(Std::SInt::Unsigned(x), 5);
+    return Std::SInt::Unsigned(x);
 end
 
 function main() -> Builtin::Foreign::CInt
