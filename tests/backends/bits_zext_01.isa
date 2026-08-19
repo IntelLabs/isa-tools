@@ -1,0 +1,15 @@
+// RUN: %aslrun %s | filecheck %s
+// Copyright (C) 2023-2026 Intel Corporation
+
+// This reproduces an actual bug found in a spec
+function Test(x : Bits(8)) -> Bits(64)
+begin
+    return Std::Bits::Zero_Extend(not x, 64);
+end
+
+function main() -> Builtin::Foreign::CInt
+begin
+    Std::Print::Bits::Hex(Test(0x87)); Print("\n");
+    // CHECK: 64'x78
+    return Builtin::Foreign::CInt::From_Integer(0);
+end
