@@ -499,8 +499,9 @@ module Runtime : RT.RuntimeLib = struct
       RT.pp_expr y
 
   let zero_extend_bits (fmt : PP.formatter) (m : int) (n : int)  (x : RT.rt_expr) : unit =
-    PP.fprintf fmt "((%a)%a)"
+    PP.fprintf fmt "((%a)(%a)%a)"
     ty_uint n
+    ty_uint m
     RT.pp_expr x
 
   let sign_extend_bits (fmt : PP.formatter) (m : int) (n : int)  (x : RT.rt_expr) : unit =
