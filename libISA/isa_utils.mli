@@ -225,6 +225,13 @@ val subst_fun_slice : (Ident.t -> AST.expr option) -> AST.slice -> AST.slice
 val subst_fun_type : (Ident.t -> AST.expr option) -> AST.ty -> AST.ty
 
 (****************************************************************)
+(** {2 Map over type parameters}                                *)
+(****************************************************************)
+
+(** Apply function to parameters of types (i.e., Bits(e) -> Bits(f(e))) *)
+val map_type_parameters : (AST.expr -> AST.expr) -> (AST.ty -> AST.ty)
+
+(****************************************************************)
 (** {2 Expression transformation}                               *)
 (****************************************************************)
 
