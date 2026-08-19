@@ -160,6 +160,103 @@ end
 module Operators2 = Map.Make (Operator2)
 
 (****************************************************************)
+(** {3 Constant folding}                                        *)
+(*                                                              *)
+(* Perform simple constant folding of expression                *)
+(*                                                              *)
+(* This is primarily used to simplify types such as Bits(3+1)   *)
+(* which is important because                                   *)
+(* - Part of our testing infrastructure requires bitwidths to   *)
+(*   be literal constants.                                      *)
+(* - In z3_of_expr, we have some hacks to handle bitwidth       *)
+(*   division such as (e.g., "size / 8") that rely on some      *)
+(*   shallow syntactic transforms.                              *)
+(* - It gives a performance benefit when constant folding       *)
+(*   simplifies constraints enough that we don't have to        *)
+(*   invoke Z3.                                                 *)
+(****************************************************************)
+
+let rec const_fold_expr (x : AST.expr) : AST.expr =
+  let rec eval (x : AST.expr) : Z.t option =
+    ( match x with
+    | Expr_Lit (VInt x') -> Some x'
+    | Expr_Assert (e1, e2, loc) -> eval e2
+    | _ -> None
+    )
+  in
+  let to_int_expr (x : Z.t) : AST.expr = Expr_Lit (VInt x) in
+  let to_bool_expr (x : bool) : AST.expr = Expr_Lit (VBool x) in
+
+  ( match x with
+  | Expr_TApply (f, [], [a; b], _) when Ident.equal f eq_int && a = b -> asl_true
+  | Expr_TApply (f, tes, es, throws) ->
+      let es' = List.map const_fold_expr es in
+      ( match flatten_map_option eval es' with
+      | Some [a; b] when Ident.equal f eq_int -> to_bool_expr (a =  b)
+      | Some [a; b] when Ident.equal f ne_int -> to_bool_expr (a <> b)
+      | Some [a; b] when Ident.equal f le_int -> to_bool_expr (a <= b)
+      | Some [a; b] when Ident.equal f lt_int -> to_bool_expr (a <  b)
+      | Some [a; b] when Ident.equal f ge_int -> to_bool_expr (a >= b)
+      | Some [a; b] when Ident.equal f gt_int -> to_bool_expr (a >  b)
+      | Some [a]    when Ident.equal f neg_int -> to_int_expr (Primops.prim_neg_int a)
+      | Some [a; b] when Ident.equal f add_int -> to_int_expr (Primops.prim_add_int a b)
+      | Some [a; b] when Ident.equal f sub_int -> to_int_expr (Primops.prim_sub_int a b)
+      | Some [a; b] when Ident.equal f mul_int -> to_int_expr (Primops.prim_mul_int a b)
+      | Some [a; b] when Ident.equal f exact_div_int -> to_int_expr (Primops.prim_exact_div_int a b)
+      | Some [a; b] when Ident.equal f pdiv_int -> to_int_expr (Primops.prim_pdiv_int a b)
+      | Some [a; b] when Ident.equal f shl_int -> to_int_expr (Primops.prim_shl_int a b)
+      | Some [a; b] when Ident.equal f shr_int -> to_int_expr (Primops.prim_shr_int a b)
+      | Some [a; b] when Ident.equal f min -> to_int_expr (Z.min a b)
+      | Some [a; b] when Ident.equal f max -> to_int_expr (Z.max a b)
+      | Some [a]    when Ident.equal f pow2_int -> to_int_expr (Primops.prim_pow2_int a)
+      | Some [a; b] when Ident.equal f pow_int_int -> to_int_expr (Primops.prim_pow_int_int a b)
+      | _ -> Expr_TApply (f, tes, es', throws)
+      )
+  | Expr_Assert (e1, e2, loc) ->
+      const_fold_expr e2
+  | _ -> x
+  )
+
+(****************************************************************)
+(** {3 Expression simplification}                               *)
+(****************************************************************)
+
+(* Simplify use of __assert and __let in an expression
+ * as preparation for generating a Z3 check.
+ *
+ * The primary reason for doing this is to enable the exact_div/pdiv
+ * handling in z3_of_expr to work.
+ *)
+class simplifyExprClass = object(self)
+  inherit Isa_visitor.nopIsaVisitor
+
+  val mutable env = Bindings.empty
+
+  method! vexpr e =
+    ( match e with
+    | Expr_Var v ->
+        ( match Bindings.find_opt v env with
+        | Some r -> ChangeTo r
+        | None -> SkipChildren
+        )
+    | Expr_Let (v, ty, e1, e2) ->
+        env <- Bindings.add v e1 env;
+        (* Note: there is no need to remove 'v' after transforming e2
+         * because __let-bound variables are unique in the expression.
+         *)
+        ChangeTo e2
+    | Expr_Assert (e1, e2, loc) ->
+        ChangeDoChildrenPost (e2, Fun.id)
+    | _ ->
+        DoChildren
+    )
+end
+
+let simplify_expr (x : AST.expr) : AST.expr =
+  let v = new simplifyExprClass in
+  Isa_visitor.visit_expr v x
+
+(****************************************************************)
 (** {3 Global Environment (aka the Global Symbol Table)}        *)
 (****************************************************************)
 
@@ -327,8 +424,14 @@ end
 let subst_consts_expr (env : GlobalEnv.t) (e : AST.expr) : AST.expr =
   subst_fun_expr (GlobalEnv.getConstant env) e
 
+let const_fold_type (x : AST.ty) : AST.ty =
+  map_type_parameters (fun e -> const_fold_expr (simplify_expr e)) x
+
 let subst_consts_type (env : GlobalEnv.t) (ty : AST.ty) : AST.ty =
-  subst_fun_type (GlobalEnv.getConstant env) ty
+  const_fold_type (subst_fun_type (GlobalEnv.getConstant env) ty)
+
+let subst_and_cleanup_type (s : AST.expr Bindings.t) (ty : AST.ty) : AST.ty =
+  const_fold_type (subst_fun_type (fun v -> Bindings.find_opt v s) ty)
 
 (** expand a type definition using type parameters *)
 let expand_type (loc : Loc.t) (ps : Ident.t list) (ty : AST.ty) (es : expr list) : AST.ty =
@@ -336,7 +439,7 @@ let expand_type (loc : Loc.t) (ps : Ident.t list) (ty : AST.ty) (es : expr list)
     raise (TypeError (loc, "wrong number of type parameters"))
   end;
   let bs = mk_bindings (List.combine ps es) in
-  subst_type bs ty
+  subst_and_cleanup_type bs ty
 
 (** dereference typedef *)
 let rec derefType (env : GlobalEnv.t) (loc : Loc.t) (ty : AST.ty) : AST.ty =
@@ -515,95 +618,6 @@ end
 (****************************************************************)
 (** {2 Subtype satisfaction}                                    *)
 (****************************************************************)
-
-(****************************************************************)
-(** {3 Expression simplification}                               *)
-(****************************************************************)
-
-(** Perform simple constant folding of expression
-
-    It's primary role is to enable the '/' hacks in
-    z3_of_expr which rely on shallow syntactic transforms.
-    It has a secondary benefit of sometimes causing constraints
-    to become so trivial that we don't even need to invoke Z3
-    which gives a performance benefit.
- *)
-
-let rec const_fold_expr (x : AST.expr) : AST.expr =
-  let rec eval (x : AST.expr) : Z.t option =
-    ( match x with
-    | Expr_Lit (VInt x') -> Some x'
-    | Expr_Assert (e1, e2, loc) -> eval e2
-    | _ -> None
-    )
-  in
-  let to_int_expr (x : Z.t) : AST.expr = Expr_Lit (VInt x) in
-  let to_bool_expr (x : bool) : AST.expr = Expr_Lit (VBool x) in
-
-  ( match x with
-  | Expr_TApply (f, [], [a; b], _) when Ident.equal f eq_int && a = b -> asl_true
-  | Expr_TApply (f, tes, es, throws) ->
-      let es' = List.map const_fold_expr es in
-      ( match flatten_map_option eval es' with
-      | Some [a; b] when Ident.equal f eq_int -> to_bool_expr (a =  b)
-      | Some [a; b] when Ident.equal f ne_int -> to_bool_expr (a <> b)
-      | Some [a; b] when Ident.equal f le_int -> to_bool_expr (a <= b)
-      | Some [a; b] when Ident.equal f lt_int -> to_bool_expr (a <  b)
-      | Some [a; b] when Ident.equal f ge_int -> to_bool_expr (a >= b)
-      | Some [a; b] when Ident.equal f gt_int -> to_bool_expr (a >  b)
-      | Some [a]    when Ident.equal f neg_int -> to_int_expr (Primops.prim_neg_int a)
-      | Some [a; b] when Ident.equal f add_int -> to_int_expr (Primops.prim_add_int a b)
-      | Some [a; b] when Ident.equal f sub_int -> to_int_expr (Primops.prim_sub_int a b)
-      | Some [a; b] when Ident.equal f mul_int -> to_int_expr (Primops.prim_mul_int a b)
-      | Some [a; b] when Ident.equal f exact_div_int -> to_int_expr (Primops.prim_exact_div_int a b)
-      | Some [a; b] when Ident.equal f pdiv_int -> to_int_expr (Primops.prim_pdiv_int a b)
-      | Some [a; b] when Ident.equal f shl_int -> to_int_expr (Primops.prim_shl_int a b)
-      | Some [a; b] when Ident.equal f shr_int -> to_int_expr (Primops.prim_shr_int a b)
-      | Some [a; b] when Ident.equal f min -> to_int_expr (Z.min a b)
-      | Some [a; b] when Ident.equal f max -> to_int_expr (Z.max a b)
-      | Some [a]    when Ident.equal f pow2_int -> to_int_expr (Primops.prim_pow2_int a)
-      | Some [a; b] when Ident.equal f pow_int_int -> to_int_expr (Primops.prim_pow_int_int a b)
-      | _ -> Expr_TApply (f, tes, es', throws)
-      )
-  | Expr_Assert (e1, e2, loc) ->
-      const_fold_expr e2
-  | _ -> x
-  )
-
-(* Simplify use of __assert and __let in an expression
- * as preparation for generating a Z3 check.
- *
- * The primary reason for doing this is to enable the exact_div/pdiv
- * handling in z3_of_expr to work.
- *)
-class simplifyExprClass = object(self)
-  inherit Isa_visitor.nopIsaVisitor
-
-  val mutable env = Bindings.empty
-
-  method! vexpr e =
-    ( match e with
-    | Expr_Var v ->
-        ( match Bindings.find_opt v env with
-        | Some r -> ChangeTo r
-        | None -> SkipChildren
-        )
-    | Expr_Let (v, ty, e1, e2) ->
-        env <- Bindings.add v e1 env;
-        (* Note: there is no need to remove 'v' after transforming e2
-         * because __let-bound variables are unique in the expression.
-         *)
-        ChangeTo e2
-    | Expr_Assert (e1, e2, loc) ->
-        ChangeDoChildrenPost (e2, Fun.id)
-    | _ ->
-        DoChildren
-    )
-end
-
-let simplify_expr (x : AST.expr) : AST.expr =
-  let v = new simplifyExprClass in
-  Isa_visitor.visit_expr v x
 
 (****************************************************************)
 (** {3 Z3 support code}                                         *)
@@ -929,9 +943,8 @@ let check_subrange_satisfies (env : Env.t) (loc : Loc.t) (ocrs1 : set_range list
 let rec check_subtype_satisfies (env : Env.t) (loc : Loc.t) (ty1 : AST.ty) (ty2 : AST.ty) : unit =
   let genv = Env.globals env in
   (* Substitute global constants in types *)
-  let subst_consts = new substFunClass (GlobalEnv.getConstant genv) in
-  let ty1' = Isa_visitor.visit_type subst_consts ty1 in
-  let ty2' = Isa_visitor.visit_type subst_consts ty2 in
+  let ty1' = subst_consts_type genv ty1 in
+  let ty2' = subst_consts_type genv ty2 in
   ( match (derefType genv loc ty1', derefType genv loc ty2') with
   | Type_Integer ocrs1, Type_Integer ocrs2 ->
       if !enable_constraint_checks then check_subrange_satisfies env loc ocrs1 ocrs2
@@ -972,9 +985,8 @@ let rec check_subtype_satisfies (env : Env.t) (loc : Loc.t) (ty1 : AST.ty) (ty2 
 let rec least_supertype (env : Env.t) (loc : Loc.t) (ty1 : AST.ty) (ty2 : AST.ty) : AST.ty =
   let genv = Env.globals env in
   (* Substitute global constants in types *)
-  let subst_consts = new substFunClass (GlobalEnv.getConstant genv) in
-  let ty1' = Isa_visitor.visit_type subst_consts ty1 in
-  let ty2' = Isa_visitor.visit_type subst_consts ty2 in
+  let ty1' = subst_consts_type genv ty1 in
+  let ty2' = subst_consts_type genv ty2 in
   ( match (derefType genv loc ty1', derefType genv loc ty2') with
   | (Type_Integer ocrs1, Type_Integer ocrs2) -> Type_Integer (constraint_union ocrs1 ocrs2)
   | (Type_Bits (e1, _), Type_Bits (e2, _)) ->
@@ -1235,9 +1247,8 @@ let synthesize_parameters (env : Env.t) (loc : Loc.t)
         Scope.set s v (Some (subst_consts_expr genv e))
       else begin
         (* Substitute global constants in types *)
-        let subst_consts = new substFunClass (GlobalEnv.getConstant genv) in
-        let ety' = Isa_visitor.visit_type subst_consts ety in
-        let ty' = Isa_visitor.visit_type subst_consts ty in
+        let ety' = subst_consts_type genv ety in
+        let ty'  = subst_consts_type genv ty in
         synthesize_type env loc s ety' ty'
       end
     )
@@ -1419,7 +1430,7 @@ let instantiate_fun (env : Env.t) (loc : Loc.t)
 
   (* Check each argument *)
   List.iter2 (fun actual_ty (v, aty, od) ->
-    let aty' = subst_type bs aty in
+    let aty' = subst_and_cleanup_type bs aty in
     (* Format.printf "%a: Argument type %a -> %a\n" FMT.loc loc FMT.ty aty FMT.ty aty'; *)
     check_subtype_satisfies env loc actual_ty aty'
     )
@@ -1428,8 +1439,8 @@ let instantiate_fun (env : Env.t) (loc : Loc.t)
 
   (* Construct result *)
   let parameters = List.map (fun (p, _) -> Bindings.find p bs) fty.params in
-  let ovty = Option.map (subst_type bs) fty.ovty in
-  let rty1 = subst_type bs fty.rty in
+  let ovty = Option.map (subst_and_cleanup_type bs) fty.ovty in
+  let rty1 = subst_and_cleanup_type bs fty.rty in
   (* Possible refined type based on constraints *)
   let rty2 = refine_type fty tys in
   let rty = Option.value rty2 ~default:rty1 in
@@ -2040,7 +2051,7 @@ and tc_expr (env : Env.t) (loc : Loc.t) (x : AST.expr) : AST.expr * AST.ty =
         List.map
           (fun (f, e) ->
             let fty = get_recordfield loc fs f in
-            let fty' = subst_type s fty in
+            let fty' = subst_and_cleanup_type s fty in
             let e' = check_expr env loc fty' e in
             (f, e'))
           fas
