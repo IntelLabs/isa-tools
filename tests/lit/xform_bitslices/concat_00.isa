@@ -11,7 +11,7 @@ begin
     var b : Bits(1);
 
     var r1 := x ++ y;
-    // CHECK: var r1 : Bits(Std::Integer::Add.0{}(2, 2)) := Std::Bits::Or.0{4}(Std::Bits::Shift_Left_Logical_Restricted.0{4}(Std::Bits::Zero_Extend.0{2, 4}(x, 4), 2), Std::Bits::Zero_Extend.0{2, 4}(y, 4));
+    // CHECK: var r1 : Bits(4) := Std::Bits::Or.0{4}(Std::Bits::Shift_Left_Logical_Restricted.0{4}(Std::Bits::Zero_Extend.0{2, 4}(x, 4), 2), Std::Bits::Zero_Extend.0{2, 4}(y, 4));
 
 
     var r2 := Std::Bits::Zero_Extend(Std::Bits::All_Ones(i), 8);
