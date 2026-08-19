@@ -1,0 +1,18 @@
+// RUN: %aslrun %s | filecheck %s
+// REQUIRES: (c23 && wide_bitint) || interpreter
+// Copyright (C) 2026-2026 Intel Corporation
+
+function FUT(dividend : Bits(128), divisor : Bits(64)) -> Bits(128)
+begin
+    let x := Std::SInt::Unsigned(dividend);
+    let y := Std::SInt::Unsigned(divisor);
+    let r := Std::SInt::Truncated_Divide(x, y);
+    return Std::SInt::To_Integer(r)[0 +: 128];
+end
+
+function main() -> Builtin::Foreign::CInt
+begin
+    Std::Print::Bits::Hex(FUT(All_Ones(128), Zero_Extend(0b1, 64)));
+    // CHECK: 128'xffffffffffffffffffffffffffffffff
+    return Builtin::Foreign::CInt::From_Integer(0);
+end

@@ -523,6 +523,8 @@ and funcall (loc : Loc.t) (fmt : PP.formatter) (f : Ident.t) (tes : AST.expr lis
   | ([n], [x;y]) when Ident.equal f exact_div_sintN -> Runtime.exact_div_sintN fmt n (mk_expr loc x) (mk_expr loc y)
   | ([n], [x;y]) when Ident.equal f fdiv_sintN -> Runtime.fdiv_sintN fmt n (mk_expr loc x) (mk_expr loc y)
   | ([n], [x;y]) when Ident.equal f frem_sintN -> Runtime.frem_sintN fmt n (mk_expr loc x) (mk_expr loc y)
+  | ([n], [x;y]) when Ident.equal f cdiv_sintN -> Runtime.cdiv_sintN fmt n (mk_expr loc x) (mk_expr loc y)
+  | ([n], [x;y]) when Ident.equal f crem_sintN -> Runtime.crem_sintN fmt n (mk_expr loc x) (mk_expr loc y)
   | ([n], [x;y]) when Ident.equal f eq_sintN -> Runtime.eq_sintN fmt n (mk_expr loc x) (mk_expr loc y)
   | ([n], [x;y]) when Ident.equal f ne_sintN -> Runtime.ne_sintN fmt n (mk_expr loc x) (mk_expr loc y)
   | ([n], [x;y]) when Ident.equal f ge_sintN -> Runtime.ge_sintN fmt n (mk_expr loc x) (mk_expr loc y)
@@ -1539,7 +1541,7 @@ let mk_ffi_conversion (loc : Loc.t) (indirect : bool) (c_name : Ident.t) (asl_na
         asl_type = asl_type;
         c_name = c_name;
         pp_c_type = Some (fun fmt -> PP.fprintf fmt "int%a" ptr ());
-        pp_c_decl = (fun fmt -> PP.fprintf fmt "int %a%a" ptr () ident c_name);
+        pp_c_decl = (fun fmt -> PP.fprintf fmt "%s %a%a" !ffi_integer ptr () ident c_name);
         pp_c_ref = (fun fmt -> PP.fprintf fmt "&%a" ident c_name);
         pp_asl_to_c = (fun fmt ->
           PP.fprintf fmt "%a%a = %a;"

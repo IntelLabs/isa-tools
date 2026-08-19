@@ -90,6 +90,8 @@ __builtin function Std::SInt::Truncated_Divide(implicit size : Integer, left : _
 __builtin function Std::SInt::Truncated_Remainder(implicit size : Integer, left : __sint(size), right : __sint(size)) -> __sint(size);
 __builtin function Std::SInt::Floor_Divide(implicit size : Integer, left : __sint(size), right : __sint(size)) -> __sint(size);
 __builtin function Std::SInt::Floor_Remainder(implicit size : Integer, left : __sint(size), right : __sint(size)) -> __sint(size);
+__builtin function Std::SInt::Ceiling_Divide(implicit size : Integer, left : __sint(size), right : __sint(size)) -> __sint(size);
+__builtin function Std::SInt::Ceiling_Remainder(implicit size : Integer, left : __sint(size), right : __sint(size)) -> __sint(size);
 __builtin function Std::SInt::Is_Power_Of_Two(implicit size : Integer, x : __sint(size)) -> Boolean;
 __builtin function Std::SInt::Exp2(implicit size : Integer, x : __sint(size)) -> __sint(size);
 __builtin function Std::SInt::Align_Down(implicit size : Integer, left : __sint(size), right : __sint(size)) -> __sint(size);
@@ -479,6 +481,8 @@ __builtin function Std::RAM::Write(implicit address_size : Integer, ram : Std::R
 use Std::Integer::Abs as Abs;
 use Std::Integer::Align_Down as Integer::Align_Down;
 use Std::Integer::Align_Up as Integer::Align_Up;
+use Std::Integer::Ceiling_Divide as Ceiling_Divide;
+use Std::Integer::Ceiling_Remainder as Ceiling_Remainder;
 use Std::Integer::Floor_Divide as Floor_Divide;
 use Std::Integer::Floor_Remainder as Floor_Remainder;
 use Std::Integer::Is_Even as Is_Even;
