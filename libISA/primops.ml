@@ -346,11 +346,11 @@ let prim_mul_sintN (x : sintN) (y : sintN) : sintN =
 let prim_exact_div_sintN (x : sintN) (y : sintN) : sintN =
   assert (x.n = y.n);
   (* disable until we fix the spec: assert (Z.geq y.n Z.zero); *)
-  mksintN x.n (Z.fdiv x.v y.v)
+  mksintN (x.n + 1) (Z.fdiv x.v y.v)
 
 let prim_zdiv_sintN (x : sintN) (y : sintN) : sintN =
   assert (x.n = y.n);
-  mksintN x.n (Z.div x.v y.v)
+  mksintN (x.n + 1) (Z.div x.v y.v)
 
 let prim_zrem_sintN (x : sintN) (y : sintN) : sintN =
   assert (x.n = y.n);
@@ -358,7 +358,7 @@ let prim_zrem_sintN (x : sintN) (y : sintN) : sintN =
 
 let prim_cdiv_sintN (x : sintN) (y : sintN) : sintN =
   assert (x.n = y.n);
-  mksintN x.n (Z.cdiv x.v y.v)
+  mksintN (x.n + 1) (Z.cdiv x.v y.v)
 
 let prim_crem_sintN (x : sintN) (y : sintN) : sintN =
   assert (x.n = y.n);
@@ -366,7 +366,7 @@ let prim_crem_sintN (x : sintN) (y : sintN) : sintN =
 
 let prim_fdiv_sintN (x : sintN) (y : sintN) : sintN =
   assert (x.n = y.n);
-  mksintN x.n (Z.fdiv x.v y.v)
+  mksintN (x.n + 1) (Z.fdiv x.v y.v)
 
 let prim_frem_sintN (x : sintN) (y : sintN) : sintN =
   assert (x.n = y.n);
