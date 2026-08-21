@@ -86,9 +86,7 @@ __builtin function Std::SInt::Subtract(implicit size : Integer, left : __sint(si
 __builtin function Std::SInt::Shift_Left(implicit size : Integer, left : __sint(size), right : __sint(size)) -> __sint(size);
 __builtin function Std::SInt::Shift_Right(implicit size : Integer, left : __sint(size), right : __sint(size)) -> __sint(size);
 __builtin function Std::SInt::Multiply(implicit size : Integer, left : __sint(size), right : __sint(size)) -> __sint(size);
-__builtin function Std::SInt::Truncated_Divide(implicit size : Integer, left : __sint(size), right : __sint(size)) -> __sint(size);
 __builtin function Std::SInt::Truncated_Remainder(implicit size : Integer, left : __sint(size), right : __sint(size)) -> __sint(size);
-__builtin function Std::SInt::Floor_Divide(implicit size : Integer, left : __sint(size), right : __sint(size)) -> __sint(size);
 __builtin function Std::SInt::Floor_Remainder(implicit size : Integer, left : __sint(size), right : __sint(size)) -> __sint(size);
 __builtin function Std::SInt::Is_Power_Of_Two(implicit size : Integer, x : __sint(size)) -> Boolean;
 __builtin function Std::SInt::Exp2(implicit size : Integer, x : __sint(size)) -> __sint(size);
@@ -245,6 +243,9 @@ __operator2 >>       = Std::Integer::Shift_Right;
 __builtin function Std::Bits::Repeat(implicit m : Integer, x : Bits(m), n : Integer) -> Bits(m*n);
 __builtin function Std::Bits::Append(implicit m : Integer, implicit n : Integer, x : Bits(m), y : Bits(n)) -> Bits(m+n);
 __builtin function Std::SInt::Unsigned(implicit size : Integer, x : Bits(size)) -> __sint(size+1);
+// Note: worst case for divide is -16 / -1 == 16: which is one bit wider than the inputs
+__builtin function Std::SInt::Truncated_Divide(implicit size : Integer, left : __sint(size), right : __sint(size)) -> __sint(size+1);
+__builtin function Std::SInt::Floor_Divide(implicit size : Integer, left : __sint(size), right : __sint(size)) -> __sint(size+1);
 
 function Std::Integer::Exp(left : Integer, right : Integer) -> Integer
 begin
