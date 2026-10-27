@@ -352,7 +352,7 @@ def mk_script(args, output_directory):
             script.append(f":show --format={args.format}")
         else:
             script.append(f":{backend_generator[args.backend]} --output-dir={output_directory} --basename={args.basename} --num-c-files=1")
-        return "\n".join(script)
+        return add_intermediates(args, "\n".join(script))
 
     substitutions = {
         'auto_case_split': '--no-auto-case-split',
@@ -387,21 +387,21 @@ def mk_script(args, output_directory):
     if args.backend in ["ac", "sc"]: substitutions['suppress_bitslice_xform'] = "--notransform"
 
     script = base_script.format(**substitutions)
+    return add_intermediates(args, script)
 
-    if args.intermediates:
-        lines_in = script.splitlines()
-        lines_out = []
-        i = 0
-        for l in lines_in:
-            if l.startswith(":"):
-                command = l.split()[0][1:]
-                lines_out.append(f":show --format={args.format} --output {args.intermediates}.{i:02}.{command}.isa")
-                i = i + 1
-            lines_out.append(l)
-
-        script = "\n".join(lines_out)
-
-    return script
+def add_intermediates(args, script):
+    """Insert a ':show' before each command to dump intermediate results."""
+    if not args.intermediates:
+        return script
+    lines_out = []
+    i = 0
+    for l in script.splitlines():
+        if l.startswith(":"):
+            command = l.split()[0][1:]
+            lines_out.append(f":show --format={args.format} --output {args.intermediates}.{i:02}.{command}.isa")
+            i = i + 1
+        lines_out.append(l)
+    return "\n".join(lines_out)
 
 ################################################################
 # Building support functions
