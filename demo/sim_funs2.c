@@ -45,12 +45,12 @@ void write_32(unsigned _BitInt(2048) *x, __int128 i, uint32_t y)
     ((uint32_t*)x)[i] = y;
 }
 
-uint32_t read_32(unsigned _BitInt(2048) *x, __int128 i)
+uint32_t read_32(const unsigned _BitInt(2048) *x, __int128 i)
 {
     return ((uint32_t*)x)[i];
 }
 
-void Instr_VINC_0(void* client_arg, struct threadlocal_state *threadlocal_state_ptr, const unsigned _BitInt(2048) *src, unsigned _BitInt(2048) *dest)
+void Instr_VINC_0(void* client_arg, struct threadlocal_state *threadlocal_state_ptr, const unsigned _BitInt(2048) *restrict src, unsigned _BitInt(2048) *restrict dest)
 {
     __int128 elements;
     
