@@ -34,12 +34,29 @@ begin
             let r := Unsigned(opcode[1:0]);
             R[r] := R[r] + 1;
 
+        when 0b0010_xxxx => // forall i: V[d][i *: 32] := V[r][i *: 32] + 1
+            let r := Unsigned(opcode[1:0]);
+            let d := Unsigned(opcode[3:2]);
+            let src := V[r];
+            let dest := Instr_VINC(src);
+            V[d] := dest;
+
         otherwise =>
             // Unrecognized instructions halt the processor
             halted := True;
     endcase;
 
     PC := PC + 1;
+end
+
+function Instr_VINC(src : Bits(2048)) -> Bits(2048)
+begin
+    var dest : Bits(2048);
+    let elements := 2048 / 32;
+    for i := 0 to elements-1 do
+        dest[i *: 32] := src[i *: 32] + 1;
+    end;
+    return dest;
 end
 
 /////////////////////////////////////////////////////////////////
@@ -54,6 +71,8 @@ var PC : Bits(64);
 
 // 4 entry 64-bit register file
 var R : array [4] of Bits(64);
+
+var V : array [4] of Bits(2048);
 
 /////////////////////////////////////////////////////////////////
 // 64-bit byte-addressable memory
@@ -154,6 +173,28 @@ begin
         when 12 => R[2] := val;
         when 13 => R[3] := val;
         otherwise => Unimplemented_Feature("ASL_WriteReg64");
+    endcase;
+end
+
+function ASL_ReadReg2048(index : Integer) -> Bits(2048)
+begin
+    case index of
+        when 4 => return V[0];
+        when 5 => return V[1];
+        when 6 => return V[2];
+        when 7 => return V[3];
+        otherwise => Unimplemented_Feature("ASL_ReadReg2048"); return Zero(2048);
+    endcase;
+end
+
+function ASL_WriteReg2048(index : Integer, val : Bits(2048))
+begin
+    case index of
+        when 4 => V[0] := val;
+        when 5 => V[1] := val;
+        when 6 => V[2] := val;
+        when 7 => V[3] := val;
+        otherwise => Unimplemented_Feature("ASL_WriteReg2048");
     endcase;
 end
 

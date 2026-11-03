@@ -60,11 +60,17 @@ demo: test.elf
 # Build simulator using C backend
 ################################################################
 
+# Can't use these flags when generating C++
+# IIC_FLAGS += --generate-cxx
+# IIC_FLAGS += --const-ref=128
+
 CFLAGS += -Wall
-CFLAGS += -g
+# CFLAGS += -g
 CFLAGS += -Wno-unused-but-set-variable
 CFLAGS += -Wno-parentheses-equality
 CFLAGS += -std=c2x
+CFLAGS += -mavx512f
+CFLAGS += -O3
 
 ifeq ($(origin CC),default)
   CC = clang-16
@@ -73,19 +79,26 @@ endif
 .PRECIOUS: simulator_%
 
 simulator_% : simulator.c config.json demo.isa
-	@ if ${HAVE_GNU_AS}; then \
-	$(IIC) --basename=sim --intermediates=log --split-state --new-ffi --backend=$* > sim.prj ; \
+	if ${HAVE_GNU_AS}; then \
+	$(IIC) --basename=sim --intermediates=log --split-state --new-ffi --backend=$* ${IIC_FLAGS} > sim.prj ; \
 	env ISA_PATH="${ISA_PATH}" $(III) --nobanner --batchmode --project=sim.prj --configuration=config.json demo.isa ; \
 	$(CC) ${shell ${IIC} --backend=$* --print-c-flags} ${CFLAGS} simulator.c sim_exceptions.c sim_vars.c sim_funs.c -o $@ ${shell ${IIC} --backend=$* --print-ld-flags} ${LDFLAGS} ; \
 	else echo ${REPORT_NOT_GAS}; fi
 
+sim_funs.c :
+	$(IIC) --basename=sim --intermediates=log --split-state --new-ffi --backend=c23 ${IIC_FLAGS} > sim.prj
+	env ISA_PATH="${ISA_PATH}" $(III) --nobanner --batchmode --project=sim.prj --configuration=config.json demo.isa
+
+sim_funs2.s : sim_funs2.c
+	$(CC) -I/home/areid/repos/isa-tools/demo/../_build/install/default/lib/isa-tools/runtime_include -DASL_C23 $(CFLAGS) sim_funs2.c -S
+
 test_% : simulator_% test.elf test.prj
-	@ if ${HAVE_GNU_AS}; then \
+	if ${HAVE_GNU_AS}; then \
 	./simulator_$* test.elf --steps=20 | filecheck test.prj ; \
 	else echo ${REPORT_NOT_GAS}; fi
 
 demo_% : simulator_% test.elf test.prj
-	@ if ${HAVE_GNU_AS}; then \
+	if ${HAVE_GNU_AS}; then \
 	./simulator_$* test.elf --steps=20; \
 	else echo ${REPORT_NOT_GAS}; fi
 
