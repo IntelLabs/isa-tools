@@ -1,0 +1,29 @@
+// RUN: %iii --batchmode --exec=:xform_constprop --exec=":show --format=raw FUT" %s | filecheck %s
+
+// Copyright (C) 2026-2026 Intel Corporation
+
+// Test simplification of slices at offset 0.
+
+function FUT()
+begin
+    var i : Integer;
+
+    // Integer slice at 0
+    var r1 := i[0 +: 8];
+    // CHECK{LITERAL}: var r1 : Bits(8) := Std::Bits::From_Integer.0{8}(i, 8);
+
+    // Integer slice not at 0
+    var r2 := i[1 +: 8];
+    // CHECK{LITERAL}: var r2 : Bits(8) := {Integer}i[1 +: 8];
+
+
+    var b : Bits(8);
+
+    // Bits slice at 0
+    var r3 := b[0 +: 8];
+    // CHECK{LITERAL}: var r3 : Bits(8) := b;
+
+    // Bits partial slice at 0
+    var r4 := b[0 +: 4];
+    // CHECK{LITERAL}: var r4 : Bits(4) := {Bits(8)}b[0 +: 4];
+end
