@@ -310,8 +310,19 @@ class constEvalClass (env : Env.t) =
 
           (* optimization: remove empty slices *)
           let ss'' = List.filter (function (Slice_LoWd(_, w)) -> w <> zero | _ -> true) ss' in
-          let r = if Utils.is_empty ss'' then empty_bits else Expr_Slices (t', e', ss'') in
-
+          let r =
+            match (t', ss'') with
+            | _, [] -> empty_bits
+            (* optimization: x[0 +: wd] where x of Integer type -> cvt_int_bits(wd, x) *)
+            | Type_Integer _, [ Slice_LoWd (lo, wd) ]
+              when lo = zero && is_literal_constant wd ->
+                mk_cvt_int_bits wd e'
+            (* optimization: x[0 +: n] where x of Bits(n) type -> x *)
+            | Type_Bits (n, _), [ Slice_LoWd (lo, wd) ]
+              when lo = zero && is_literal_constant n && wd = n ->
+                e'
+            | _ -> Expr_Slices (t', e', ss'')
+          in
           Visitor.ChangeTo (self#fold_expr r)
       | Expr_TApply (f, [n], [e], NoThrow) when Ident.equal f Builtin_idents.length && isPure e ->
           Visitor.ChangeTo (self#eval_expr n)
