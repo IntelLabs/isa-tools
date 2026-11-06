@@ -3285,8 +3285,10 @@ let tc_declaration (env : GlobalEnv.t) (d : AST.declaration) :
       | fs -> raise (Ambiguous (loc, "function", Ident.to_string qid))
       )
   | Decl_FunFFI (nm, is_export, qid, ps, loc) ->
-      (* todo: assignment functions need their name mangled *)
-      ( match GlobalEnv.getFuns env qid with
+      (* Assignment functions are found using their mangled name, e.g. F_Write *)
+      let fs = GlobalEnv.getFuns env qid in
+      let fs = if Utils.is_empty fs then GlobalEnv.getSetterFun env qid else fs in
+      ( match fs with
       | [f] ->
           List.iter (fun (p, _) ->
             if not (List.exists (fun (p', _) -> Ident.equal p p') ps) then
