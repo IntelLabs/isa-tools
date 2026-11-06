@@ -1,0 +1,35 @@
+// RUN: %iii --batchmode --exec=":xform_monomorphize" --exec=":show E*" --exec=":show I*" %s | filecheck %s
+// Copyright (C) 2026 Intel Corporation
+
+// Array functions are imported and exported using their name, e.g. E, and
+// instantiated as E_n_8.
+
+// Array assignment functions are imported and exported using their mangled
+// name, e.g. E_Write, and instantiated as E_Write_n_8.
+
+function E[n : Integer, a : Integer] -> Bits(n)
+begin
+    return Std::Bits::Zero(n);
+end
+
+function E[implicit n : Integer, a : Integer] := value : Bits(n)
+begin
+end
+
+function I[n : Integer, a : Integer] -> Bits(n);
+function I[implicit n : Integer, a : Integer] := value : Bits(n);
+
+foreign export function "E_8" = E with {n => 8};
+foreign export function "E_Write_8" = E_Write with {n => 8};
+foreign import function "I_8" = I with {n => 8};
+foreign import function "I_Write_8" = I_Write with {n => 8};
+
+// CHECK:      foreign export function "E_8" = E_n_8.0 with {};
+// CHECK:      foreign export function "E_Write_8" = E_Write_n_8.0 with {};
+// CHECK:      function E_n_8.0{}[a : Integer] -> Bits(8){{$}}
+// CHECK:      function E_Write_n_8.0{}[a : Integer] := value : Bits(8) -> (){{$}}
+
+// CHECK:      foreign import function "I_8" = I_n_8.0 with {};
+// CHECK:      foreign import function "I_Write_8" = I_Write_n_8.0 with {};
+// CHECK:      function I_n_8.0{}[a : Integer] -> Bits(8);
+// CHECK:      function I_Write_n_8.0{}[a : Integer] := value : Bits(8) -> ();
