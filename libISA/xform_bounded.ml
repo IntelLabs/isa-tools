@@ -491,7 +491,7 @@ let primop (f : Ident.t) (ftype : AST.function_type) (ps : AST.expr list) (args 
   | ([],  [x1; x2]) when Ident.equal f gt_int  -> mk_cmp gt_sintN x1 x2
   | ([],  [x1])     when Ident.equal f is_pow2_int -> mk_pred is_pow2_sintN x1
   | ([Expr_Lit (VInt n') as n], [x; _])   when Ident.equal f cvt_int_bits  -> mk_cvt_sintN_bits n x
-  | ([Expr_Lit (VInt n') as n], [x])      when Ident.equal f cvt_bits_uint -> Some (mk_cvt_sintN_int (Z.to_int n') (AST.Expr_TApply (cvt_bits_usintN, [n], [x], NoThrow)))
+  | ([Expr_Lit (VInt n') as n], [x])      when Ident.equal f cvt_bits_uint -> Some (mk_cvt_sintN_int (1 + Z.to_int n') (AST.Expr_TApply (cvt_bits_usintN, [n], [x], NoThrow)))
   | ([Expr_Lit (VInt n') as n], [x])      when Ident.equal f cvt_bits_sint -> Some (mk_cvt_sintN_int (Z.to_int n') (AST.Expr_TApply (cvt_bits_ssintN, [n], [x], NoThrow)))
   | _ -> None
   )
