@@ -43,6 +43,7 @@ typedef uint64_t ASL_bits32_t;
 #include "asl/error.h"
 #include "asl/info.h"
 #include "asl/ram.h"
+#include "asl/slice.h"
 #include "asl/track_valid.h"
 
 #endif  // ASL_RUNTIME_H
