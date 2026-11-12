@@ -25,6 +25,15 @@ open Utils
 
 let transform_slices : bool ref = ref true
 
+(* Slice assignments to bitvectors wider than max_width are not transformed
+ * (negative value means there is no limit). *)
+let max_width : int ref = ref (-1)
+
+let is_transformable_width (w : AST.expr) : bool =
+  match w with
+  | Expr_Lit (VInt n) -> !max_width < 0 || Z.leq n (Z.of_int !max_width)
+  | _ -> false
+
 let rec transform_non_slices (loc : Loc.t) (n : AST.expr) (w : AST.expr) (i : AST.expr) (x : AST.expr) : AST.expr =
   ( match x with
   | Expr_TApply (f, _, _, _) when Ident.equal f ones_bits ->
@@ -193,7 +202,7 @@ class bitsliceClass =
             le,
             [Slice_LoWd (lo, sw)]),
           rhs,
-          _) when !transform_slices ->
+          _) when !transform_slices && is_transformable_width w ->
         Option.fold (lexpr_to_expr_safe_to_replicate_opt le)
           ~some:(fun e -> transform_assignment le e w sw lo rhs loc)
           ~none:Visitor.DoChildren
@@ -230,6 +239,7 @@ let _ =
       [
         ("--transform",   Arg.Set   transform_slices, " Transform bitslice operations to mask & or operations");
         ("--notransform", Arg.Clear transform_slices, " Do not transform bitslice operations");
+        ("--max-width",   Arg.Set_int max_width,      "<n> Do not transform bitslice assignments to bitvectors wider than n");
       ]
   in
   Commands.registerCommand "xform_bitslices" options [] [] "Transform bitslice operations" cmd
