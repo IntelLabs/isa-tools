@@ -1,0 +1,96 @@
+// RUN: %aslrun %s | filecheck %s
+// Copyright (C) 2026 Intel Corporation
+
+// Slices of power-of-2 sizes from wide bitvectors at byte-aligned and
+// unaligned offsets. Covers each fast-path bitvector size and slice size.
+
+function Test_256_8(x : Bits(256), i : Integer) -> Bits(8)
+begin
+    return x[i +: 8];
+end
+
+function Test_256_128(x : Bits(256), i : Integer) -> Bits(128)
+begin
+    return x[i +: 128];
+end
+
+function Test_512_16(x : Bits(512), i : Integer) -> Bits(16)
+begin
+    return x[i +: 16];
+end
+
+function Test_512_256(x : Bits(512), i : Integer) -> Bits(256)
+begin
+    return x[i +: 256];
+end
+
+function Test_1024_64(x : Bits(1024), i : Integer) -> Bits(64)
+begin
+    return x[i +: 64];
+end
+
+function Test_1024_512(x : Bits(1024), i : Integer) -> Bits(512)
+begin
+    return x[i +: 512];
+end
+
+function Test_2048_32(x : Bits(2048), i : Integer) -> Bits(32)
+begin
+    return x[i +: 32];
+end
+
+function Test_2048_1024(x : Bits(2048), i : Integer) -> Bits(1024)
+begin
+    return x[i +: 1024];
+end
+
+function main() -> Builtin::Foreign::CInt
+begin
+    // byte k of x is k
+    var x : Bits(2048) := Std::Bits::Zero(2048);
+    for k := 0 to 255 do
+        x[8 * k +: 8] := Std::Bits::From_Integer(k, 8);
+    end;
+
+    Std::Print::Bits::Hex(Test_256_8(x[0 +: 256], 248)); Print("\n");
+    // CHECK: 8'x1f
+    Std::Print::Bits::Hex(Test_256_8(x[0 +: 256], 4)); Print("\n");
+    // CHECK: 8'x10
+
+    Std::Print::Bits::Hex(Test_256_128(x[0 +: 256], 128)); Print("\n");
+    // CHECK: 128'x1f1e1d1c1b1a19181716151413121110
+    Std::Print::Bits::Hex(Test_256_128(x[0 +: 256], 4)); Print("\n");
+    // CHECK: 128'xf0e0d0c0b0a0908070605040302010
+
+    Std::Print::Bits::Hex(Test_512_16(x[0 +: 512], 496)); Print("\n");
+    // CHECK: 16'x3f3e
+    Std::Print::Bits::Hex(Test_512_16(x[0 +: 512], 4)); Print("\n");
+    // CHECK: 16'x2010
+
+    Std::Print::Bits::Hex(Test_512_256(x[0 +: 512], 256)); Print("\n");
+    // CHECK: 256'x3f3e3d3c3b3a393837363534333231302f2e2d2c2b2a29282726252423222120
+    Std::Print::Bits::Hex(Test_512_256(x[0 +: 512], 4)); Print("\n");
+    // CHECK: 256'x1f1e1d1c1b1a191817161514131211100f0e0d0c0b0a0908070605040302010
+
+    Std::Print::Bits::Hex(Test_1024_64(x[0 +: 1024], 960)); Print("\n");
+    // CHECK: 64'x7f7e7d7c7b7a7978
+    Std::Print::Bits::Hex(Test_1024_64(x[0 +: 1024], 4)); Print("\n");
+    // CHECK: 64'x8070605040302010
+
+    Std::Print::Bits::Hex(Test_1024_512(x[0 +: 1024], 512)); Print("\n");
+    // CHECK: 512'x7f7e7d7c7b7a797877767574737271706f6e6d6c6b6a696867666564636261605f5e5d5c5b5a595857565554535251504f4e4d4c4b4a49484746454443424140
+    Std::Print::Bits::Hex(Test_1024_512(x[0 +: 1024], 4)); Print("\n");
+    // CHECK: 512'x3f3e3d3c3b3a393837363534333231302f2e2d2c2b2a292827262524232221201f1e1d1c1b1a191817161514131211100f0e0d0c0b0a0908070605040302010
+
+    Std::Print::Bits::Hex(Test_2048_32(x[0 +: 2048], 2016)); Print("\n");
+    // CHECK: 32'xfffefdfc
+    Std::Print::Bits::Hex(Test_2048_32(x[0 +: 2048], 4)); Print("\n");
+    // CHECK: 32'x40302010
+
+    Std::Print::Bits::Hex(Test_2048_1024(x[0 +: 2048], 1024)); Print("\n");
+    // CHECK: 1024'xfffefdfcfbfaf9f8f7f6f5f4f3f2f1f0efeeedecebeae9e8e7e6e5e4e3e2e1e0dfdedddcdbdad9d8d7d6d5d4d3d2d1d0cfcecdcccbcac9c8c7c6c5c4c3c2c1c0bfbebdbcbbbab9b8b7b6b5b4b3b2b1b0afaeadacabaaa9a8a7a6a5a4a3a2a1a09f9e9d9c9b9a999897969594939291908f8e8d8c8b8a89888786858483828180
+    Std::Print::Bits::Hex(Test_2048_1024(x[0 +: 2048], 4)); Print("\n");
+    // CHECK: 1024'x7f7e7d7c7b7a797877767574737271706f6e6d6c6b6a696867666564636261605f5e5d5c5b5a595857565554535251504f4e4d4c4b4a494847464544434241403f3e3d3c3b3a393837363534333231302f2e2d2c2b2a292827262524232221201f1e1d1c1b1a191817161514131211100f0e0d0c0b0a0908070605040302010
+
+    return Builtin::Foreign::CInt::From_Integer(0);
+end

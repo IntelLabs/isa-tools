@@ -23,6 +23,12 @@ typedef unsigned _BitInt(256) ASL_bits256_t;
 #if BITINT_MAXWIDTH >= 512
 typedef unsigned _BitInt(512) ASL_bits512_t;
 #endif
+#if BITINT_MAXWIDTH >= 1024
+typedef unsigned _BitInt(1024) ASL_bits1024_t;
+#endif
+#if BITINT_MAXWIDTH >= 2048
+typedef unsigned _BitInt(2048) ASL_bits2048_t;
+#endif
 
 #define ASL_cast_bits_512_64(x) ((ASL_bits64_t)(x))
 #define ASL_cast_bits_256_64(x) ((ASL_bits64_t)(x))

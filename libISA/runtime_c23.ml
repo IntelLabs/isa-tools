@@ -452,11 +452,27 @@ module Runtime : RT.RuntimeLib = struct
         n
         RT.pp_expr x
 
-  let get_slice (fmt : PP.formatter) (n : int) (w : int) (x : RT.rt_expr) (i : RT.rt_expr) : unit =
-    PP.fprintf fmt "((%a)(%a >> %a))"
-      ty_bits w
-      RT.pp_expr x
-      RT.pp_expr i
+  let get_slice (fmt : PP.formatter) (n : int) (w : int) (x : RT.rt_expr)
+      (i : RT.rt_expr) : unit =
+    if List.mem n [256; 512; 1024; 2048]
+       && List.mem w [8; 16; 32; 64; 128; 256; 512; 1024]
+       && w < n
+    then
+      (* Read the slice from memory instead of shifting the whole bitvector.
+       * This requires that the index is a multiple of 8: if the C compiler
+       * cannot prove this, it falls back to shifting.
+       *)
+      PP.fprintf fmt "({ int64_t __lo = %a; (__lo %% 8 == 0) ? ASL_get_slice_%d_%d(%a, __lo) : ((%a)(%a >> __lo)); })"
+        RT.pp_expr i
+        n w
+        RT.pp_expr x
+        ty_bits w
+        RT.pp_expr x
+    else
+      PP.fprintf fmt "((%a)(%a >> %a))"
+        ty_bits w
+        RT.pp_expr x
+        RT.pp_expr i
 
   let set_slice (fmt : PP.formatter) (n : int) (w : int) (l : RT.rt_expr) (i : RT.rt_expr) (r : RT.rt_expr) : unit =
     PP.fprintf fmt "{ __auto_type __index = %a; "
