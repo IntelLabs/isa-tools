@@ -474,19 +474,41 @@ module Runtime : RT.RuntimeLib = struct
         RT.pp_expr x
         RT.pp_expr i
 
-  let set_slice (fmt : PP.formatter) (n : int) (w : int) (l : RT.rt_expr) (i : RT.rt_expr) (r : RT.rt_expr) : unit =
-    PP.fprintf fmt "{ __auto_type __index = %a; "
-      RT.pp_expr i;
+  let set_slice_mask_shift (fmt : PP.formatter) (n : int) (w : int) (l : RT.rt_expr) (pp_v : PP.formatter -> unit) : unit =
     PP.fprintf fmt "%a __mask = %a >> %d; "
       ty_bits n
       ones_bits n
       (n - w);
-    PP.fprintf fmt "%a = (%a & ~(__mask << __index)) | (((%a)%a) << __index);"
+    PP.fprintf fmt "%a = (%a & ~(__mask << __i)) | (((%a)%t) << __i);"
       RT.pp_expr l
       RT.pp_expr l
       ty_bits n
-      RT.pp_expr r;
-    PP.fprintf fmt " }"
+      pp_v
+
+    let set_slice (fmt : PP.formatter) (n : int) (w : int) (l : RT.rt_expr)
+        (i : RT.rt_expr) (r : RT.rt_expr) : unit =
+    if List.mem n [256; 512; 1024; 2048]
+       && List.mem w [8; 16; 32; 64; 128; 256; 512; 1024]
+       && w < n
+    then begin
+      (* Write the slice to memory instead of masking and shifting the whole
+       * bitvector. This requires that the index is a multiple of 8: if the
+       * C compiler cannot prove this, it falls back to masking and shifting.
+       *)
+      PP.fprintf fmt "{ int64_t __i = %a; %a __value = %a; "
+        RT.pp_expr i
+        ty_bits w
+        RT.pp_expr r;
+      PP.fprintf fmt "if (__i %% 8 == 0) { ASL_set_slice_%d(&%a, __i, __value); } "
+        w
+        RT.pp_expr l;
+      PP.fprintf fmt "else { %a } }"
+        (fun fmt () -> set_slice_mask_shift fmt n w l (fun fmt -> PP.pp_print_string fmt "__value")) ()
+    end else begin
+      PP.fprintf fmt "{ __auto_type __i = %a; %a }"
+        RT.pp_expr i
+        (fun fmt () -> set_slice_mask_shift fmt n w l (fun fmt -> RT.pp_expr fmt r)) ()
+    end
 
   let eq_bits  (fmt : PP.formatter) (n : int) (x : RT.rt_expr) (y : RT.rt_expr) : unit = binop fmt "==" x y
   let ne_bits  (fmt : PP.formatter) (n : int) (x : RT.rt_expr) (y : RT.rt_expr) : unit = binop fmt "!=" x y
