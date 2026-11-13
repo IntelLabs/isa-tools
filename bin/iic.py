@@ -385,6 +385,8 @@ def mk_script(args, output_directory):
     if args.Oarrays: substitutions['xform_arrays'] = ':xform_arrays'
     if args.Obounded: substitutions['bounded_int'] = ':xform_bounded'
     if args.backend in ["ac", "sc"]: substitutions['suppress_bitslice_xform'] = "--notransform"
+    # C23 runtime optimizes bitslice assignments for wide bitvectors
+    if args.backend == "c23": substitutions['suppress_bitslice_xform'] = "--max-width=128"
 
     script = base_script.format(**substitutions)
     return add_intermediates(args, script)

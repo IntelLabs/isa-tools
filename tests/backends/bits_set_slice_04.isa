@@ -1,0 +1,120 @@
+// RUN: %aslrun %s | filecheck %s
+// Copyright (C) 2026 Intel Corporation
+
+// Assignment of power-of-2 sized slices of wide bitvectors at
+// byte-aligned and unaligned offsets.
+
+function Test_256_8(x : Bits(256), i : Integer, y : Bits(8)) -> Bits(256)
+begin
+    var r := x;
+    r[i +: 8] := y;
+    return r;
+end
+
+function Test_256_128(x : Bits(256), i : Integer, y : Bits(128)) -> Bits(256)
+begin
+    var r := x;
+    r[i +: 128] := y;
+    return r;
+end
+
+function Test_512_16(x : Bits(512), i : Integer, y : Bits(16)) -> Bits(512)
+begin
+    var r := x;
+    r[i +: 16] := y;
+    return r;
+end
+
+function Test_512_256(x : Bits(512), i : Integer, y : Bits(256)) -> Bits(512)
+begin
+    var r := x;
+    r[i +: 256] := y;
+    return r;
+end
+
+function Test_1024_64(x : Bits(1024), i : Integer, y : Bits(64)) -> Bits(1024)
+begin
+    var r := x;
+    r[i +: 64] := y;
+    return r;
+end
+
+function Test_1024_512(x : Bits(1024), i : Integer, y : Bits(512)) -> Bits(1024)
+begin
+    var r := x;
+    r[i +: 512] := y;
+    return r;
+end
+
+function Test_2048_32(x : Bits(2048), i : Integer, y : Bits(32)) -> Bits(2048)
+begin
+    var r := x;
+    r[i +: 32] := y;
+    return r;
+end
+
+function Test_2048_1024(x : Bits(2048), i : Integer, y : Bits(1024)) -> Bits(2048)
+begin
+    var r := x;
+    r[i +: 1024] := y;
+    return r;
+end
+
+function main() -> Builtin::Foreign::CInt
+begin
+    // byte k of y is k
+    var y : Bits(1024) := Std::Bits::Zero(1024);
+    for k := 0 to 127 do
+        y[8 * k +: 8] := Std::Bits::From_Integer(k, 8);
+    end;
+
+    let ones256_8 := Std::Bits::All_Ones(256);
+    Std::Print::Bits::Hex(Test_256_8(ones256_8, 248, y[0 +: 8])[240 +: 16]); Print("\n");
+    // CHECK: 16'xff
+    Std::Print::Bits::Hex(Test_256_8(ones256_8, 4, y[0 +: 8])[0 +: 20]); Print("\n");
+    // CHECK: 20'xff00f
+
+    let ones256_128 := Std::Bits::All_Ones(256);
+    Std::Print::Bits::Hex(Test_256_128(ones256_128, 128, y[0 +: 128])[120 +: 136]); Print("\n");
+    // CHECK: 136'xf0e0d0c0b0a09080706050403020100ff
+    Std::Print::Bits::Hex(Test_256_128(ones256_128, 4, y[0 +: 128])[0 +: 140]); Print("\n");
+    // CHECK: 140'xff0f0e0d0c0b0a09080706050403020100f
+
+    let ones512_16 := Std::Bits::All_Ones(512);
+    Std::Print::Bits::Hex(Test_512_16(ones512_16, 496, y[0 +: 16])[488 +: 24]); Print("\n");
+    // CHECK: 24'x100ff
+    Std::Print::Bits::Hex(Test_512_16(ones512_16, 4, y[0 +: 16])[0 +: 28]); Print("\n");
+    // CHECK: 28'xff0100f
+
+    let ones512_256 := Std::Bits::All_Ones(512);
+    Std::Print::Bits::Hex(Test_512_256(ones512_256, 256, y[0 +: 256])[248 +: 264]); Print("\n");
+    // CHECK: 264'x1f1e1d1c1b1a191817161514131211100f0e0d0c0b0a09080706050403020100ff
+    Std::Print::Bits::Hex(Test_512_256(ones512_256, 4, y[0 +: 256])[0 +: 268]); Print("\n");
+    // CHECK: 268'xff1f1e1d1c1b1a191817161514131211100f0e0d0c0b0a09080706050403020100f
+
+    let ones1024_64 := Std::Bits::All_Ones(1024);
+    Std::Print::Bits::Hex(Test_1024_64(ones1024_64, 960, y[0 +: 64])[952 +: 72]); Print("\n");
+    // CHECK: 72'x706050403020100ff
+    Std::Print::Bits::Hex(Test_1024_64(ones1024_64, 4, y[0 +: 64])[0 +: 76]); Print("\n");
+    // CHECK: 76'xff0706050403020100f
+
+    let ones1024_512 := Std::Bits::All_Ones(1024);
+    Std::Print::Bits::Hex(Test_1024_512(ones1024_512, 512, y[0 +: 512])[504 +: 520]); Print("\n");
+    // CHECK: 520'x3f3e3d3c3b3a393837363534333231302f2e2d2c2b2a292827262524232221201f1e1d1c1b1a191817161514131211100f0e0d0c0b0a09080706050403020100ff
+    Std::Print::Bits::Hex(Test_1024_512(ones1024_512, 4, y[0 +: 512])[0 +: 524]); Print("\n");
+    // CHECK: 524'xff3f3e3d3c3b3a393837363534333231302f2e2d2c2b2a292827262524232221201f1e1d1c1b1a191817161514131211100f0e0d0c0b0a09080706050403020100f
+
+    let ones2048_32 := Std::Bits::All_Ones(2048);
+    Std::Print::Bits::Hex(Test_2048_32(ones2048_32, 2016, y[0 +: 32])[2008 +: 40]); Print("\n");
+    // CHECK: 40'x3020100ff
+    Std::Print::Bits::Hex(Test_2048_32(ones2048_32, 4, y[0 +: 32])[0 +: 44]); Print("\n");
+    // CHECK: 44'xff03020100f
+
+    let ones2048_1024 := Std::Bits::All_Ones(2048);
+    Std::Print::Bits::Hex(Test_2048_1024(ones2048_1024, 1024, y[0 +: 1024])[1016 +: 1032]); Print("\n");
+    // CHECK: 1032'x7f7e7d7c7b7a797877767574737271706f6e6d6c6b6a696867666564636261605f5e5d5c5b5a595857565554535251504f4e4d4c4b4a494847464544434241403f3e3d3c3b3a393837363534333231302f2e2d2c2b2a292827262524232221201f1e1d1c1b1a191817161514131211100f0e0d0c0b0a09080706050403020100ff
+    Std::Print::Bits::Hex(Test_2048_1024(ones2048_1024, 4, y[0 +: 1024])[0 +: 1036]); Print("\n");
+    // CHECK: 1036'xff7f7e7d7c7b7a797877767574737271706f6e6d6c6b6a696867666564636261605f5e5d5c5b5a595857565554535251504f4e4d4c4b4a494847464544434241403f3e3d3c3b3a393837363534333231302f2e2d2c2b2a292827262524232221201f1e1d1c1b1a191817161514131211100f0e0d0c0b0a09080706050403020100f
+
+    return Builtin::Foreign::CInt::From_Integer(0);
+end

@@ -11,16 +11,20 @@
 #ifdef ASL_C23
 
 /*
- * Fast extraction of power-of-2 sized slices from wide bitvectors.
+ * Fast extraction and assignment of power-of-2 sized slices of wide
+ * bitvectors.
  *
  * ASL_get_slice_<n>_<w>(x, lo) returns bits [lo +: w] of the n-bit
  * bitvector x for n in {256, 512, 1024, 2048} and w in
  * {8, 16, 32, 64, 128, 256, 512, 1024} with w < n.
  *
- * Instead of shifting the entire bitvector, the slice is read directly
- * from memory. This relies on the bitvector (an unsigned _BitInt) being
- * stored in little-endian order, so that bit 'lo' is in byte 'lo / 8',
- * and on 'lo' being a multiple of 8.
+ * ASL_set_slice_<w>(x, lo, v) sets bits [lo +: w] of the bitvector
+ * pointed to by x to v for w in {8, 16, 32, 64, 128, 256, 512, 1024}.
+ *
+ * Instead of shifting (and masking) the entire bitvector, the slice is
+ * read from or written to memory directly. This relies on the bitvector
+ * (an unsigned _BitInt) being stored in little-endian order, so that
+ * bit 'lo' is in byte 'lo / 8', and on 'lo' being a multiple of 8.
  */
 
 #include <limits.h>
@@ -82,6 +86,30 @@ ASL_GET_SLICE(2048, 1024)
 #undef ASL_GET_SLICE_N
 #undef ASL_GET_SLICE
 #undef ASL_GET_SLICE_ATTR
+
+#define ASL_SET_SLICE(w)                                          \
+        static inline void                                        \
+        ASL_set_slice_##w(void *x, int64_t lo, ASL_bits##w##_t v) \
+        {                                                         \
+                memcpy((char *)x + lo / 8, &v, sizeof(v));        \
+        }
+
+ASL_SET_SLICE(8)
+ASL_SET_SLICE(16)
+ASL_SET_SLICE(32)
+ASL_SET_SLICE(64)
+ASL_SET_SLICE(128)
+#if BITINT_MAXWIDTH >= 256
+ASL_SET_SLICE(256)
+#endif
+#if BITINT_MAXWIDTH >= 512
+ASL_SET_SLICE(512)
+#endif
+#if BITINT_MAXWIDTH >= 1024
+ASL_SET_SLICE(1024)
+#endif
+
+#undef ASL_SET_SLICE
 
 #endif  // ASL_C23
 
