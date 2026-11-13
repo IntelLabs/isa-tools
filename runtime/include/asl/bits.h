@@ -20,7 +20,7 @@ typedef unsigned __int128 ASL_bits128_t;
 #if BITINT_MAXWIDTH >= 256
 typedef unsigned _BitInt(256) ASL_bits256_t;
 #endif
-#if BITINT_MAXWIDTH >= 256
+#if BITINT_MAXWIDTH >= 512
 typedef unsigned _BitInt(512) ASL_bits512_t;
 #endif
 
