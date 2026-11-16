@@ -1,0 +1,27 @@
+// RUN: %iii --batchmode --exec=:xform_foreign --exec=":show --format=raw F" %s | filecheck %s
+// Copyright (C) 2026 Intel Corporation
+
+// Partial assignments to imported variables use read-modify-write
+
+var x : Bits(16);
+var a : array [4] of Bits(16);
+
+foreign import var "x" = x;
+foreign import var "a" = a;
+
+function F(i : Integer, v : Bits(8))
+begin
+    x[i +: 8] := v;
+    a[i][7 : 0] := x[15 : 8];
+end
+
+// CHECK:      function F.0{}(i : Integer, v : Bits(8)) -> (){{$}}
+// CHECK-NEXT: begin
+// CHECK-NEXT:     var __ffi0 : Bits(16) := x_Read.0{}();
+// CHECK-NEXT:     {Bits(16)}__ffi0[i +: 8] := v;
+// CHECK-NEXT:     x_Write.0{}(__ffi0);
+
+// CHECK-NEXT:     var __ffi1 : Bits(16) := a_Read.0{}(i);
+// CHECK-NEXT:     {Bits(16)}__ffi1[7 : 0] := {Bits(16)}x_Read.0{}()[15 : 8];
+// CHECK-NEXT:     a_Write.0{}(i, __ffi1);
+// CHECK-NEXT: end

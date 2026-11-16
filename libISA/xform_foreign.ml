@@ -10,6 +10,10 @@
  * These functions are declared as imported using foreign import
  * function. Declaration of the variable itself is removed as no
  * longer needed.
+ *
+ * Partial assignments, e.g., to a slice of the
+ * variable, read the variable into a temporary, update the
+ * temporary and write it back.
 
  * For foreign export var declaration, generates a pair of
  * functions to read/write the variable from/to ISA and declares
@@ -77,60 +81,30 @@ let mk_array_wr_fty (i : Ident.t) (ity : AST.ixtype) (vl : Ident.t)
     is_builtin = false;
   }
 
-let mk_read_fident (i : Ident.t) : Ident.t =
-  Ident.add_suffix (Ident.mk_fident_with_tag i ~tag:0) ~suffix:"Read"
+let mk_read_fident = Xform_var_access.mk_read_fident
+let mk_write_fident = Xform_var_access.mk_write_fident
 
-let mk_write_fident (i : Ident.t) : Ident.t =
-  Ident.add_suffix (Ident.mk_fident_with_tag i ~tag:0) ~suffix:"Write"
+(* Set of variable identifiers to be imported or exported *)
+let vars (ds : AST.declaration list) (is_export : bool) : IdentSet.t =
+  ds
+  |> List.filter_map (function
+       | AST.Decl_VarFFI (nm, e, v, loc) when e = is_export -> Some v
+       | _ -> None)
+  |> IdentSet.of_list
+
+let tmpVariables = new Isa_utils.nameSupply "__ffi"
 
 class replacerClass (ds : AST.declaration list) =
-  object (self)
-    inherit Isa_visitor.nopIsaVisitor
-
-    (* Set of variable identifiers to be imported *)
-    val vars_imported : IdentSet.t =
-      ds
-      |> List.filter_map (function
-           | AST.Decl_VarFFI (nm, false, v, loc) -> Some v
-           | _ -> None)
-      |> IdentSet.of_list
-
-    (* Set of variable identifiers to be exported *)
-    val vars_exported : IdentSet.t =
-      ds
-      |> List.filter_map (function
-           | AST.Decl_VarFFI (nm, true, v, loc) -> Some v
-           | _ -> None)
-      |> IdentSet.of_list
+  let vars_imported = vars ds false in
+  let vars_exported = vars ds true in
+  object
+    inherit Xform_var_access.replacerClass tmpVariables ds vars_imported
 
     method is_imported (v : Ident.t) : bool =
       IdentSet.mem v vars_imported
 
     method is_exported (v : Ident.t) : bool =
       IdentSet.mem v vars_exported
-
-    method! vexpr e =
-      match e with
-      | Expr_Array (Expr_Var v, i) when self#is_imported v ->
-          let f = mk_read_fident v in
-          let e' = AST.Expr_TApply (f, [], [ i ], NoThrow) in
-          ChangeDoChildrenPost (e', Fun.id)
-      | Expr_Var v when self#is_imported v ->
-          let f = mk_read_fident v in
-          ChangeTo (AST.Expr_TApply (f, [], [], NoThrow))
-      | _ -> DoChildren
-
-    method! vstmt s =
-      match s with
-      | Stmt_Assign (LExpr_Array (LExpr_Var v, i), e, loc) when self#is_imported v ->
-          let f = mk_write_fident v in
-          let s' = AST.Stmt_TCall (f, [], [ i; e ], NoThrow, loc) in
-          ChangeDoChildrenPost ([ s' ], Fun.id)
-      | Stmt_Assign (LExpr_Var v, e, loc) when self#is_imported v ->
-          let f = mk_write_fident v in
-          let s' = AST.Stmt_TCall (f, [], [ e ], NoThrow, loc) in
-          ChangeDoChildrenPost ([ s' ], Fun.id)
-      | _ -> DoChildren
   end
 
 let xform_decl (replacer : replacerClass) (d : AST.declaration) :
