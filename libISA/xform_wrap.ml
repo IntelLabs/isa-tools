@@ -12,6 +12,9 @@
  * state, a simulator can redefine the functions to provide access
  * to its own simulation state instead.
  *
+ * Partial assignments, e.g., to a slice of the variable, read the
+ * variable into a temporary, update the temporary and write it back.
+ *
  * Copyright (C) 2024-2026 Intel Corporation
  * SPDX-License-Identifier: BSD-3-Clause
  ****************************************************************)
@@ -20,47 +23,22 @@ module AST = Isa_ast
 open Isa_utils
 open Identset
 
-let mk_read_fident (i : Ident.t) : Ident.t =
-  Ident.add_suffix (Ident.mk_fident_with_tag i ~tag:0) ~suffix:"Read"
+let mk_read_fident = Xform_var_access.mk_read_fident
+let mk_write_fident = Xform_var_access.mk_write_fident
 
-let mk_write_fident (i : Ident.t) : Ident.t =
-  Ident.add_suffix (Ident.mk_fident_with_tag i ~tag:0) ~suffix:"Write"
+(* Set of identifiers of variables to be wrapped *)
+let decl_vars (ds : AST.declaration list) : IdentSet.t =
+  ds
+  |> List.filter_map (function
+       | AST.Decl_Var (v, ty, loc) -> Some v
+       | _ -> None)
+  |> IdentSet.of_list
+
+let tmpVariables = new Isa_utils.nameSupply "__wrap"
 
 class replaceClass (ds : AST.declaration list) =
-  object (self)
-    inherit Isa_visitor.nopIsaVisitor
-
-    (* Set of identifiers of variables to be wrapped *)
-    val decl_var_idents : IdentSet.t =
-      ds
-      |> List.filter_map (function
-           | AST.Decl_Var (v, ty, loc) -> Some v
-           | _ -> None)
-      |> IdentSet.of_list
-
-    method! vexpr e =
-      match e with
-      | Expr_Array (Expr_Var v, i) when IdentSet.mem v decl_var_idents ->
-          let f = mk_read_fident v in
-          let e' = AST.Expr_TApply (f, [], [ i ], NoThrow) in
-          ChangeDoChildrenPost (e', Fun.id)
-      | Expr_Var v when IdentSet.mem v decl_var_idents ->
-          let f = mk_read_fident v in
-          ChangeTo (AST.Expr_TApply (f, [], [], NoThrow))
-      | _ -> DoChildren
-
-    method! vstmt s =
-      match s with
-      | Stmt_Assign (LExpr_Array (LExpr_Var v, i), e, loc) when IdentSet.mem v decl_var_idents ->
-          let f = mk_write_fident v in
-          let s' = AST.Stmt_TCall (f, [], [ i ; e ], NoThrow, loc) in
-          ChangeDoChildrenPost ([ s' ], Fun.id)
-      | Stmt_Assign (LExpr_Var v, e, loc) when IdentSet.mem v decl_var_idents ->
-          let f = mk_write_fident v in
-          let s' = AST.Stmt_TCall (f, [], [ e ], NoThrow, loc) in
-          ChangeDoChildrenPost ([ s' ], Fun.id)
-      | _ -> DoChildren
-
+  object
+    inherit Xform_var_access.replacerClass tmpVariables ds (decl_vars ds)
   end
 
 let xform_decl (replacer : replaceClass) (d : AST.declaration) :
