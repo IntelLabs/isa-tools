@@ -25,9 +25,9 @@ let wrap_tests : unit Alcotest.test_case list =
       "var x : Integer;
        function f() -> Integer begin var y : Integer; x := 1; y := 1; return x + y; end"
       "var x : Integer;
-       function x_read() -> Integer begin return x; end
-       function x_write(v : Integer) begin x := v; end
-       function f() -> Integer begin var y : Integer; x_write(1); y := 1; return x_read() + y; end");
+       function x_Read() -> Integer begin return x; end
+       function x_Write(v : Integer) begin x := v; end
+       function f() -> Integer begin var y : Integer; x_Write(1); y := 1; return x_Read() + y; end");
 
     ("let", `Quick, decl
       ""
@@ -41,9 +41,9 @@ let wrap_tests : unit Alcotest.test_case list =
       "var x : array [1] of Integer;
        function f() -> Integer begin var y : array [1] of Integer; x[0] := 1; y[0] := 1; return x[0] + y[0]; end"
       "var x : array [1] of Integer;
-       function x_read(i : Integer) -> Integer begin return x[i]; end
-       function x_write(i : Integer, v : Integer) begin x[i] := v; end
-       function f() -> Integer begin var y : array [1] of Integer; x_write(0, 1); y[0] := 1; return x_read(0) + y[0]; end");
+       function x_Read(i : Integer) -> Integer begin return x[i]; end
+       function x_Write(i : Integer, v : Integer) begin x[i] := v; end
+       function f() -> Integer begin var y : array [1] of Integer; x_Write(0, 1); y[0] := 1; return x_Read(0) + y[0]; end");
   ]
 
 (****************************************************************
