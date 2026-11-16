@@ -5,8 +5,8 @@
  * writing the variables, and replaces use of the variables by
  * calls to the functions.
  *
- * For variable x the names of created functions are x_read and
- * x_write.
+ * For variable x the names of created functions are x_Read and
+ * x_Write.
  *
  * Because the variables typically represent processor or memory
  * state, a simulator can redefine the functions to provide access
@@ -21,10 +21,10 @@ open Isa_utils
 open Identset
 
 let mk_read_fident (i : Ident.t) : Ident.t =
-  Ident.add_suffix (Ident.mk_fident_with_tag i ~tag:0) ~suffix:"read"
+  Ident.add_suffix (Ident.mk_fident_with_tag i ~tag:0) ~suffix:"Read"
 
 let mk_write_fident (i : Ident.t) : Ident.t =
-  Ident.add_suffix (Ident.mk_fident_with_tag i ~tag:0) ~suffix:"write"
+  Ident.add_suffix (Ident.mk_fident_with_tag i ~tag:0) ~suffix:"Write"
 
 class replaceClass (ds : AST.declaration list) =
   object (self)
