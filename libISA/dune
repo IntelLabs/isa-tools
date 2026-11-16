@@ -87,6 +87,7 @@
    xform_simplify_expr
    xform_tuples
    xform_valid
+   xform_var_access
    xform_wrap)
  (libraries menhirLib ocolor str yojson zarith z3))
 
