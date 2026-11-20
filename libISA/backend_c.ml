@@ -1294,8 +1294,8 @@ let exceptions (fmt : PP.formatter) (xs : AST.declaration list) : unit =
     List.iter (fun (tc, fs, loc) ->
         PP.fprintf fmt "typedef struct {";
         indented fmt (fun _ ->
-          PP.fprintf fmt "ASL_exception_tag_t ASL_tag;@,";
-          cutsep (pp_field loc) fmt fs
+          PP.fprintf fmt "ASL_exception_tag_t ASL_tag;";
+          List.iter (PP.fprintf fmt "@,%a" (pp_field loc)) fs
         );
         PP.fprintf fmt "@,} %a;@,@," ident tc
       )
