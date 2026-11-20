@@ -1111,10 +1111,19 @@ let rec stmt (fmt : PP.formatter) (x : AST.stmt) : unit =
   )
 
 and indented_block (fmt : PP.formatter) (xs : AST.stmt list) : unit =
+  (* Statements that are fully handled by decl print nothing: skip them to
+   * avoid empty lines *)
+  let is_decl_only (x : AST.stmt) : bool =
+    match x with
+    | Stmt_VarDeclsNoInit (_, Type_Constructor (i, [ _ ]), _)
+      when Ident.equal i Builtin_idents.ram -> false
+    | Stmt_VarDeclsNoInit _ -> true
+    | _ -> false
+  in
   if xs <> [] then begin
     indented fmt (fun _ ->
       map fmt (decl fmt) xs;
-      cutsep stmt fmt xs)
+      cutsep stmt fmt (List.filter (fun x -> not (is_decl_only x)) xs))
   end
 
 let formal (loc : Loc.t) (fmt : PP.formatter) (x : Ident.t * AST.ty * AST.expr option) : unit =
