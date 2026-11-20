@@ -475,10 +475,15 @@ module Runtime : RT.RuntimeLib = struct
         RT.pp_expr i
 
   let set_slice_mask_shift (fmt : PP.formatter) (n : int) (w : int) (l : RT.rt_expr) (pp_v : PP.formatter -> unit) : unit =
-    PP.fprintf fmt "%a __mask = %a >> %d; "
-      ty_bits n
-      ones_bits n
-      (n - w);
+    if w = 0 then
+      PP.fprintf fmt "%a __mask = %a; "
+        ty_bits n
+        zeros_bits n
+    else
+      PP.fprintf fmt "%a __mask = (%a)%a; "
+        ty_bits n
+        ty_bits n
+        ones_bits w;
     PP.fprintf fmt "%a = (%a & ~(__mask << __i)) | (((%a)%t) << __i);"
       RT.pp_expr l
       RT.pp_expr l

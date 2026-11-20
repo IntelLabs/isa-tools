@@ -33,12 +33,12 @@ let getset_tests : unit Alcotest.test_case list =
     ("assignment function type", `Quick, decl
       ""
       "function S := val : Integer;"
-      "function S_write(val : Integer);");
+      "function S_Write(val : Integer);");
 
     ("assignment function", `Quick, decl
       "var x : Integer;"
       "function S := val : Integer begin x := val; end"
-      "function S_write(val : Integer) begin x := val; end");
+      "function S_Write(val : Integer) begin x := val; end");
 
     ("array function type", `Quick, decl
       ""
@@ -53,21 +53,21 @@ let getset_tests : unit Alcotest.test_case list =
     ("array assignment function type", `Quick, decl
       ""
       "function S[i : Integer] := val : Integer;"
-      "function S_write(i : Integer, val : Integer);");
+      "function S_Write(i : Integer, val : Integer);");
 
     ("array assignment function", `Quick, decl
       "var x : array [1] of Integer;"
       "function S[i : Integer] := val : Integer begin x[i] := val; end"
-      "function S_write(i : Integer, val : Integer) begin x[i] := val; end");
+      "function S_Write(i : Integer, val : Integer) begin x[i] := val; end");
 
     ("__write l-expr", `Quick, decl
       "var x : Integer;"
       "function S := val : Integer begin x := val; end
        function P() begin S := 0; end
        function F() -> Integer begin S := 0; return 0; end"
-      "function S_write(val : Integer) begin x := val; end
-       function P() begin S_write(0); end
-       function F() -> Integer begin S_write(0); return 0; end");
+      "function S_Write(val : Integer) begin x := val; end
+       function P() begin S_Write(0); end
+       function F() -> Integer begin S_Write(0); return 0; end");
 
     ("__readwrite l-expr", `Quick, decl
       "var x : Bits(3);"
@@ -76,9 +76,9 @@ let getset_tests : unit Alcotest.test_case list =
        function P() begin X[1 +: 2] := 0b10; end
        function F() -> Bits(3) begin X[1 +: 2] := 0b10; return X; end"
       "function X() -> Bits(3) begin return x; end
-       function X_write(val : Bits(3)) begin x := val; end
-       function P() begin var __rmw0 := X(); __rmw0[1 +: 2] := 0b10; X_write(__rmw0); end
-       function F() -> Bits(3) begin var __rmw1 := X(); __rmw1[1 +: 2] := 0b10; X_write(__rmw1); return X(); end");
+       function X_Write(val : Bits(3)) begin x := val; end
+       function P() begin var __rmw0 := X(); __rmw0[1 +: 2] := 0b10; X_Write(__rmw0); end
+       function F() -> Bits(3) begin var __rmw1 := X(); __rmw1[1 +: 2] := 0b10; X_Write(__rmw1); return X(); end");
   ]
 
 (****************************************************************
