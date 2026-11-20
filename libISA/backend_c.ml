@@ -1149,13 +1149,10 @@ let function_body (loc : Loc.t) (fmt : PP.formatter) (b : AST.stmt list) (rty : 
              ( match rty with
              | Type_Tuple([]) -> PP.fprintf fmt "return;"
              | _ ->
-               braces fmt (fun _ ->
-                 indented fmt (fun _ ->
-                   let v = asl_fake_return_value in
-                   varty loc fmt v rty;
-                   PP.fprintf fmt ";@,return %a;" ident v
-                 );
-                 cut fmt
+               indented_braces fmt (fun _ ->
+                 let v = asl_fake_return_value in
+                 varty loc fmt v rty;
+                 PP.fprintf fmt ";@,return %a;" ident v
                )
              ));
            cut fmt

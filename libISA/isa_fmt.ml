@@ -218,9 +218,7 @@ let rec ty (fmt : PP.formatter) (x : AST.ty) : unit =
       parens fmt (fun _ -> expr fmt n);
       if not (Utils.is_empty fs) then begin
         nbsp fmt;
-        braces fmt (fun _ ->
-            indented fmt (fun _ -> cutsep fmt (regfield fmt) fs);
-            cut fmt)
+        indented_braces fmt (fun _ -> cutsep fmt (regfield fmt) fs)
       end
   | Type_Constructor (tc, es) ->
       tycon fmt tc;
@@ -792,18 +790,16 @@ let declaration ?(short=false) (fmt : PP.formatter) (x : AST.declaration) : unit
           nbsp fmt;
           eq fmt;
           nbsp fmt;
-          braces fmt (fun _ ->
-              indented fmt (fun _ ->
-                  cutsep fmt
-                    (fun (f, t) ->
-                      fieldname fmt f;
-                      nbsp fmt;
-                      colon fmt;
-                      nbsp fmt;
-                      ty fmt t;
-                      comma fmt)
-                    fs);
-              cut fmt);
+          indented_braces fmt (fun _ ->
+              cutsep fmt
+                (fun (f, t) ->
+                  fieldname fmt f;
+                  nbsp fmt;
+                  colon fmt;
+                  nbsp fmt;
+                  ty fmt t;
+                  comma fmt)
+                fs);
           semicolon fmt
       | Decl_Exception (tc, fs, loc) ->
           kw_record fmt;
@@ -812,18 +808,16 @@ let declaration ?(short=false) (fmt : PP.formatter) (x : AST.declaration) : unit
           nbsp fmt;
           eq fmt;
           nbsp fmt;
-          braces fmt (fun _ ->
-              indented fmt (fun _ ->
-                  cutsep fmt
-                    (fun (f, t) ->
-                      fieldname fmt f;
-                      nbsp fmt;
-                      colon fmt;
-                      nbsp fmt;
-                      ty fmt t;
-                      comma fmt)
-                    fs);
-              cut fmt);
+          indented_braces fmt (fun _ ->
+              cutsep fmt
+                (fun (f, t) ->
+                  fieldname fmt f;
+                  nbsp fmt;
+                  colon fmt;
+                  nbsp fmt;
+                  ty fmt t;
+                  comma fmt)
+                fs);
           semicolon fmt
       | Decl_Typedef (tc, [], Type_Bits(n,fs), loc) when fs <> [] ->
           PP.fprintf fmt "%t %a = {@,"

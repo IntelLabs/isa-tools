@@ -38,6 +38,7 @@ val surround :
 val with_color : formatter -> ColorT.color4 -> (unit -> unit) -> unit
 val commasep : formatter -> ('a -> unit) -> 'a list -> unit
 val braces : formatter -> (unit -> unit) -> unit
+val indented_braces : formatter -> (unit -> unit) -> unit
 val brackets : formatter -> (unit -> unit) -> unit
 val parens : formatter -> (unit -> unit) -> unit
 
