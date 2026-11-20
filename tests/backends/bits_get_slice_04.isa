@@ -1,0 +1,96 @@
+// RUN: %aslrun %s | filecheck %s
+// Copyright (C) 2026 Intel Corporation
+
+// Slices of 1, 2 and 4 bits from wide bitvectors at aligned and unaligned
+// offsets (including slices that cross a byte boundary).
+
+function Test_256_1(x : Bits(256), i : Integer) -> Bits(1)
+begin
+    return x[i +: 1];
+end
+
+function Test_256_4(x : Bits(256), i : Integer) -> Bits(4)
+begin
+    return x[i +: 4];
+end
+
+function Test_512_2(x : Bits(512), i : Integer) -> Bits(2)
+begin
+    return x[i +: 2];
+end
+
+function Test_1024_4(x : Bits(1024), i : Integer) -> Bits(4)
+begin
+    return x[i +: 4];
+end
+
+function Test_2048_1(x : Bits(2048), i : Integer) -> Bits(1)
+begin
+    return x[i +: 1];
+end
+
+function Test_2048_2(x : Bits(2048), i : Integer) -> Bits(2)
+begin
+    return x[i +: 2];
+end
+
+function main() -> Builtin::Foreign::CInt
+begin
+    // byte k of x is k
+    var x : Bits(2048) := Std::Bits::Zero(2048);
+    for k := 0 to 255 do
+        x[8 * k +: 8] := Std::Bits::From_Integer(k, 8);
+    end;
+
+    Std::Print::Bits::Hex(Test_256_1(x[0 +: 256], 7)); Print("\n");
+    // CHECK: 1'x0
+    Std::Print::Bits::Hex(Test_256_1(x[0 +: 256], 13)); Print("\n");
+    // CHECK: 1'x0
+    Std::Print::Bits::Hex(Test_256_1(x[0 +: 256], 249)); Print("\n");
+    // CHECK: 1'x1
+    Std::Print::Bits::Hex(Test_256_1(x[0 +: 256], 255)); Print("\n");
+    // CHECK: 1'x0
+
+    Std::Print::Bits::Hex(Test_256_4(x[0 +: 256], 3)); Print("\n");
+    // CHECK: 4'x0
+    Std::Print::Bits::Hex(Test_256_4(x[0 +: 256], 7)); Print("\n");
+    // CHECK: 4'x2
+    Std::Print::Bits::Hex(Test_256_4(x[0 +: 256], 252)); Print("\n");
+    // CHECK: 4'x1
+
+    Std::Print::Bits::Hex(Test_512_2(x[0 +: 512], 3)); Print("\n");
+    // CHECK: 2'x0
+    Std::Print::Bits::Hex(Test_512_2(x[0 +: 512], 7)); Print("\n");
+    // CHECK: 2'x2
+    Std::Print::Bits::Hex(Test_512_2(x[0 +: 512], 506)); Print("\n");
+    // CHECK: 2'x3
+    Std::Print::Bits::Hex(Test_512_2(x[0 +: 512], 510)); Print("\n");
+    // CHECK: 2'x0
+
+    Std::Print::Bits::Hex(Test_1024_4(x[0 +: 1024], 3)); Print("\n");
+    // CHECK: 4'x0
+    Std::Print::Bits::Hex(Test_1024_4(x[0 +: 1024], 7)); Print("\n");
+    // CHECK: 4'x2
+    Std::Print::Bits::Hex(Test_1024_4(x[0 +: 1024], 1020)); Print("\n");
+    // CHECK: 4'x7
+
+    Std::Print::Bits::Hex(Test_2048_1(x[0 +: 2048], 7)); Print("\n");
+    // CHECK: 1'x0
+    Std::Print::Bits::Hex(Test_2048_1(x[0 +: 2048], 13)); Print("\n");
+    // CHECK: 1'x0
+    Std::Print::Bits::Hex(Test_2048_1(x[0 +: 2048], 2041)); Print("\n");
+    // CHECK: 1'x1
+    Std::Print::Bits::Hex(Test_2048_1(x[0 +: 2048], 2047)); Print("\n");
+    // CHECK: 1'x1
+
+    Std::Print::Bits::Hex(Test_2048_2(x[0 +: 2048], 3)); Print("\n");
+    // CHECK: 2'x0
+    Std::Print::Bits::Hex(Test_2048_2(x[0 +: 2048], 7)); Print("\n");
+    // CHECK: 2'x2
+    Std::Print::Bits::Hex(Test_2048_2(x[0 +: 2048], 2042)); Print("\n");
+    // CHECK: 2'x3
+    Std::Print::Bits::Hex(Test_2048_2(x[0 +: 2048], 2046)); Print("\n");
+    // CHECK: 2'x3
+
+    return Builtin::Foreign::CInt::From_Integer(0);
+end

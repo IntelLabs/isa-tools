@@ -30,6 +30,11 @@ typedef unsigned _BitInt(1024) ASL_bits1024_t;
 typedef unsigned _BitInt(2048) ASL_bits2048_t;
 #endif
 
+// Sub-byte bitvectors used by the runtime
+typedef unsigned _BitInt(1) ASL_bits1_t;
+typedef unsigned _BitInt(2) ASL_bits2_t;
+typedef unsigned _BitInt(4) ASL_bits4_t;
+
 #define ASL_cast_bits_512_64(x) ((ASL_bits64_t)(x))
 #define ASL_cast_bits_256_64(x) ((ASL_bits64_t)(x))
 #define ASL_cast_bits_128_64(x) ((ASL_bits64_t)(x))

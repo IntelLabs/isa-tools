@@ -16,15 +16,18 @@
  *
  * ASL_get_slice_<n>_<w>(x, lo) returns bits [lo +: w] of the n-bit
  * bitvector x for n in {256, 512, 1024, 2048} and w in
- * {8, 16, 32, 64, 128, 256, 512, 1024} with w < n.
+ * {1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024} with w < n.
  *
  * ASL_set_slice_<w>(x, lo, v) sets bits [lo +: w] of the bitvector
- * pointed to by x to v for w in {8, 16, 32, 64, 128, 256, 512, 1024}.
+ * pointed to by x to v for w in {1, 2, 4, 8, 16, 32, 64, 128, 256, 512,
+ * 1024}.
  *
  * Instead of shifting (and masking) the entire bitvector, the slice is
  * read from or written to memory directly. This relies on the bitvector
  * (an unsigned _BitInt) being stored in little-endian order, so that
- * bit 'lo' is in byte 'lo / 8', and on 'lo' being a multiple of 8.
+ * bit 'lo' is in byte 'lo / 8', and on 'lo' being a multiple of 8
+ * (for w >= 8) or a multiple of w (for w < 8, so that the slice lies
+ * within a single byte).
  */
 
 #include <limits.h>
@@ -48,20 +51,32 @@
 #define ASL_GET_SLICE_ATTR static inline
 #endif
 
-#define ASL_GET_SLICE(n, w)                                       \
-        ASL_GET_SLICE_ATTR ASL_bits##w##_t                        \
-        ASL_get_slice_##n##_##w(ASL_bits##n##_t x, int64_t lo)    \
-        {                                                         \
-                ASL_bits##w##_t r;                                \
-                memcpy(&r, (const char *)&x + lo / 8, sizeof(r)); \
-                return r;                                         \
+#define ASL_GET_SLICE(n, w)                                             \
+        ASL_GET_SLICE_ATTR ASL_bits##w##_t                              \
+        ASL_get_slice_##n##_##w(ASL_bits##n##_t x, int64_t lo)          \
+        {                                                               \
+                ASL_bits##w##_t r;                                      \
+                memcpy(&r, (const uint8_t *)&x + (lo >> 3), sizeof(r)); \
+                return r;                                               \
         }
 
-#define ASL_GET_SLICE_N(n)    \
-        ASL_GET_SLICE(n, 8)   \
-        ASL_GET_SLICE(n, 16)  \
-        ASL_GET_SLICE(n, 32)  \
-        ASL_GET_SLICE(n, 64)  \
+// Slices narrower than a byte are read from the byte containing them
+#define ASL_GET_SUBBYTE_SLICE(n, w)                             \
+        ASL_GET_SLICE_ATTR ASL_bits##w##_t                      \
+        ASL_get_slice_##n##_##w(ASL_bits##n##_t x, int64_t lo)  \
+        {                                                       \
+                uint8_t b = *((const uint8_t *)&x + (lo >> 3)); \
+                return (ASL_bits##w##_t)(b >> (lo & 7));        \
+        }
+
+#define ASL_GET_SLICE_N(n)          \
+        ASL_GET_SUBBYTE_SLICE(n, 1) \
+        ASL_GET_SUBBYTE_SLICE(n, 2) \
+        ASL_GET_SUBBYTE_SLICE(n, 4) \
+        ASL_GET_SLICE(n, 8)         \
+        ASL_GET_SLICE(n, 16)        \
+        ASL_GET_SLICE(n, 32)        \
+        ASL_GET_SLICE(n, 64)        \
         ASL_GET_SLICE(n, 128)
 
 #if BITINT_MAXWIDTH >= 256
@@ -84,6 +99,7 @@ ASL_GET_SLICE(2048, 1024)
 #endif
 
 #undef ASL_GET_SLICE_N
+#undef ASL_GET_SUBBYTE_SLICE
 #undef ASL_GET_SLICE
 #undef ASL_GET_SLICE_ATTR
 
@@ -91,9 +107,23 @@ ASL_GET_SLICE(2048, 1024)
         static inline void                                        \
         ASL_set_slice_##w(void *x, int64_t lo, ASL_bits##w##_t v) \
         {                                                         \
-                memcpy((char *)x + lo / 8, &v, sizeof(v));        \
+                memcpy((uint8_t *)x + (lo >> 3), &v, sizeof(v));  \
         }
 
+// Slices narrower than a byte are merged into the byte containing them
+#define ASL_SET_SUBBYTE_SLICE(w)                                      \
+        static inline void                                            \
+        ASL_set_slice_##w(void *x, int64_t lo, ASL_bits##w##_t v)     \
+        {                                                             \
+                uint8_t *p = (uint8_t *)x + (lo >> 3);                \
+                unsigned shift = (unsigned)(lo & 7);                  \
+                uint8_t mask = (uint8_t)(((1u << w) - 1) << shift);   \
+                *p = (uint8_t)((*p & ~mask) | ((uint8_t)v << shift)); \
+        }
+
+ASL_SET_SUBBYTE_SLICE(1)
+ASL_SET_SUBBYTE_SLICE(2)
+ASL_SET_SUBBYTE_SLICE(4)
 ASL_SET_SLICE(8)
 ASL_SET_SLICE(16)
 ASL_SET_SLICE(32)
@@ -109,6 +139,7 @@ ASL_SET_SLICE(512)
 ASL_SET_SLICE(1024)
 #endif
 
+#undef ASL_SET_SUBBYTE_SLICE
 #undef ASL_SET_SLICE
 
 #endif  // ASL_C23
