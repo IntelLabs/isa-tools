@@ -1667,7 +1667,7 @@ let mk_ffi_export_wrapper
   in
 
   let pp_funlist fs fmt = List.iter (fun f -> PP.fprintf fmt "%t@," f) fs in
-  let pp_stmtlist fs fmt = List.iter (fun f -> PP.fprintf fmt "%t;@," f) fs in
+  let pp_stmtlist fs fmt = cutsep (fun fmt f -> PP.fprintf fmt "%t;" f) fmt fs in
 
   (* Most of the complexity is in dealing with tuple returns *)
   let asl_ret_name = Ident.mk_ident "ret" in
