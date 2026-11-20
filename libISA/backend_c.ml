@@ -1300,14 +1300,15 @@ let exceptions (fmt : PP.formatter) (xs : AST.declaration list) : unit =
         PP.fprintf fmt "@,} %a;@,@," ident tc
       )
       excs;
-    PP.fprintf fmt "typedef union {@,    %s@,%a@,} ASL_exception_t;@,"
-      "struct { ASL_exception_tag_t ASL_tag; } _exc;"
-      (PP.pp_print_list (fun fmt (tc, _, _) ->
-          PP.fprintf fmt "    %a _%a;"
+    PP.fprintf fmt "typedef union ";
+    indented_braces fmt (fun _ ->
+      PP.fprintf fmt "struct { ASL_exception_tag_t ASL_tag; } _exc;";
+      List.iter (fun (tc, _, _) ->
+          PP.fprintf fmt "@,%a _%a;"
             ident tc
             ident tc)
-      )
-      excs;
+        excs);
+    PP.fprintf fmt " ASL_exception_t;@,";
     PP.fprintf fmt "@,extern ASL_exception_t ASL_exception;@,@,";
   )
 
