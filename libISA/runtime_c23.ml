@@ -452,12 +452,16 @@ module Runtime : RT.RuntimeLib = struct
         n
         RT.pp_expr x
 
+  (* Bitvector and slice widths for which slices are read from / written
+     to memory directly instead of shifting the whole bitvector. *)
+  let is_fast_slice (n : int) (w : int) : bool =
+    List.mem n [256; 512; 1024; 2048]
+    && List.mem w [8; 16; 32; 64; 128; 256; 512; 1024]
+    && w < n
+
   let get_slice (fmt : PP.formatter) (n : int) (w : int) (x : RT.rt_expr)
       (i : RT.rt_expr) : unit =
-    if List.mem n [256; 512; 1024; 2048]
-       && List.mem w [8; 16; 32; 64; 128; 256; 512; 1024]
-       && w < n
-    then
+    if is_fast_slice n w then
       (* Read the slice from memory instead of shifting the whole bitvector.
        * This requires that the index is a multiple of 8: if the C compiler
        * cannot prove this, it falls back to shifting.
@@ -492,10 +496,7 @@ module Runtime : RT.RuntimeLib = struct
 
     let set_slice (fmt : PP.formatter) (n : int) (w : int) (l : RT.rt_expr)
         (i : RT.rt_expr) (r : RT.rt_expr) : unit =
-    if List.mem n [256; 512; 1024; 2048]
-       && List.mem w [8; 16; 32; 64; 128; 256; 512; 1024]
-       && w < n
-    then begin
+    if is_fast_slice n w then begin
       (* Write the slice to memory instead of masking and shifting the whole
        * bitvector. This requires that the index is a multiple of 8: if the
        * C compiler cannot prove this, it falls back to masking and shifting.
