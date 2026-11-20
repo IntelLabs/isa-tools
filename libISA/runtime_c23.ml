@@ -11,6 +11,7 @@
 module PP = Format
 module V = Value
 module RT = Runtime
+open Format_utils
 open Utils
 
 module Runtime : RT.RuntimeLib = struct
@@ -485,11 +486,11 @@ module Runtime : RT.RuntimeLib = struct
 
   let set_slice_mask_shift (fmt : PP.formatter) (n : int) (w : int) (l : RT.rt_expr) (pp_v : PP.formatter -> unit) : unit =
     if w = 0 then
-      PP.fprintf fmt "%a __mask = %a; "
+      PP.fprintf fmt "%a __mask = %a;@,"
         ty_bits n
         zeros_bits n
     else
-      PP.fprintf fmt "%a __mask = (%a)%a; "
+      PP.fprintf fmt "%a __mask = (%a)%a;@,"
         ty_bits n
         ty_bits n
         ones_bits w;
@@ -499,27 +500,35 @@ module Runtime : RT.RuntimeLib = struct
       ty_bits n
       pp_v
 
-    let set_slice (fmt : PP.formatter) (n : int) (w : int) (l : RT.rt_expr)
-        (i : RT.rt_expr) (r : RT.rt_expr) : unit =
+  let set_slice (fmt : PP.formatter) (n : int) (w : int) (l : RT.rt_expr)
+      (i : RT.rt_expr) (r : RT.rt_expr) : unit =
     if is_fast_slice n w then begin
       (* Write the slice to memory instead of masking and shifting the whole
        * bitvector. This requires that the index is suitably aligned: if the
        * C compiler cannot prove this, it falls back to masking and shifting.
        *)
-      PP.fprintf fmt "{ int64_t __i = %a; %a __value = %a; "
-        RT.pp_expr i
-        ty_bits w
-        RT.pp_expr r;
-      PP.fprintf fmt "if (__i %% %d == 0) { ASL_set_slice_%d(&%a, __i, __value); } "
-        (fast_slice_align w)
-        w
-        RT.pp_expr l;
-      PP.fprintf fmt "else { %a } }"
-        (fun fmt () -> set_slice_mask_shift fmt n w l (fun fmt -> PP.pp_print_string fmt "__value")) ()
+      vbox fmt (fun _ ->
+        indented_braces fmt (fun _ ->
+          PP.fprintf fmt "int64_t __i = %a;@,"
+            RT.pp_expr i;
+          PP.fprintf fmt "%a __value = %a;@,"
+            ty_bits w
+            RT.pp_expr r;
+          PP.fprintf fmt "if (__i %% %d == 0) "
+            (fast_slice_align w);
+          indented_braces fmt (fun _ ->
+            PP.fprintf fmt "ASL_set_slice_%d(&%a, __i, __value);"
+              w
+              RT.pp_expr l);
+          PP.fprintf fmt " else ";
+          indented_braces fmt (fun _ ->
+            set_slice_mask_shift fmt n w l (fun fmt -> PP.pp_print_string fmt "__value"))))
     end else begin
-      PP.fprintf fmt "{ __auto_type __i = %a; %a }"
-        RT.pp_expr i
-        (fun fmt () -> set_slice_mask_shift fmt n w l (fun fmt -> RT.pp_expr fmt r)) ()
+      vbox fmt (fun _ ->
+        indented_braces fmt (fun _ ->
+          PP.fprintf fmt "__auto_type __i = %a;@,"
+            RT.pp_expr i;
+          set_slice_mask_shift fmt n w l (fun fmt -> RT.pp_expr fmt r)))
     end
 
   let eq_bits  (fmt : PP.formatter) (n : int) (x : RT.rt_expr) (y : RT.rt_expr) : unit = binop fmt "==" x y
