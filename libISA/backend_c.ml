@@ -1096,7 +1096,7 @@ let rec stmt (fmt : PP.formatter) (x : AST.stmt) : unit =
       PP.fprintf fmt "} else {";
       indented fmt (fun _ ->
         ( match odefault with
-        | None -> PP.fprintf fmt "goto %a;@," ident (current_catch_label ())
+        | None -> PP.fprintf fmt "goto %a;" ident (current_catch_label ())
         | Some (s, _) ->
             PP.fprintf fmt "ASL_exception._exc.ASL_tag = ASL_no_exception;@,";
             PP.fprintf fmt "{%a@,}" indented_block s
