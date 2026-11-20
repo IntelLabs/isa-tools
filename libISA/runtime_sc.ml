@@ -803,7 +803,8 @@ module Runtime : RT.RuntimeLib = struct
     let array_size = (n + 63) / 64 in
     for limb = 0 to array_size - 1 do
       let slice_size = min 64 (n - limb * 64) in (* handle final slice *)
-      PP.fprintf fmt "%a[%d] = %a.range(%d, %d).to_uint64();@,"
+      if limb > 0 then PP.pp_print_cut fmt ();
+      PP.fprintf fmt "%a[%d] = %a.range(%d, %d).to_uint64();"
         RT.pp_expr x
         limb
         RT.pp_expr y
