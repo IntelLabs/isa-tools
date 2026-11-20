@@ -79,6 +79,12 @@ let commasep (fmt : PP.formatter) (pp : 'a -> unit) (xs : 'a list) : unit =
 let braces (fmt : PP.formatter) (pp : unit -> unit) =
   surround fmt lbrace rbrace pp
 
+(* Print "{", the indented body on new lines and "}" on its own line *)
+let indented_braces (fmt : PP.formatter) (pp : unit -> unit) =
+  braces fmt (fun _ ->
+      indented fmt pp;
+      cut fmt)
+
 let brackets (fmt : PP.formatter) (pp : unit -> unit) =
   surround fmt lbrack rbrack pp
 
