@@ -1666,15 +1666,12 @@ let mk_ffi_export_wrapper
       |> Utils.split3
   in
 
-  let pp_funlist fs fmt = List.iter (fun f -> PP.fprintf fmt "%t@," f) fs in
-  let pp_stmtlist fs fmt = cutsep (fun fmt f -> PP.fprintf fmt "%t;" f) fmt fs in
-
   (* Most of the complexity is in dealing with tuple returns *)
   let asl_ret_name = Ident.mk_ident "ret" in
   let (pp_c_ret_type, pp_c_ret_value, pp_output_arg_decls, pp_output_cvts) =
       let pp_void_type fmt = PP.fprintf fmt "void" in
       ( match fty.rty with
-      | Type_Tuple([]) -> (pp_void_type, (fun fmt -> ()), [], [])
+      | Type_Tuple([]) -> (pp_void_type, None, [], [])
       | ty ->
           let c_name = Ident.add_prefix asl_ret_name ~prefix:"c_" in
           ( match fields_of_return_type ty with
@@ -1696,7 +1693,7 @@ let mk_ffi_export_wrapper
                 |> Utils.split4
               in
               ( pp_void_type
-              , (fun fmt -> ())
+              , None
               , pp_c_decls
               , pp_extracts @ pp_cvts
               )
@@ -1705,14 +1702,14 @@ let mk_ffi_export_wrapper
             ( match output.pp_c_type with
             | Some pp ->
                 ( pp
-                , (fun fmt -> Ident.pp fmt output.c_name)
+                , Some (fun fmt -> Ident.pp fmt output.c_name)
                 , []
-                , [pp_stmtlist [output.pp_c_decl]; output.pp_asl_to_c]
+                , [(fun fmt -> PP.fprintf fmt "%t;" output.pp_c_decl); output.pp_asl_to_c]
                 )
             | None ->
                 (* Functions can't directly return arrays, so add to C arg list *)
                 ( pp_void_type
-                , (fun fmt -> ())
+                , None
                 , [output.pp_c_decl]
                 , [output.pp_asl_to_c]
                 )
@@ -1731,21 +1728,30 @@ let mk_ffi_export_wrapper
 
   (* generate body of export wrapper *)
   let pp_export_body fmt =
-    pp_funlist pp_input_cvts fmt;
-    PP.fprintf fmt "ASL_exception._exc.ASL_tag = ASL_no_exception;@,";
-    ( match fty.rty with
-    | Type_Tuple([]) -> ()
-    | rty ->
-        varty loc fmt asl_ret_name rty;
-        PP.fprintf fmt " = "
-    );
-    let pp_input_args = List.map (fun a fmt -> Ident.pp fmt a) input_args in
-    let pp_args = pp_client_args fmt @ pp_extra_args fmt @ pp_input_args in
-    PP.fprintf fmt "%a(%a);@," ident asl_name (commasep (fun fmt pp -> pp fmt)) pp_args;
-    PP.fprintf fmt "if (ASL_exception._exc.ASL_tag != ASL_no_exception) ASL_error(\"%a\", \"uncaught exception\");@,"
-      ident asl_name;
-    pp_funlist pp_output_cvts fmt;
-    PP.fprintf fmt "return %t;" pp_c_ret_value
+    let pp_clear_exception fmt =
+      PP.fprintf fmt "ASL_exception._exc.ASL_tag = ASL_no_exception;"
+    in
+    let pp_call fmt =
+      ( match fty.rty with
+      | Type_Tuple([]) -> ()
+      | rty ->
+          varty loc fmt asl_ret_name rty;
+          PP.fprintf fmt " = "
+      );
+      let pp_input_args = List.map (fun a fmt -> Ident.pp fmt a) input_args in
+      let pp_args = pp_client_args fmt @ pp_extra_args fmt @ pp_input_args in
+      PP.fprintf fmt "%a(%a);" ident asl_name (commasep (fun fmt pp -> pp fmt)) pp_args
+    in
+    let pp_check_exception fmt =
+      PP.fprintf fmt "if (ASL_exception._exc.ASL_tag != ASL_no_exception) ASL_error(\"%a\", \"uncaught exception\");"
+        ident asl_name
+    in
+    let pp_return = Option.map (fun v fmt -> PP.fprintf fmt "return %t;" v) pp_c_ret_value in
+    cutsep (fun fmt pp -> pp fmt) fmt
+      (pp_input_cvts
+       @ [pp_clear_exception; pp_call; pp_check_exception]
+       @ pp_output_cvts
+       @ Option.to_list pp_return)
   in
 
   let pp_proto fmt = PP.fprintf fmt "%a;@," pp_c_function_header ()
@@ -1804,15 +1810,12 @@ let mk_ffi_import_wrapper
       |> Utils.split3
   in
 
-  let pp_funlist fs fmt = List.iter (fun f -> PP.fprintf fmt "%t@," f) fs in
-  let pp_stmtlist fs fmt = List.iter (fun f -> PP.fprintf fmt "%t;@," f) fs in
-
   (* Most of the complexity is in dealing with tuple returns *)
   let asl_ret_name = Ident.mk_ident "ret" in
   let (pp_c_ret_type, pp_c_ret_decl, pp_asl_ret_value, pp_output_args, pp_output_arg_decls, pp_output_var_decls, pp_output_cvts) =
       let pp_void_type fmt = PP.fprintf fmt "void" in
       ( match fty.rty with
-      | Type_Tuple([]) -> (pp_void_type, None, (fun fmt -> ()), [], [], [], [])
+      | Type_Tuple([]) -> (pp_void_type, None, None, [], [], [], [])
       | ty ->
           let c_name = Ident.add_prefix asl_ret_name ~prefix:"c_" in
           ( match fields_of_return_type ty with
@@ -1840,7 +1843,7 @@ let mk_ffi_import_wrapper
               in
               ( pp_void_type
               , None
-              , (fun fmt -> Ident.pp fmt asl_ret_name)
+              , Some (fun fmt -> Ident.pp fmt asl_ret_name)
               , pp_c_args
               , pp_c_arg_decls
               , pp_c_var_decls
@@ -1852,7 +1855,7 @@ let mk_ffi_import_wrapper
             | Some pp ->
                 ( pp
                 , Some output.pp_c_decl
-                , (fun fmt -> Ident.pp fmt output.asl_name)
+                , Some (fun fmt -> Ident.pp fmt output.asl_name)
                 , []
                 , []
                 , []
@@ -1862,7 +1865,7 @@ let mk_ffi_import_wrapper
                 (* Functions can't directly return arrays, so add to C arg list *)
                 ( pp_void_type
                 , None
-                , (fun fmt -> Ident.pp fmt output.asl_name)
+                , Some (fun fmt -> Ident.pp fmt output.asl_name)
                 , [(fun fmt -> Ident.pp fmt output.c_name)]
                 , [output.pp_c_decl]
                 , [output.pp_c_decl]
@@ -1883,18 +1886,24 @@ let mk_ffi_import_wrapper
 
   (* generate body of import wrapper *)
   let pp_import_body fmt =
-    pp_funlist pp_input_cvts fmt;
-    pp_stmtlist pp_output_var_decls fmt;
-    ( match pp_c_ret_decl with
-    | None -> ()
-    | Some pp -> PP.fprintf fmt "%t = " pp
-    );
-    let pp_args =
-      pp_client_args fmt @ pp_extra_args fmt @ pp_input_args @ pp_output_args
+    let pp_output_var_decls = List.map (fun f fmt -> PP.fprintf fmt "%t;" f) pp_output_var_decls in
+    let pp_call fmt =
+      ( match pp_c_ret_decl with
+      | None -> ()
+      | Some pp -> PP.fprintf fmt "%t = " pp
+      );
+      let pp_args =
+        pp_client_args fmt @ pp_extra_args fmt @ pp_input_args @ pp_output_args
+      in
+      PP.fprintf fmt "%a(%a);" ident c_name (commasep (fun fmt pp -> pp fmt)) pp_args
     in
-    PP.fprintf fmt "%a(%a);@," ident c_name (commasep (fun fmt pp -> pp fmt)) pp_args;
-    pp_funlist pp_output_cvts fmt;
-    PP.fprintf fmt "return %t;" pp_asl_ret_value
+    let pp_return = Option.map (fun v fmt -> PP.fprintf fmt "return %t;" v) pp_asl_ret_value in
+    cutsep (fun fmt pp -> pp fmt) fmt
+      (pp_input_cvts
+       @ pp_output_var_decls
+       @ [pp_call]
+       @ pp_output_cvts
+       @ Option.to_list pp_return)
   in
 
   let pp_proto fmt = PP.fprintf fmt "%a;@," pp_c_function_header ()
