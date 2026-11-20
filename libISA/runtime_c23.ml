@@ -452,18 +452,27 @@ module Runtime : RT.RuntimeLib = struct
         n
         RT.pp_expr x
 
+  (* Bitvector and slice widths for which slices are read from / written
+     to memory directly instead of shifting the whole bitvector. *)
+  let is_fast_slice (n : int) (w : int) : bool =
+    List.mem n [256; 512; 1024; 2048]
+    && List.mem w [1; 2; 4; 8; 16; 32; 64; 128; 256; 512; 1024]
+    && w < n
+
+  (* The slice should start at byte boundary or,
+     for slices narrower than byte, lie within a single byte. *)
+  let fast_slice_align (w : int) : int = min w 8
+
   let get_slice (fmt : PP.formatter) (n : int) (w : int) (x : RT.rt_expr)
       (i : RT.rt_expr) : unit =
-    if List.mem n [256; 512; 1024; 2048]
-       && List.mem w [8; 16; 32; 64; 128; 256; 512; 1024]
-       && w < n
-    then
+    if is_fast_slice n w then
       (* Read the slice from memory instead of shifting the whole bitvector.
-       * This requires that the index is a multiple of 8: if the C compiler
+       * This requires that the index is suitably aligned: if the C compiler
        * cannot prove this, it falls back to shifting.
        *)
-      PP.fprintf fmt "({ int64_t __lo = %a; (__lo %% 8 == 0) ? ASL_get_slice_%d_%d(%a, __lo) : ((%a)(%a >> __lo)); })"
+      PP.fprintf fmt "({ int64_t __lo = %a; (__lo %% %d == 0) ? ASL_get_slice_%d_%d(%a, __lo) : ((%a)(%a >> __lo)); })"
         RT.pp_expr i
+        (fast_slice_align w)
         n w
         RT.pp_expr x
         ty_bits w
@@ -475,10 +484,15 @@ module Runtime : RT.RuntimeLib = struct
         RT.pp_expr i
 
   let set_slice_mask_shift (fmt : PP.formatter) (n : int) (w : int) (l : RT.rt_expr) (pp_v : PP.formatter -> unit) : unit =
-    PP.fprintf fmt "%a __mask = %a >> %d; "
-      ty_bits n
-      ones_bits n
-      (n - w);
+    if w = 0 then
+      PP.fprintf fmt "%a __mask = %a; "
+        ty_bits n
+        zeros_bits n
+    else
+      PP.fprintf fmt "%a __mask = (%a)%a; "
+        ty_bits n
+        ty_bits n
+        ones_bits w;
     PP.fprintf fmt "%a = (%a & ~(__mask << __i)) | (((%a)%t) << __i);"
       RT.pp_expr l
       RT.pp_expr l
@@ -487,19 +501,17 @@ module Runtime : RT.RuntimeLib = struct
 
     let set_slice (fmt : PP.formatter) (n : int) (w : int) (l : RT.rt_expr)
         (i : RT.rt_expr) (r : RT.rt_expr) : unit =
-    if List.mem n [256; 512; 1024; 2048]
-       && List.mem w [8; 16; 32; 64; 128; 256; 512; 1024]
-       && w < n
-    then begin
+    if is_fast_slice n w then begin
       (* Write the slice to memory instead of masking and shifting the whole
-       * bitvector. This requires that the index is a multiple of 8: if the
+       * bitvector. This requires that the index is suitably aligned: if the
        * C compiler cannot prove this, it falls back to masking and shifting.
        *)
       PP.fprintf fmt "{ int64_t __i = %a; %a __value = %a; "
         RT.pp_expr i
         ty_bits w
         RT.pp_expr r;
-      PP.fprintf fmt "if (__i %% 8 == 0) { ASL_set_slice_%d(&%a, __i, __value); } "
+      PP.fprintf fmt "if (__i %% %d == 0) { ASL_set_slice_%d(&%a, __i, __value); } "
+        (fast_slice_align w)
         w
         RT.pp_expr l;
       PP.fprintf fmt "else { %a } }"

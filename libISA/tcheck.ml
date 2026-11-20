@@ -2337,7 +2337,7 @@ and tc_lexpr2 (env : Env.t) (loc : Loc.t)
           (LExpr_Var i.name, i.ty)
       | None -> (
           let getters = GlobalEnv.getFuns (Env.globals env) v in
-          let setters = GlobalEnv.getSetterFun (Env.globals env) (Ident.add_suffix v ~suffix:"write") in
+          let setters = GlobalEnv.getSetterFun (Env.globals env) (Ident.add_suffix v ~suffix:"Write") in
           let ogetter =
             chooseFunction (Env.globals env) loc "nullary function"
               (Ident.to_string v) false [] getters
@@ -2392,7 +2392,7 @@ and tc_lexpr2 (env : Env.t) (loc : Loc.t)
       | LExpr_Var a -> (
           let tys = List.map (function _, ty -> ty) ss' in
           let getters = GlobalEnv.getFuns (Env.globals env) a in
-          let setters = GlobalEnv.getSetterFun (Env.globals env) (Ident.add_suffix a ~suffix:"write") in
+          let setters = GlobalEnv.getSetterFun (Env.globals env) (Ident.add_suffix a ~suffix:"Write") in
           let ogetters =
             chooseFunction (Env.globals env) loc "function"
               (Ident.to_string a) true tys getters
@@ -2472,7 +2472,7 @@ let rec tc_lexpr (env : Env.t) (loc : Loc.t)
           LExpr_Var v
       | None -> (
           let setters =
-            GlobalEnv.getSetterFun (Env.globals env) (Ident.add_suffix v ~suffix:"write")
+            GlobalEnv.getSetterFun (Env.globals env) (Ident.add_suffix v ~suffix:"Write")
           in
           let osetter =
             chooseFunction (Env.globals env) loc "var setter function"
@@ -2535,7 +2535,7 @@ let rec tc_lexpr (env : Env.t) (loc : Loc.t)
         | LExpr_Var a -> (
             let tys = List.map (function _, ty -> ty) ss' in
             let setters =
-              GlobalEnv.getSetterFun (Env.globals env) (Ident.add_suffix a ~suffix:"write")
+              GlobalEnv.getSetterFun (Env.globals env) (Ident.add_suffix a ~suffix:"Write")
             in
             let osetters =
               chooseFunction (Env.globals env) loc "setter function"
@@ -2559,7 +2559,7 @@ let rec tc_lexpr (env : Env.t) (loc : Loc.t)
                 (LExpr_Write (gty'.name, gty'.parameters, es, throws), ty)
             | _ -> (
                 let getters = GlobalEnv.getFuns (Env.globals env) a in
-                let setters = GlobalEnv.getSetterFun (Env.globals env) (Ident.add_suffix a ~suffix:"write") in
+                let setters = GlobalEnv.getSetterFun (Env.globals env) (Ident.add_suffix a ~suffix:"Write") in
                 let ogetter =
                   chooseFunction (Env.globals env) loc "nullary function"
                     (Ident.to_string a) false [] getters
@@ -3064,7 +3064,7 @@ let tc_setter
 
 let mangle_setter_name (f : Ident.t) (fty : AST.function_type) : Ident.t =
   if Option.is_some fty.setter_arg then
-    Ident.add_suffix f ~suffix:"write"
+    Ident.add_suffix f ~suffix:"Write"
   else
     f
 
@@ -3285,8 +3285,10 @@ let tc_declaration (env : GlobalEnv.t) (d : AST.declaration) :
       | fs -> raise (Ambiguous (loc, "function", Ident.to_string qid))
       )
   | Decl_FunFFI (nm, is_export, qid, ps, loc) ->
-      (* todo: assignment functions need their name mangled *)
-      ( match GlobalEnv.getFuns env qid with
+      (* Assignment functions are found using their mangled name, e.g. F_Write *)
+      let fs = GlobalEnv.getFuns env qid in
+      let fs = if Utils.is_empty fs then GlobalEnv.getSetterFun env qid else fs in
+      ( match fs with
       | [f] ->
           List.iter (fun (p, _) ->
             if not (List.exists (fun (p', _) -> Ident.equal p p') ps) then
