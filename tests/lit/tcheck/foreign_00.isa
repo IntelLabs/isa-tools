@@ -1,0 +1,34 @@
+// RUN: %iii --batchmode --exec=":show E*" --exec=":show I*" %s | filecheck %s
+// Copyright (C) 2026 Intel Corporation
+
+// Array functions are imported and exported using their name, e.g. E.
+
+// Array assignment functions are imported and exported using their mangled
+// name, e.g. E_Write.
+
+function E[a : Integer] -> Integer
+begin
+    return a;
+end
+
+function E[a : Integer] := value : Integer
+begin
+end
+
+function I[a : Integer] -> Integer;
+function I[a : Integer] := value : Integer;
+
+foreign export function "E" = E with {};
+foreign export function "E_Write" = E_Write with {};
+foreign import function "I" = I with {};
+foreign import function "I_Write" = I_Write with {};
+
+// CHECK:      function E.0{}[a : Integer] -> Integer;
+// CHECK:      function E_Write.0{}[a : Integer] := value : Integer -> ();
+// CHECK:      foreign export function "E" = E.0 with {};
+// CHECK:      foreign export function "E_Write" = E_Write.0 with {};
+
+// CHECK:      function I.0{}[a : Integer] -> Integer;
+// CHECK:      function I_Write.0{}[a : Integer] := value : Integer -> ();
+// CHECK:      foreign import function "I" = I.0 with {};
+// CHECK:      foreign import function "I_Write" = I_Write.0 with {};

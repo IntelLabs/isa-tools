@@ -243,7 +243,7 @@ let reachable_decls_tests : unit Alcotest.test_case list =
        "function F -> Bits(1);
         function F := value : Bits(1);
         function T() begin F := 0b0; end"
-       ["T"] ["T.0"; "T.0"; "F_write.0"]
+       ["T"] ["T.0"; "T.0"; "F_Write.0"]
     );
     ("lexpr read-write", `Quick, test_reachable_decls globals prelude
        "function F -> Bits(1);
@@ -252,7 +252,7 @@ let reachable_decls_tests : unit Alcotest.test_case list =
         function G := x : Bits(1);
         function T() begin F[0] := 0b0; G[0] := 0b0; end"
        ["T"]
-       ["T.0"; "T.0"; "G_write.0"; "G.0"; "F_write.0"; "F.0"]
+       ["T.0"; "T.0"; "G_Write.0"; "G.0"; "F_Write.0"; "F.0"]
     );
   ]
 
