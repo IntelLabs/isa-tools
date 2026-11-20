@@ -834,12 +834,12 @@ module Runtime : RT.RuntimeLib = struct
       RT.pp_expr x
 
   let ffi_c2asl_bits_large (fmt : PP.formatter) (n : int) (x : RT.rt_expr) (y : RT.rt_expr) : unit =
-    PP.fprintf fmt "%a %a = 0uwb;@,"
+    PP.fprintf fmt "%a %a = 0uwb;"
       ty_bits n
       RT.pp_expr x;
     let array_size = (n + 63) / 64 in
     for limb = 0 to array_size - 1 do
-        PP.fprintf fmt "%a = %a | (((%a)(%a[%d])) << %d);@,"
+        PP.fprintf fmt "@,%a = %a | (((%a)(%a[%d])) << %d);"
         RT.pp_expr x
         RT.pp_expr x
         ty_bits n
@@ -851,7 +851,8 @@ module Runtime : RT.RuntimeLib = struct
   let ffi_asl2c_bits_large (fmt : PP.formatter) (n : int) (x : RT.rt_expr) (y : RT.rt_expr) : unit =
     let array_size = (n + 63) / 64 in
     for limb = 0 to array_size - 1 do
-      PP.fprintf fmt "%a[%d] = (uint64_t)(%a >> %d);@,"
+      if limb > 0 then PP.pp_print_cut fmt ();
+      PP.fprintf fmt "%a[%d] = (uint64_t)(%a >> %d);"
         RT.pp_expr x
         limb
         RT.pp_expr y
