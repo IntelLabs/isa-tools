@@ -986,8 +986,8 @@ let rec stmt (fmt : PP.formatter) (x : AST.stmt) : unit =
           | _
           -> expr loc fmt e
           );
-          PP.fprintf fmt ") {";
-          indented fmt (fun _ ->
+          PP.fprintf fmt ") ";
+          indented_braces fmt (fun _ ->
               map fmt
                 (fun (AST.Alt_Alt (ps, oc, ss, loc)) ->
                   if Option.is_some oc then
@@ -1007,8 +1007,7 @@ let rec stmt (fmt : PP.formatter) (x : AST.stmt) : unit =
                   )
               );
               PP.fprintf fmt "@,}"
-            );
-          PP.fprintf fmt "@,}"
+            )
       )
   | Stmt_VarDecl (_, DeclItem_Var (v, _), i, loc) ->
       PP.fprintf fmt "%a = %a;"
@@ -1235,9 +1234,9 @@ let declaration (fmt : PP.formatter) ?(is_extern : bool option) (x : AST.declara
             PP.fprintf fmt ";@,@,"
           end
       | Decl_Record (tc, [], fs, loc) ->
-          PP.fprintf fmt "typedef struct {";
-          indented fmt (fun _ -> cutsep (pp_field loc) fmt fs);
-          PP.fprintf fmt "@,} %a;@,@," ident tc
+          PP.fprintf fmt "typedef struct ";
+          indented_braces fmt (fun _ -> cutsep (pp_field loc) fmt fs);
+          PP.fprintf fmt " %a;@,@," ident tc
       | Decl_Typedef (tc, [], t, loc) ->
           PP.fprintf fmt "typedef ";
           varty loc fmt tc t;
@@ -1293,12 +1292,12 @@ let exceptions (fmt : PP.formatter) (xs : AST.declaration list) : unit =
     List.iter (fun (tc, _, _) -> PP.fprintf fmt ", tag_%a" ident tc) excs;
     PP.fprintf fmt " } ASL_exception_tag_t;@,@,";
     List.iter (fun (tc, fs, loc) ->
-        PP.fprintf fmt "typedef struct {";
-        indented fmt (fun _ ->
+        PP.fprintf fmt "typedef struct ";
+        indented_braces fmt (fun _ ->
           PP.fprintf fmt "ASL_exception_tag_t ASL_tag;";
           List.iter (PP.fprintf fmt "@,%a" (pp_field loc)) fs
         );
-        PP.fprintf fmt "@,} %a;@,@," ident tc
+        PP.fprintf fmt " %a;@,@," ident tc
       )
       excs;
     PP.fprintf fmt "typedef union ";
@@ -1766,10 +1765,9 @@ let mk_ffi_export_wrapper
     let is_main = Ident.equal c_name (Ident.mk_ident "main") in
     wrap_extern (not is_main) fmt (fun fmt ->
       pp_proto fmt;
-      PP.fprintf fmt "@,";
-      PP.fprintf fmt "%a {" pp_c_function_header ();
-      indented fmt (fun _ -> pp_export_body fmt);
-      PP.fprintf fmt "@,}@,@,"
+      PP.fprintf fmt "@,%a " pp_c_function_header ();
+      indented_braces fmt (fun _ -> pp_export_body fmt);
+      PP.fprintf fmt "@,@,"
     )
   in
 
@@ -1918,9 +1916,9 @@ let mk_ffi_import_wrapper
       PP.fprintf fmt "@,"
     );
     function_header loc fmt asl_name fty;
-    PP.fprintf fmt "@,{";
-    indented fmt (fun _ -> pp_import_body fmt);
-    PP.fprintf fmt "@,}@,@,"
+    PP.fprintf fmt "@,";
+    indented_braces fmt (fun _ -> pp_import_body fmt);
+    PP.fprintf fmt "@,@,"
   in
 
   (pp_proto, pp_wrapper)
