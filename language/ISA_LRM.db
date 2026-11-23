@@ -4079,20 +4079,20 @@ function Std::Bits::Unsigned_Saturate(x : Integer, size : {0..}) -&gt; Bits(size
 function Std::Bits::Signed_Saturate(x : Integer, size : {0..}) -&gt; Bits(size)
 
 // Return the number of bits set to '0b1' in x
-function Std::Bits::Count_Set_Bits(implicit size : {0..}, x : Bits(size)) -&gt; {0..size-1}
+function Std::Bits::Count_Set_Bits(implicit size : {0..}, x : Bits(size)) -&gt; {0..size}
 
 // Return the number of consecutive zero bits at the top of a bitvector.
 // e.g.,. Count_Leading_Zero_Bits(0b0011_0000) == 2
-function Std::Bits::Count_Leading_Zero_Bits(implicit size : {0..}, x : Bits(size)) -&gt; {0..size-1}
+function Std::Bits::Count_Leading_Zero_Bits(implicit size : {0..}, x : Bits(size)) -&gt; {0..size}
 
 // Return the number of matching bits at the top of a bitvector.
 // e.g.,. Count_Leading_Sign_Bits(0b0011_0000) == 2
 // e.g.,. Count_Leading_Sign_Bits(0b1110_0000) == 3
-function Std::Bits::Count_Leading_Sign_Bits(implicit size : {1..}, x : Bits(size)) -&gt; {1..size-1}
+function Std::Bits::Count_Leading_Sign_Bits(implicit size : {1..}, x : Bits(size)) -&gt; {1..size}
 
 // Return the number of consecutive zero bits at the bottom of a bitvector.
 // e.g.,. Count_Trailing_Zero_Bits(0b0011_0000) == r
-function Std::Bits::Count_Trailing_Zero_Bits(implicit size : {0..}, x : Bits(size)) -&gt; {0..size-1}
+function Std::Bits::Count_Trailing_Zero_Bits(implicit size : {0..}, x : Bits(size)) -&gt; {0..size}
 
 // Test whether there are an even number of bits set in `x`
 function Std::Bits::Is_Parity_Even(implicit size : {0..}, x : Bits(size)) -&gt; Boolean
