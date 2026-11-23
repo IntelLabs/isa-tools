@@ -2597,78 +2597,70 @@ slice = expression
             then <literal>B[…]</literal> is used to extract a slice from the bitvector.
           </para>
 
-          <orderedlist numeration="arabic" spacing="compact">
+          <table>
+            <caption>Bitslice operators</caption>
 
-            <listitem>
-              <para>
-                <literal>B[i]</literal>
-                (bit index)
-                returns the <literal>i</literal>th element
-                of the bitvector <literal>B</literal>.
-                Requires that <literal>i in {0 .. n-1}</literal>.
-              </para>
-            </listitem>
+            <thead>
+              <tr>
+                <th>Bitslice kind</th>
+                <th>Expression</th>
+                <th>Bit in result</th>
+                <th>Type of i</th>
+                <th>Type of j</th>
+                <th>Additional consthaints</th>
+              </tr>
+            </thead>
 
-            <listitem>
-              <para>
-                <literal>B[i : j]</literal>
-                (range-based bitslice)
-                returns bits <literal>j</literal> up to <literal>i</literal>
-                (inclusive)
-                of the bitvector <literal>B</literal>.
+            <tbody>
 
-                Requires that <literal>i in {j-1 .. n-1}</literal>
-                and <literal>j in {0 .. i+1}</literal>.
-              </para>
-            </listitem>
+              <tr>
+                <td>Bit index</td>
+                <td>B[i]</td>
+                <td>i</td>
+                <td>{ 0 .. n-1 }</td>
+                <td></td>
+                <td></td>
+              </tr>
+              <tr>
+                <td>Range-based slice</td>
+                <td>B[i:j]</td>
+                <td>j up to i</td>
+                <td>{ 0 .. n-1 }</td>
+                <td>{ 0 .. i+1 }</td>
+                <td></td>
+              </tr>
+              <tr>
+                <td>Width-based slice</td>
+                <td>B[i+:j]</td>
+                <td>i up to i+j-1</td>
+                <td>{ 0 .. n-1 }</td>
+                <td>{ 0 .. n-i }</td>
+                <td></td>
+              </tr>
+              <tr>
+                <td>Width-based slice (from top)</td>
+                <td>B[i-:j]</td>
+                <td>i down to i-j+1</td>
+                <td>{ 0 .. n-1 }</td>
+                <td>{ 0 .. i+1 }</td>
+                <td></td>
+              </tr>
+              <tr>
+                <td>Element slice</td>
+                <td>B[i*:j]</td>
+                <td>i*j up to i*j + j-1</td>
+                <td>{ 0 .. n/j-1 }</td>
+                <td>{ 1 .. n }</td>
+                <td>n % j == 0</td>
+              </tr>
+            </tbody>
+          </table>
 
-            <listitem>
-              <para>
-                <literal>B[i +: j]</literal>
-                (width-based bitslice)
-                returns bits <literal>i</literal> up to <literal>i+j-1</literal>
-                (inclusive)
-                of the bitvector <literal>B</literal>.
-
-                Requires that <literal>i in {0 .. n-1}</literal>
-                and <literal>j in {0 .. n-i}</literal>.
-              </para>
-            </listitem>
-
-            <listitem>
-              <para>
-                <literal>B[i -: j]</literal>
-                (width-based bitslice)
-                returns bits <literal>i</literal> down to <literal>i-j+1</literal>
-                (inclusive)
-                of the bitvector <literal>B</literal>.
-
-                Requires that <literal>i in {0 .. n-1}</literal>
-                and <literal>j in {0 .. i}</literal>.
-              </para>
-            </listitem>
-
-            <listitem>
-              <para>
-                <literal>B[i *: j]</literal>
-                (element bitslice)
-                returns bits <literal>i*j</literal> up to <literal>i*j + j-1</literal>
-                (inclusive)
-                of the bitvector <literal>B</literal>.
-
-                Requires that <literal>i in {0 .. n/j}</literal>
-                and <literal>n % j == 0</literal>.
-              </para>
-            </listitem>
-
-            <listitem status="unimplemented">
-              <para>
-                <literal>B[i, j +: k]</literal> - any combination of the above -
-                the concatenation of a number of individual bitslices
-              </para>
-            </listitem>
-
-          </orderedlist>
+          <para status="unimplemented">
+              In addition, any combination of the above such as
+              <literal>B[i, j +: k]</literal> is equivalent to
+              the concatenation of a number of individual bitslices.
+          </para>
         </listitem>
 
         <listitem>
