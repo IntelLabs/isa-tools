@@ -3630,16 +3630,32 @@ assert s == 55;
 
         The loop control variable is immutable within the body of the loop
         and only accessible inside the loop.
-
-        The variable can be thought of as if it was declared
-        <quote>let i : {e1..e2} := …</quote> at the start of the
-        statement list.
       </para>
 
       <para>
-        If e1 &gt; e2, the loop executes 0 times. If e1 == e2, the loop
-        executes 1 time. The loop executes <quote>Max(1 + e2 - e1,
-        0)</quote> times.
+        For <quote>for i := e1 to e2</quote>,
+
+        the variable <quote>i</quote> has type <quote>{e1..e2}</quote>,
+
+        the loop executes <quote>Max(1 + e2 - e1, 0)</quote> times.
+
+        If e1 &gt; e2, the loop executes 0 times.
+
+        If e1 == e2, the loop executes 1 time.
+
+      </para>
+
+      <para>
+        For <quote>for i := e1 downto e2</quote>,
+
+        the variable <quote>i</quote> has type <quote>{e2..e1}</quote>
+
+        and the loop executes <quote>Max(1 + e1 - e2, 0)</quote> times.
+
+        If e2 &gt; e1, the loop executes 0 times.
+
+        If e1 == e2, the loop executes 1 time.
+
       </para>
 
     </section>
