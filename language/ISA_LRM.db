@@ -2141,7 +2141,7 @@ assert (UNSPECIFIED : Bits(8)) == (UNSPECIFIED : Bits(8)); // This assertion cou
               x + y
             </td>
             <td>
-              Integer, Bits
+              Integer
             </td>
             <td>
               Addition
@@ -2150,10 +2150,23 @@ assert (UNSPECIFIED : Bits(8)) == (UNSPECIFIED : Bits(8)); // This assertion cou
 
           <tr>
             <td>
+              x + y
+            </td>
+            <td>
+              Bits
+            </td>
+            <td>
+              Addition.
+              Inputs and outputs are the same size.
+            </td>
+          </tr>
+
+          <tr>
+            <td>
               x - y
             </td>
             <td>
-              Integer, Bits
+              Integer
             </td>
             <td>
               Subtraction
@@ -2162,13 +2175,40 @@ assert (UNSPECIFIED : Bits(8)) == (UNSPECIFIED : Bits(8)); // This assertion cou
 
           <tr>
             <td>
+              x - y
+            </td>
+            <td>
+              Bits
+            </td>
+            <td>
+              Subtraction.
+              Inputs and outputs are the same size.
+            </td>
+          </tr>
+
+          <tr>
+            <td>
               x * y
             </td>
             <td>
-              Integer, Bits
+              Integer
             </td>
             <td>
               Multiplication
+            </td>
+          </tr>
+
+          <tr>
+            <td>
+              x * y
+            </td>
+            <td>
+              Bits
+            </td>
+            <td>
+              Multiplication.
+              Inputs and outputs are the same size.
+              Result is the bottom <quote>n</quote> bits of the product.
             </td>
           </tr>
 
