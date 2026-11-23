@@ -3730,8 +3730,9 @@ throw-statement = 'throw' expression ';'
 catch-statement =
 'try'
     statement-list
-'with'
-    { 'when' pattern [ guard ] '=>' statement-list }
+'catch'
+    { 'when' identifier ':'  exception_type '=>' statement-list }
+    [ 'otherwise' '=>' statement-list ]
 'endtry' ';'
 
 guard = 'if' boolean-expression
