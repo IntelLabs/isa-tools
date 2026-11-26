@@ -160,51 +160,51 @@ module Runtime : RT.RuntimeLib = struct
 
   let fdiv_sintN (fmt : PP.formatter) (n : int) (x : RT.rt_expr) (y : RT.rt_expr) : unit =
     PP.fprintf fmt "({ %a __tmp1 = %a; "
-      ty_sint n
+      ty_sint (n+1)
       RT.pp_expr x;
     PP.fprintf fmt "%a __tmp2 = %a; "
-      ty_sint n
+      ty_sint (n+1)
       RT.pp_expr y;
-    PP.fprintf fmt "%a __tmp3 = __tmp1 / __tmp2; " ty_sint n;
-    PP.fprintf fmt "%a __tmp4 = __tmp1 %% __tmp2; " ty_sint n;
+    PP.fprintf fmt "%a __tmp3 = __tmp1 / __tmp2; " ty_sint (n+1);
+    PP.fprintf fmt "%a __tmp4 = __tmp1 %% __tmp2; " ty_sint (n+1);
     PP.fprintf fmt "if (__tmp4 != 0 && (__tmp1 < 0 || __tmp2 < 0)) { __tmp3 = __tmp3 - 1; } ";
     PP.fprintf fmt "__tmp3; })"
 
   let frem_sintN (fmt : PP.formatter) (n : int) (x : RT.rt_expr) (y : RT.rt_expr) : unit =
     PP.fprintf fmt "({ %a __tmp1 = %a; "
-      ty_sint n
+      ty_sint (n+1)
       RT.pp_expr x;
     PP.fprintf fmt "%a __tmp2 = %a; "
-      ty_sint n
+      ty_sint (n+1)
       RT.pp_expr y;
-    PP.fprintf fmt "%a __tmp3 = __tmp1 / __tmp2; " ty_sint n;
-    PP.fprintf fmt "%a __tmp4 = __tmp1 %% __tmp2; " ty_sint n;
+    PP.fprintf fmt "%a __tmp3 = __tmp1 / __tmp2; " ty_sint (n+1);
+    PP.fprintf fmt "%a __tmp4 = __tmp1 %% __tmp2; " ty_sint (n+1);
     PP.fprintf fmt "if (__tmp4 != 0 && (__tmp1 < 0 || __tmp2 < 0)) { __tmp4 = __tmp4 + __tmp2; } ";
-    PP.fprintf fmt "__tmp4; })"
+    PP.fprintf fmt "((%a)__tmp4); })" ty_sint n
 
   let cdiv_sintN (fmt : PP.formatter) (n : int) (x : RT.rt_expr) (y : RT.rt_expr) : unit =
     PP.fprintf fmt "({ %a __tmp1 = %a; "
-      ty_sint n
+      ty_sint (n+1)
       RT.pp_expr x;
     PP.fprintf fmt "%a __tmp2 = %a; "
-      ty_sint n
+      ty_sint (n+1)
       RT.pp_expr y;
-    PP.fprintf fmt "%a __tmp3 = __tmp1 / __tmp2; " ty_sint n;
-    PP.fprintf fmt "%a __tmp4 = __tmp1 %% __tmp2; " ty_sint n;
+    PP.fprintf fmt "%a __tmp3 = __tmp1 / __tmp2; " ty_sint (n+1);
+    PP.fprintf fmt "%a __tmp4 = __tmp1 %% __tmp2; " ty_sint (n+1);
     PP.fprintf fmt "if (__tmp4 != 0 && ((__tmp1 < 0) == (__tmp2 < 0))) { __tmp3 = __tmp3 + 1; } ";
     PP.fprintf fmt "__tmp3; })"
 
   let crem_sintN (fmt : PP.formatter) (n : int) (x : RT.rt_expr) (y : RT.rt_expr) : unit =
     PP.fprintf fmt "({ %a __tmp1 = %a; "
-      ty_sint n
+      ty_sint (n+1)
       RT.pp_expr x;
     PP.fprintf fmt "%a __tmp2 = %a; "
-      ty_sint n
+      ty_sint (n+1)
       RT.pp_expr y;
-    PP.fprintf fmt "%a __tmp3 = __tmp1 / __tmp2; " ty_sint n;
-    PP.fprintf fmt "%a __tmp4 = __tmp1 %% __tmp2; " ty_sint n;
+    PP.fprintf fmt "%a __tmp3 = __tmp1 / __tmp2; " ty_sint (n+1);
+    PP.fprintf fmt "%a __tmp4 = __tmp1 %% __tmp2; " ty_sint (n+1);
     PP.fprintf fmt "if (__tmp4 != 0 && ((__tmp1 < 0) == (__tmp2 < 0))) { __tmp4 = __tmp4 - __tmp2; } ";
-    PP.fprintf fmt "__tmp4; })"
+    PP.fprintf fmt "((%a)__tmp4); })" ty_sint n
 
   let is_pow2_sintN (fmt : PP.formatter) (n : int) (x : RT.rt_expr) : unit =
     PP.fprintf fmt "({ %a __tmp = %a; "

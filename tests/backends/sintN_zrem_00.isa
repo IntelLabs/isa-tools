@@ -18,5 +18,7 @@ begin
     // CHECK: -i8'd2
     Std::Print::SInt::Dec(FUT(i8'd6, -i8'd3)); Print("\n");
     // CHECK: i8'd0
+    Std::Print::SInt::Dec(FUT(-i8'd128, -i8'd1)); Print("\n");
+    // CHECK: i8'd0
     return Builtin::Foreign::CInt::From_Integer(0);
 end
